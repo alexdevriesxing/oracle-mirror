@@ -1,27 +1,10 @@
 name = "oracle-mirror"
-
-# Use the compiled worker from dist/index.js
 main = "dist/index.js"
+compatibility_date = "2024-12-01"
 
-# Use the latest Workers runtime features.
-compatibility_date = "2024-06-01"
-
-## If you need node compatibility, uncomment the following line.
-# node_compat = true
-
-# Bind the Workers AI service to `env.AI`.
 [ai]
 binding = "AI"
 
-# Serve static assets from the public/ directory.  Wrangler will upload all files
-# in this folder to Cloudflare’s asset store when you run `wrangler publish`.
-[site]
-bucket = "./public"
-
-## Optional: you can specify a custom domain here.
-# zone_id = ""
-# routes = [ { pattern = "example.com/*", zone_name = "example.com" } ]
-
-## Optional: configure Smart Placement or run your worker first.
-# [placement]
-# run_worker_first = false
+[assets]
+directory = "./public"
+binding = "ASSETS"
