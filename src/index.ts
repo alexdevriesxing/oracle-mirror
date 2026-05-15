@@ -234,6 +234,11 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.hostname === "www.oraclemirror.com") {
+      url.hostname = "oraclemirror.com";
+      return Response.redirect(url.toString(), 301);
+    }
+
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/health") {
         return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
