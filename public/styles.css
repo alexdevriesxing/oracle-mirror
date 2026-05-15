@@ -243,7 +243,7 @@ header {
 /* --- Hero Section --- */
 #hero {
   width: 100%;
-  min-height: 65vh;
+  min-height: clamp(420px, 58vh, 620px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -451,7 +451,7 @@ header {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.15rem;
   max-width: 1100px;
   margin: 0 auto;
@@ -660,7 +660,7 @@ header {
   padding: 0 1rem 2rem;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 100px);
+  min-height: calc(100svh - 110px);
 }
 
 .chat-orb-container {
@@ -1473,12 +1473,39 @@ select option {
 
 .ad-placeholder {
   width: 100%;
-  max-width: 728px;
-  min-height: 10px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ad-slot-leaderboard {
+  width: min(728px, 100%);
+  min-height: 90px;
+}
+
+.ad-slot-rectangle {
+  width: min(300px, 100%);
+  min-height: 250px;
+}
+
+.ad-slot-mobile-banner {
+  width: min(320px, 100%);
+  min-height: 50px;
+}
+
+.ad-desktop-only {
+  display: flex;
+}
+
+.ad-mobile-only {
+  display: none;
 }
 
 .ad-leaderboard {
-  margin-top: 0;
+  margin: 0 auto 1.5rem;
+}
+
+.ad-mobile-top {
+  margin: 0 auto 1.25rem;
 }
 
 .ad-native-home {
@@ -1514,7 +1541,6 @@ select option {
 
 .ad-mobile-sticky .ad-placeholder {
   max-width: 320px;
-  min-height: 50px;
   margin: 0 auto;
 }
 
@@ -1571,7 +1597,7 @@ footer {
    ========================================================= */
 @media (max-width: 1024px) {
   .cards {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 
   .overview-grid {
@@ -1624,7 +1650,7 @@ footer {
 
   .nav-hamburger { display: flex; }
 
-  #hero { min-height: 55vh; padding: 2rem 1rem; }
+  #hero { min-height: 470px; padding: 2rem 1rem; }
 
   .mirror {
     width: clamp(260px, 75vw, 360px);
@@ -1632,7 +1658,7 @@ footer {
   }
 
   .cards {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.95rem;
   }
 
@@ -1641,9 +1667,8 @@ footer {
   .tarot-card-slot { width: 75px; height: 115px; }
   .personas-gallery { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 
-  .ad-leaderboard .ad-placeholder {
-    max-width: 320px;
-  }
+  .ad-desktop-only { display: none; }
+  .ad-mobile-only { display: flex; }
 
   /* Show mobile sticky ad */
   .ad-mobile-sticky { display: block; }
@@ -1652,6 +1677,10 @@ footer {
   html { scroll-padding-bottom: calc(var(--ad-sticky-height) + 1rem); }
   body { padding-bottom: var(--ad-sticky-height); }
   footer { padding-bottom: calc(var(--ad-sticky-height) + 0.5rem); }
+
+  .chat-layout {
+    min-height: calc(100svh - 96px - var(--ad-sticky-height));
+  }
 
   .chat-container {
     max-height: 40vh;
@@ -1667,7 +1696,7 @@ footer {
 
   .mirror-inner { padding: 1.5rem; }
 
-  .cards { grid-template-columns: repeat(2, 1fr); }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .zodiac-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
   .love-names { flex-direction: column; }
   .love-names .realm-text-input { max-width: 100%; }
