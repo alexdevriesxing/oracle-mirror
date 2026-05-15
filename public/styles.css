@@ -186,7 +186,17 @@ header {
 .nav-link:focus-visible,
 .dropdown-item:focus-visible,
 .nav-logo:focus-visible,
-.nav-hamburger:focus-visible {
+.nav-hamburger:focus-visible,
+.btn-gold:focus-visible,
+.btn-back:focus-visible,
+.card:focus-visible,
+.zodiac-btn:focus-visible,
+.realm-input:focus-visible,
+.realm-text-input:focus-visible,
+.realm-number-input:focus-visible,
+.realm-date-input:focus-visible,
+.realm-select:focus-visible,
+.chat-text-input:focus-visible {
   outline: 2px solid var(--gold-light);
   outline-offset: 3px;
 }
@@ -407,10 +417,10 @@ header {
   background: none;
   border: 1px solid var(--glass-border);
   color: var(--gold);
-  padding: 0.5rem 1rem;
+  padding: 0.65rem 1.1rem;
   border-radius: 6px;
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   cursor: pointer;
   transition: all var(--transition);
   backdrop-filter: blur(4px);
@@ -422,8 +432,8 @@ header {
 }
 
 .btn-small {
-  padding: 0.4rem 1rem;
-  font-size: 0.75rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
 }
 
 /* --- Realm Cards --- */
@@ -983,7 +993,7 @@ select option {
 .realm-subtitle {
   color: var(--text-muted);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 1.02rem;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -1096,13 +1106,13 @@ select option {
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  padding: 0.6rem;
+  padding: 0.75rem 0.6rem;
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
   color: var(--text-cream);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: 0.88rem;
   cursor: pointer;
   transition: all var(--transition);
 }
@@ -1114,7 +1124,7 @@ select option {
   color: #93c5fd;
 }
 
-.zodiac-symbol { font-size: 1.4rem; }
+.zodiac-symbol { font-size: 1.55rem; }
 
 /* Chinese Zodiac Lanterns */
 .lantern {
@@ -1477,18 +1487,31 @@ select option {
   overflow: hidden;
 }
 
+.ad-placeholder:empty {
+  min-height: 0;
+}
+
 .ad-slot-leaderboard {
   width: min(728px, 100%);
+}
+
+.ad-slot-leaderboard:not(:empty) {
   min-height: 90px;
 }
 
 .ad-slot-rectangle {
   width: min(300px, 100%);
+}
+
+.ad-slot-rectangle:not(:empty) {
   min-height: 250px;
 }
 
 .ad-slot-mobile-banner {
   width: min(320px, 100%);
+}
+
+.ad-slot-mobile-banner:not(:empty) {
   min-height: 50px;
 }
 
