@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oracle Mirror — See Beyond. Know Within.</title>
+    <meta name="description" content="Peer into the Oracle Mirror and let Madame Fortuna guide your path. Fortune telling, tarot readings, zodiac horoscopes, numerology and more." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=MedievalSharp&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="particles" aria-hidden="true"></canvas>
+
+    <!-- ===== HEADER / NAV ===== -->
+    <header>
+      <nav class="nav-container">
+        <a href="#" id="nav-home" class="nav-logo">
+          <span class="logo-icon">&#9788;</span>
+          <span class="logo-text">Oracle Mirror</span>
+        </a>
+        <div class="nav-links" id="nav-links">
+          <a href="#" class="nav-link active" data-nav="home">Home</a>
+          <a href="#" class="nav-link" data-nav="crystal-ball">Crystal Ball</a>
+          <div class="nav-dropdown">
+            <a href="#" class="nav-link nav-dropdown-trigger">Realms <span class="dropdown-arrow">&#9662;</span></a>
+            <div class="nav-dropdown-menu">
+              <a href="#" class="dropdown-item" data-nav="western-zodiac">&#9734; Western Zodiac</a>
+              <a href="#" class="dropdown-item" data-nav="chinese-zodiac">&#128009; Chinese Zodiac</a>
+              <a href="#" class="dropdown-item" data-nav="tarot">&#127183; Tarot</a>
+              <a href="#" class="dropdown-item" data-nav="love">&#128156; Love Oracle</a>
+              <a href="#" class="dropdown-item" data-nav="magic8">&#127921; Magic 8 Ball</a>
+              <a href="#" class="dropdown-item" data-nav="numerology">&#128290; Numerology</a>
+              <a href="#" class="dropdown-item" data-nav="daily-fortune">&#127773; Daily Fortune</a>
+            </div>
+          </div>
+          <a href="#" class="nav-link" data-nav="personas">Mystics</a>
+          <a href="#" class="nav-link" data-nav="archive">Archive</a>
+        </div>
+        <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- ===== HOME PAGE ===== -->
+    <main id="page-home" class="page active">
+      <!-- Hero -->
+      <section id="hero">
+        <div class="hero-content">
+          <div class="mirror">
+            <div class="mirror-glow"></div>
+            <div class="mirror-inner">
+              <p class="mirror-tagline">See Beyond. Know Within.</p>
+              <h2>The answers you seek are already within you.</h2>
+              <p class="mirror-desc">Step closer. The mirror is waiting.</p>
+              <button class="btn-gold btn-enter" data-nav="crystal-ball">Enter the Mirror</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADSTERRA: Desktop Leaderboard Banner (728x90) — paste code inside -->
+      <div class="ad-container ad-leaderboard">
+        <div class="ad-placeholder" data-ad="leaderboard-728x90"></div>
+      </div>
+
+      <!-- Choose Your Realm -->
+      <section id="modules">
+        <div class="section-divider">&#10022; &#9830; &#10022;</div>
+        <h2>Choose Your Realm</h2>
+        <p class="section-subtitle">Each realm holds a path to insight, guidance, and magic.</p>
+        <div class="cards">
+          <a class="card card-crystal" data-realm="crystal-ball">
+            <div class="card-frame">
+              <div class="card-icon">&#128302;</div>
+              <h3>Madame Fortuna's<br/>Crystal Ball</h3>
+              <p class="card-desc">Peer into the mist of possibilities</p>
+            </div>
+          </a>
+          <a class="card card-western" data-realm="western-zodiac">
+            <div class="card-frame">
+              <div class="card-icon">&#9734;</div>
+              <h3>Western Zodiac</h3>
+              <p class="card-desc">Discover what the stars have aligned for you</p>
+            </div>
+          </a>
+          <a class="card card-chinese" data-realm="chinese-zodiac">
+            <div class="card-frame">
+              <div class="card-icon">&#128009;</div>
+              <h3>Chinese Zodiac</h3>
+              <p class="card-desc">Ancient wisdom of the Eastern cycle</p>
+            </div>
+          </a>
+          <a class="card card-tarot" data-realm="tarot">
+            <div class="card-frame">
+              <div class="card-icon">&#127183;</div>
+              <h3>Tarot</h3>
+              <p class="card-desc">The cards reveal what words cannot</p>
+            </div>
+          </a>
+          <a class="card card-love" data-realm="love">
+            <div class="card-frame">
+              <div class="card-icon">&#128156;</div>
+              <h3>Love Oracle</h3>
+              <p class="card-desc">Explore the mysteries of the heart</p>
+            </div>
+          </a>
+          <a class="card card-magic8" data-realm="magic8">
+            <div class="card-frame">
+              <div class="card-icon">&#127921;</div>
+              <h3>Magic 8 Ball</h3>
+              <p class="card-desc">Ask. Shake. Reveal.</p>
+            </div>
+          </a>
+          <a class="card card-numerology" data-realm="numerology">
+            <div class="card-frame">
+              <div class="card-icon">&#128290;</div>
+              <h3>Numerology</h3>
+              <p class="card-desc">Numbers hold the secrets of you</p>
+            </div>
+          </a>
+          <a class="card card-daily" data-realm="daily-fortune">
+            <div class="card-frame">
+              <div class="card-icon">&#127773;</div>
+              <h3>Daily Fortune</h3>
+              <p class="card-desc">Today holds its own sacred message</p>
+            </div>
+          </a>
+          <a class="card card-personas" data-realm="personas">
+            <div class="card-frame">
+              <div class="card-icon">&#129497;</div>
+              <h3>Personas</h3>
+              <p class="card-desc">Uncover the many faces that shape your fate</p>
+            </div>
+          </a>
+          <a class="card card-archive" data-realm="archive">
+            <div class="card-frame">
+              <div class="card-icon">&#128218;</div>
+              <h3>Archive</h3>
+              <p class="card-desc">Wisdom, stories, and past readings</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- ADSTERRA: Native Banner / Rectangle (300x250) -->
+      <div class="ad-container ad-native-home">
+        <div class="ad-placeholder" data-ad="native-300x250"></div>
+      </div>
+
+      <!-- Trust Badges -->
+      <section class="trust-section">
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <span class="trust-icon">&#9788;</span>
+            <strong>Ancient Wisdom</strong>
+            <p>Timeless knowledge from many traditions</p>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-icon">&#10026;</span>
+            <strong>Trusted Guidance</strong>
+            <p>Intuitive readings with heartfelt insight</p>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-icon">&#10024;</span>
+            <strong>Magical Experience</strong>
+            <p>Immersive readings crafted with care</p>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-icon">&#128274;</span>
+            <strong>Private &amp; Secure</strong>
+            <p>Your journey is always your own</p>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-icon">&#9789;</span>
+            <strong>Always Here</strong>
+            <p>Guidance whenever you need it most</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== CRYSTAL BALL (Chat with Madame Fortuna) ===== -->
+    <section id="page-crystal-ball" class="page realm-page realm-crystal">
+      <div class="chat-layout">
+        <div class="realm-header">
+          <button class="btn-back" data-back>&#8592; Return to Realms</button>
+          <h2>Madame Fortuna's Crystal Ball</h2>
+          <p class="realm-subtitle">Peer into the mist of possibilities</p>
+        </div>
+
+        <!-- Crystal Ball Visual -->
+        <div class="chat-orb-container">
+          <div class="crystal-ball-orb chat-orb">
+            <div class="orb-inner"></div>
+            <div class="orb-shine"></div>
+            <div class="orb-text" id="orb-status">The mists await your question...</div>
+          </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" class="chat-text-input" placeholder="Whisper your question to Madame Fortuna..." autocomplete="off" />
+          <button id="chat-send" class="btn-gold btn-chat-send">Reveal My Fortune</button>
+        </div>
+
+        <!-- ADSTERRA: In-content rectangle ad -->
+        <div class="ad-container ad-chat-bottom">
+          <div class="ad-placeholder" data-ad="chat-rectangle-300x250"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== WESTERN ZODIAC ===== -->
+    <section id="page-western-zodiac" class="page realm-page realm-western">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Celestial Observatory</h2>
+        <p class="realm-subtitle">Ascend to the star-domed observatory where Astaria reads the movements of planets and constellations...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="zodiac-wheel"><div class="zodiac-ring"></div></div>
+      </div>
+      <div class="realm-form">
+        <label class="realm-label">Select Your Zodiac Sign</label>
+        <div class="zodiac-grid" id="zodiac-signs">
+          <button class="zodiac-btn" data-sign="aries"><span class="zodiac-symbol">&#9800;</span><span>Aries</span></button>
+          <button class="zodiac-btn" data-sign="taurus"><span class="zodiac-symbol">&#9801;</span><span>Taurus</span></button>
+          <button class="zodiac-btn" data-sign="gemini"><span class="zodiac-symbol">&#9802;</span><span>Gemini</span></button>
+          <button class="zodiac-btn" data-sign="cancer"><span class="zodiac-symbol">&#9803;</span><span>Cancer</span></button>
+          <button class="zodiac-btn" data-sign="leo"><span class="zodiac-symbol">&#9804;</span><span>Leo</span></button>
+          <button class="zodiac-btn" data-sign="virgo"><span class="zodiac-symbol">&#9805;</span><span>Virgo</span></button>
+          <button class="zodiac-btn" data-sign="libra"><span class="zodiac-symbol">&#9806;</span><span>Libra</span></button>
+          <button class="zodiac-btn" data-sign="scorpio"><span class="zodiac-symbol">&#9807;</span><span>Scorpio</span></button>
+          <button class="zodiac-btn" data-sign="sagittarius"><span class="zodiac-symbol">&#9808;</span><span>Sagittarius</span></button>
+          <button class="zodiac-btn" data-sign="capricorn"><span class="zodiac-symbol">&#9809;</span><span>Capricorn</span></button>
+          <button class="zodiac-btn" data-sign="aquarius"><span class="zodiac-symbol">&#9810;</span><span>Aquarius</span></button>
+          <button class="zodiac-btn" data-sign="pisces"><span class="zodiac-symbol">&#9811;</span><span>Pisces</span></button>
+        </div>
+        <div class="oracle-response" data-output="western-zodiac"></div>
+      </div>
+    </section>
+
+    <!-- ===== CHINESE ZODIAC ===== -->
+    <section id="page-chinese-zodiac" class="page realm-page realm-chinese">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>The Jade Pavilion</h2>
+        <p class="realm-subtitle">Enter the pavilion of lanterns and jade where Master Longwei reads the harmony of the celestial animals...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="lantern lantern-1"></div>
+        <div class="lantern lantern-2"></div>
+        <div class="lantern lantern-3"></div>
+      </div>
+      <div class="realm-form">
+        <label class="realm-label" for="birth-year">Enter Your Birth Year</label>
+        <input type="number" id="birth-year" class="realm-number-input" min="1900" max="2100" placeholder="e.g. 1990" />
+        <div id="chinese-animal-display" class="animal-display hidden"></div>
+        <button class="btn-gold btn-realm" id="btn-chinese">Consult Master Longwei</button>
+        <div class="oracle-response" data-output="chinese-zodiac"></div>
+      </div>
+    </section>
+
+    <!-- ===== TAROT ===== -->
+    <section id="page-tarot" class="page realm-page realm-tarot">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>The Arcane Library</h2>
+        <p class="realm-subtitle">In this candlelit sanctum of ancient tomes, Seraphina draws the cards that reveal your fate...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="tarot-spread">
+          <div class="tarot-card-slot" id="tarot-card-1"><div class="tarot-card-back">Past</div></div>
+          <div class="tarot-card-slot" id="tarot-card-2"><div class="tarot-card-back">Present</div></div>
+          <div class="tarot-card-slot" id="tarot-card-3"><div class="tarot-card-back">Future</div></div>
+        </div>
+      </div>
+      <div class="realm-form">
+        <textarea class="realm-input" data-input="tarot" placeholder="Focus on your question as the cards are drawn..."></textarea>
+        <button class="btn-gold btn-realm" data-endpoint="/api/tarot" data-body-key="question" data-source="tarot">Draw the Cards</button>
+        <div class="oracle-response" data-output="tarot"></div>
+      </div>
+    </section>
+
+    <!-- ===== LOVE ===== -->
+    <section id="page-love" class="page realm-page realm-love">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>The Romantic Salon</h2>
+        <p class="realm-subtitle">Rosalind awaits in her salon of rose quartz and paired constellations to guide your heart...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="love-hearts">
+          <div class="floating-heart h1">&#10084;</div>
+          <div class="floating-heart h2">&#10084;</div>
+          <div class="floating-heart h3">&#10084;</div>
+        </div>
+      </div>
+      <div class="realm-form">
+        <div class="love-names">
+          <input type="text" id="love-name1" class="realm-text-input" placeholder="Your name (optional)" />
+          <span class="love-ampersand">&amp;</span>
+          <input type="text" id="love-name2" class="realm-text-input" placeholder="Their name (optional)" />
+        </div>
+        <textarea class="realm-input" data-input="love" placeholder="Ask about matters of the heart..."></textarea>
+        <button class="btn-gold btn-realm" id="btn-love">Consult Rosalind</button>
+        <div class="oracle-response" data-output="love"></div>
+      </div>
+    </section>
+
+    <!-- ===== MAGIC 8 BALL ===== -->
+    <section id="page-magic8" class="page realm-page realm-magic8">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>The Cosmic Arcade</h2>
+        <p class="realm-subtitle">Step into the neon-lit arcade where the Cosmic 8-Ball pulses with otherworldly energy...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="magic8-ball" id="magic8-ball">
+          <div class="magic8-window"><span class="magic8-number">8</span></div>
+        </div>
+      </div>
+      <div class="realm-form">
+        <textarea class="realm-input" data-input="magic8" placeholder="Ask a yes or no question, then shake the ball..."></textarea>
+        <button class="btn-gold btn-realm btn-neon" data-endpoint="/api/magic8" data-body-key="question" data-source="magic8">Shake the 8-Ball</button>
+        <div class="oracle-response" data-output="magic8"></div>
+      </div>
+    </section>
+
+    <!-- ===== NUMEROLOGY ===== -->
+    <section id="page-numerology" class="page realm-page realm-numerology">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Sacred Geometry Chamber</h2>
+        <p class="realm-subtitle">Pythius awaits in his chamber of glowing diagrams and floating glyphs to reveal your life path...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="geometry-shape">
+          <div class="geo-ring geo-1"></div>
+          <div class="geo-ring geo-2"></div>
+          <div class="geo-ring geo-3"></div>
+          <div class="geo-core" id="life-path-display"></div>
+        </div>
+      </div>
+      <div class="realm-form">
+        <label class="realm-label" for="numerology-birthday">Enter Your Birthday</label>
+        <input type="date" id="numerology-birthday" class="realm-date-input" />
+        <button class="btn-gold btn-realm" id="btn-numerology">Calculate Life Path</button>
+        <div class="oracle-response" data-output="numerology"></div>
+      </div>
+    </section>
+
+    <!-- ===== DAILY FORTUNE ===== -->
+    <section id="page-daily-fortune" class="page realm-page realm-daily">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Dawn Ritual Table</h2>
+        <p class="realm-subtitle">Each sunrise, the Dawn Oracle inscribes your fortune on golden parchment by candlelight...</p>
+      </div>
+      <div class="realm-scene">
+        <div class="sunrise-glow"></div>
+      </div>
+      <div class="realm-form">
+        <label class="realm-label">Your zodiac sign (optional)</label>
+        <select id="daily-sign" class="realm-select">
+          <option value="">-- Choose sign --</option>
+          <option value="aries">Aries</option><option value="taurus">Taurus</option>
+          <option value="gemini">Gemini</option><option value="cancer">Cancer</option>
+          <option value="leo">Leo</option><option value="virgo">Virgo</option>
+          <option value="libra">Libra</option><option value="scorpio">Scorpio</option>
+          <option value="sagittarius">Sagittarius</option><option value="capricorn">Capricorn</option>
+          <option value="aquarius">Aquarius</option><option value="pisces">Pisces</option>
+        </select>
+        <button class="btn-gold btn-realm" id="btn-daily">Reveal Today's Fortune</button>
+        <div class="oracle-response" data-output="daily-fortune"></div>
+      </div>
+    </section>
+
+    <!-- ===== PERSONAS ===== -->
+    <section id="page-personas" class="page realm-page realm-personas">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Hall of Mystics</h2>
+        <p class="realm-subtitle">Meet the oracles who dwell within the Oracle Mirror, each with their own domain of wisdom...</p>
+      </div>
+      <div class="personas-gallery">
+        <div class="persona-card">
+          <div class="persona-portrait portrait-fortuna"></div>
+          <h3>Madame Fortuna</h3>
+          <p class="persona-domain">Crystal Ball</p>
+          <p class="persona-desc">An ancient seer who peers through swirling mists to reveal hidden truths and cosmic destinies.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-astaria"></div>
+          <h3>Astaria</h3>
+          <p class="persona-domain">Western Zodiac</p>
+          <p class="persona-desc">A celestial astrologer who reads planetary movements from her observatory among the clouds.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-longwei"></div>
+          <h3>Master Longwei</h3>
+          <p class="persona-domain">Chinese Zodiac</p>
+          <p class="persona-desc">A wise sage who reads fortunes in a jade pavilion adorned with lanterns and ink-brush scrolls.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-seraphina"></div>
+          <h3>Seraphina</h3>
+          <p class="persona-domain">Tarot</p>
+          <p class="persona-desc">A mysterious reader in an arcane library who draws cards that reveal the threads of fate.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-rosalind"></div>
+          <h3>Rosalind</h3>
+          <p class="persona-domain">Love Oracle</p>
+          <p class="persona-desc">A romantic oracle surrounded by rose quartz who guides hearts through cosmic compatibility.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-8ball"></div>
+          <h3>Cosmic 8-Ball</h3>
+          <p class="persona-domain">Magic 8 Ball</p>
+          <p class="persona-desc">A neon-glowing arcade oracle pulsing with playful cosmic energy and quick-fire answers.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-pythius"></div>
+          <h3>Pythius</h3>
+          <p class="persona-domain">Numerology</p>
+          <p class="persona-desc">A sacred geometry master who reveals destiny through numbers, frequencies, and divine ratios.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-dawn"></div>
+          <h3>Dawn Oracle</h3>
+          <p class="persona-domain">Daily Fortune</p>
+          <p class="persona-desc">A mystical spirit who appears each sunrise to inscribe your fortune on golden parchment.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ARCHIVE ===== -->
+    <section id="page-archive" class="page realm-page realm-archive">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>The Magical Library</h2>
+        <p class="realm-subtitle">Your past readings are preserved here on enchanted scrolls...</p>
+      </div>
+      <div class="archive-controls">
+        <button class="btn-gold btn-small" id="btn-clear-archive">Clear All Readings</button>
+      </div>
+      <div id="archive-list" class="archive-list">
+        <p class="archive-empty">No readings have been saved yet. Visit a realm to begin your journey.</p>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+      <div class="footer-badges">
+        <div class="footer-badge"><span>&#9788;</span> Ancient Wisdom</div>
+        <div class="footer-badge"><span>&#10026;</span> Trusted Guidance</div>
+        <div class="footer-badge"><span>&#10024;</span> Magical Experience</div>
+        <div class="footer-badge"><span>&#128274;</span> Private &amp; Secure</div>
+        <div class="footer-badge"><span>&#9789;</span> Always Here</div>
+      </div>
+      <p class="footer-copy">&copy; 2026 Oracle Mirror. This site is for entertainment purposes only.</p>
+    </footer>
+
+    <!-- ===== ADSTERRA: Mobile Sticky Bottom Banner (320x50) ===== -->
+    <div class="ad-mobile-sticky" id="ad-mobile-sticky">
+      <!-- Paste your Adsterra mobile banner (320x50) script here -->
+      <div class="ad-placeholder" data-ad="mobile-sticky-320x50"></div>
+    </div>
+
+    <script src="script.js" type="module"></script>
+  </body>
+</html>
