@@ -63,6 +63,20 @@ const pages = document.querySelectorAll(".page");
 const navLinks = document.querySelectorAll(".nav-link[data-nav], .dropdown-item[data-nav]");
 const navLinksContainer = document.getElementById("nav-links");
 const hamburger = document.getElementById("nav-hamburger");
+const mobileStickyAd = document.getElementById("ad-mobile-sticky");
+
+function syncStickyAdHeight() {
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const height = isMobile && mobileStickyAd ? Math.ceil(mobileStickyAd.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--ad-sticky-height", `${height}px`);
+}
+
+if (mobileStickyAd) {
+  const stickyAdObserver = new ResizeObserver(syncStickyAdHeight);
+  stickyAdObserver.observe(mobileStickyAd);
+  window.addEventListener("resize", syncStickyAdHeight);
+  syncStickyAdHeight();
+}
 
 function showPage(pageId) {
   for (const p of pages) {
