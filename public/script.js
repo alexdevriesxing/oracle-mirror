@@ -1,4 +1,15 @@
-// Oracle Mirror — Client-side application
+import {
+  activateAdSlot,
+  activateSlotsForScreen,
+  createArchiveFeedAdSlot,
+  createResultAdSlot,
+  initAdSystem,
+  registerAdSlots,
+  scheduleAmbientPopunder,
+  trackEvent,
+} from "./ads.js";
+
+// Oracle Mirror - Client-side application
 
 // --- Particles ---
 const canvas = document.getElementById("particles");
@@ -58,55 +69,208 @@ if (canvas) {
   });
 }
 
-// --- Navigation ---
+// --- Navigation, routes, and virtual screens ---
 const pages = document.querySelectorAll(".page");
-const navLinks = document.querySelectorAll(".nav-link[data-nav], .dropdown-item[data-nav]");
 const navLinksContainer = document.getElementById("nav-links");
 const hamburger = document.getElementById("nav-hamburger");
-const mobileStickyAd = document.getElementById("ad-mobile-sticky");
 
-function syncStickyAdHeight() {
-  const isMobile = window.matchMedia("(max-width: 768px)").matches;
-  const height = isMobile && mobileStickyAd ? Math.ceil(mobileStickyAd.getBoundingClientRect().height) : 0;
-  document.documentElement.style.setProperty("--ad-sticky-height", `${height}px`);
+const ROUTE_BY_PAGE = {
+  home: "/",
+  "crystal-ball": "/crystal-ball",
+  "western-zodiac": "/western-zodiac",
+  "chinese-zodiac": "/chinese-zodiac",
+  tarot: "/tarot",
+  love: "/love-oracle",
+  magic8: "/magic-8-ball",
+  numerology: "/numerology",
+  "daily-fortune": "/daily-fortune",
+  personas: "/mystics",
+  archive: "/archive",
+  "privacy-policy": "/privacy-policy",
+  "cookie-policy": "/cookie-policy",
+  contact: "/contact",
+};
+
+const RESULT_ROUTE_BY_REALM = {
+  "crystal-ball": "/result/crystal-ball",
+  "western-zodiac": "/result/western-zodiac",
+  "chinese-zodiac": "/result/chinese-zodiac",
+  tarot: "/result/tarot",
+  love: "/result/love-oracle",
+  magic8: "/result/magic-8-ball",
+  numerology: "/result/numerology",
+  "daily-fortune": "/result/daily-fortune",
+};
+
+const PAGE_BY_ROUTE = new Map(Object.entries(ROUTE_BY_PAGE).map(([page, path]) => [path, page]));
+const PAGE_BY_RESULT_ROUTE = new Map(Object.entries(RESULT_ROUTE_BY_REALM).map(([page, path]) => [path, page]));
+const REALM_PAGES = new Set([
+  "crystal-ball",
+  "western-zodiac",
+  "chinese-zodiac",
+  "tarot",
+  "love",
+  "magic8",
+  "numerology",
+  "daily-fortune",
+]);
+
+const SCREEN_META = {
+  home: {
+    title: "Oracle Mirror | Tarot, Horoscopes, Numerology & Fortune Readings",
+    description: "Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror.",
+  },
+  "crystal-ball": {
+    title: "Crystal Ball Reading | Oracle Mirror",
+    description: "Ask Madame Fortuna's crystal ball for a mystical fortune reading and save the answer to your Oracle Mirror archive.",
+  },
+  "western-zodiac": {
+    title: "Western Zodiac Horoscope | Oracle Mirror",
+    description: "Choose your zodiac sign for a celestial horoscope reading from the Oracle Mirror observatory.",
+  },
+  "chinese-zodiac": {
+    title: "Chinese Zodiac Reading | Oracle Mirror",
+    description: "Enter your birth year for a Chinese zodiac fortune from the Jade Pavilion of Oracle Mirror.",
+  },
+  tarot: {
+    title: "Tarot Reading | Oracle Mirror",
+    description: "Draw a Past, Present, and Future tarot spread inside Oracle Mirror's arcane library.",
+  },
+  love: {
+    title: "Love Oracle Reading | Oracle Mirror",
+    description: "Ask the Love Oracle for romantic guidance, compatibility insight, and heart-centered reflection.",
+  },
+  magic8: {
+    title: "Magic 8 Ball Oracle | Oracle Mirror",
+    description: "Shake the Cosmic 8 Ball for a quick mystical answer to your yes-or-no question.",
+  },
+  numerology: {
+    title: "Numerology Life Path Reading | Oracle Mirror",
+    description: "Calculate your life path number and receive a numerology reading from Oracle Mirror.",
+  },
+  "daily-fortune": {
+    title: "Daily Fortune | Oracle Mirror",
+    description: "Reveal today's fortune with the Dawn Oracle and receive a daily mystical affirmation.",
+  },
+  personas: {
+    title: "Oracle Mirror Mystics | Fortune-Telling Personas",
+    description: "Meet the mystics behind Oracle Mirror's crystal ball, tarot, zodiac, love, numerology, and daily fortune realms.",
+  },
+  archive: {
+    title: "Reading Archive | Oracle Mirror",
+    description: "Review saved Oracle Mirror readings in your private browser archive.",
+  },
+  "privacy-policy": {
+    title: "Privacy Policy | Oracle Mirror",
+    description: "Read how Oracle Mirror handles local reading history, analytics events, advertising consent, and API requests.",
+  },
+  "cookie-policy": {
+    title: "Cookie Policy | Oracle Mirror",
+    description: "Manage Oracle Mirror cookie and advertising script preferences.",
+  },
+  contact: {
+    title: "Contact | Oracle Mirror",
+    description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
+  },
+};
+
+function canonicalUrl(path) {
+  return `https://oraclemirror.com${path === "/" ? "/" : path}`;
 }
 
-if (mobileStickyAd) {
-  const stickyAdObserver = new ResizeObserver(syncStickyAdHeight);
-  stickyAdObserver.observe(mobileStickyAd);
-  window.addEventListener("resize", syncStickyAdHeight);
-  syncStickyAdHeight();
+function getRouteState(pathname = window.location.pathname) {
+  const normalized = pathname.length > 1 ? pathname.replace(/\/$/, "") : "/";
+  if (PAGE_BY_RESULT_ROUTE.has(normalized)) {
+    return { pageId: PAGE_BY_RESULT_ROUTE.get(normalized), isResult: true, path: normalized };
+  }
+  return {
+    pageId: PAGE_BY_ROUTE.get(normalized) || "home",
+    isResult: false,
+    path: PAGE_BY_ROUTE.has(normalized) ? normalized : "/",
+  };
 }
 
-function showPage(pageId) {
+function updateDocumentMeta(pageId, isResult = false) {
+  const routePath = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
+  const baseMeta = SCREEN_META[pageId] || SCREEN_META.home;
+  const title = isResult ? `Your ${baseMeta.title.replace(" | Oracle Mirror", "")} Result | Oracle Mirror` : baseMeta.title;
+  const description = isResult
+    ? `Read your completed Oracle Mirror result for this ${baseMeta.title.split("|")[0].trim().toLowerCase()} session.`
+    : baseMeta.description;
+  const url = canonicalUrl(routePath);
+
+  document.title = title;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+  document.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
+  document.querySelector('meta[property="og:title"]')?.setAttribute("content", title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", url);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", title);
+  document.querySelector('meta[name="twitter:description"]')?.setAttribute("content", description);
+}
+
+function trackVirtualPage(pageId, isResult = false) {
+  const path = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
+  trackEvent("virtual_page_view", {
+    page_path: path,
+    page_title: document.title,
+    screen: isResult ? `result/${pageId}` : pageId,
+    realm: pageId,
+  });
+}
+
+function adScreenForPage(pageId, isResult = false) {
+  if (isResult) return "result";
+  if (pageId === "home") return "home";
+  if (pageId === "archive") return "archive";
+  if (REALM_PAGES.has(pageId)) return "realm";
+  return "home";
+}
+
+function showPage(pageId, options = {}) {
+  const { push = true, isResult = false, scroll = true, emitTracking = true } = options;
   for (const p of pages) {
     p.classList.remove("active");
   }
+
   const target = document.getElementById(`page-${pageId}`);
   if (target) {
     target.classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Update active nav link
+  const routePath = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
+  if (push && routePath && window.location.pathname !== routePath) {
+    history.pushState({ pageId, isResult }, "", routePath);
+  }
+
+  updateDocumentMeta(pageId, isResult);
+
   for (const link of document.querySelectorAll(".nav-link[data-nav]")) {
-    link.classList.toggle("active", link.dataset.nav === pageId);
+    link.classList.toggle("active", link.dataset.nav === pageId || (pageId === "love" && link.dataset.nav === "love"));
   }
 
-  // Close mobile menu
   navLinksContainer?.classList.remove("open");
+  registerAdSlots(target || document);
+  activateSlotsForScreen(adScreenForPage(pageId, isResult), pageId);
+
+  if (emitTracking) {
+    trackVirtualPage(pageId, isResult);
+    if (REALM_PAGES.has(pageId) && !isResult) {
+      trackEvent("realm_open", { realm: pageId, page_path: routePath });
+    }
+    if (pageId === "archive") {
+      trackEvent("archive_open", { page_path: routePath });
+      setTimeout(renderArchive, 50);
+    }
+  }
 }
 
-function goHome() {
+function goHome(event) {
+  event?.preventDefault();
   showPage("home");
 }
 
-document.getElementById("nav-home")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  goHome();
-});
-
-// Nav links (header + dropdown + any data-nav buttons)
 for (const link of document.querySelectorAll("[data-nav]")) {
   link.addEventListener("click", (e) => {
     e.preventDefault();
@@ -115,23 +279,25 @@ for (const link of document.querySelectorAll("[data-nav]")) {
   });
 }
 
-// Realm cards
 for (const card of document.querySelectorAll(".card[data-realm]")) {
   card.addEventListener("click", (e) => {
     e.preventDefault();
     const realm = card.dataset.realm;
-    showPage(realm);
+    if (realm) showPage(realm);
   });
 }
 
-// Back buttons
 for (const btn of document.querySelectorAll("[data-back]")) {
   btn.addEventListener("click", goHome);
 }
 
-// Hamburger menu
 hamburger?.addEventListener("click", () => {
   navLinksContainer?.classList.toggle("open");
+});
+
+window.addEventListener("popstate", () => {
+  const route = getRouteState();
+  showPage(route.pageId, { push: false, isResult: route.isResult, scroll: false });
 });
 
 // Close mobile menu on outside click
@@ -170,6 +336,7 @@ function setOutput(realm, text, isLoading = false) {
   el.style.display = "block";
   if (isLoading) {
     el.classList.add("loading");
+    clearResultAftercare(realm);
   } else {
     el.classList.remove("loading");
   }
@@ -202,6 +369,111 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
+function setReadingState(isAnimating) {
+  if (isAnimating) {
+    document.body.dataset.readingState = "animating";
+  } else {
+    delete document.body.dataset.readingState;
+  }
+}
+
+function clearResultAftercare(realm) {
+  if (realm === "crystal-ball") {
+    chatMessages?.querySelectorAll(".oracle-ad-chat-result").forEach((el) => el.remove());
+    return;
+  }
+
+  const output = document.querySelector(`[data-output="${realm}"]`);
+  let next = output?.nextElementSibling;
+  while (next?.classList.contains("result-aftercare")) {
+    const current = next;
+    next = next.nextElementSibling;
+    current.remove();
+  }
+}
+
+function focusRealmInput(realm) {
+  if (realm === "crystal-ball" && !fortuneProfileReady()) {
+    fortuneFocus?.focus();
+    return;
+  }
+  const focusSelectors = {
+    "crystal-ball": "#chat-input",
+    "western-zodiac": ".zodiac-btn",
+    "chinese-zodiac": "#birth-year",
+    tarot: '[data-input="tarot"]',
+    love: '[data-input="love"]',
+    magic8: '[data-input="magic8"]',
+    numerology: "#numerology-birthday",
+    "daily-fortune": "#daily-sign",
+  };
+  document.querySelector(focusSelectors[realm])?.focus();
+}
+
+function addResultActions(realm, afterNode) {
+  const actions = document.createElement("div");
+  actions.className = "result-actions result-aftercare";
+  actions.innerHTML = `
+    <button class="btn-gold btn-small" data-another-reading="${realm}">Try Another Reading</button>
+    <a class="btn-ghost btn-small" href="/archive" data-nav="archive">Open Archive</a>
+  `;
+  afterNode.insertAdjacentElement("afterend", actions);
+
+  actions.querySelector("[data-another-reading]")?.addEventListener("click", () => {
+    trackEvent("another_reading_click", { realm });
+    clearResultAftercare(realm);
+    showPage(realm, { isResult: false, scroll: false });
+    focusRealmInput(realm);
+  });
+
+  actions.querySelector('[data-nav="archive"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    showPage("archive");
+  });
+}
+
+function markResultRendered(realm, answer) {
+  const resultPath = RESULT_ROUTE_BY_REALM[realm];
+  const output = document.querySelector(`[data-output="${realm}"]`);
+  trackEvent("result_rendered", {
+    realm,
+    answer_length: answer?.length || 0,
+    page_path: resultPath,
+  });
+  scheduleAmbientPopunder("result_rendered");
+
+  if (resultPath) {
+    if (window.location.pathname !== resultPath) {
+      history.pushState({ pageId: realm, isResult: true }, "", resultPath);
+    } else {
+      history.replaceState({ pageId: realm, isResult: true }, "", resultPath);
+    }
+    updateDocumentMeta(realm, true);
+    trackVirtualPage(realm, true);
+  }
+
+  if (realm === "crystal-ball" && chatMessages) {
+    clearResultAftercare(realm);
+    const adSlot = createResultAdSlot(realm);
+    adSlot.classList.add("oracle-ad-chat-result");
+    chatMessages.appendChild(adSlot);
+    registerAdSlots(adSlot);
+    activateSlotsForScreen("result", realm);
+    scrollChatToBottom();
+    return;
+  }
+
+  if (output) {
+    clearResultAftercare(realm);
+    const adSlot = createResultAdSlot(realm);
+    adSlot.classList.add("result-aftercare");
+    output.insertAdjacentElement("afterend", adSlot);
+    addResultActions(realm, adSlot);
+    registerAdSlots(adSlot);
+    activateSlotsForScreen("result", realm);
+  }
+}
+
 // --- Archive (LocalStorage) ---
 const ARCHIVE_KEY = "oracle-mirror-archive";
 
@@ -224,6 +496,11 @@ function saveToArchive(realm, question, answer, extra) {
   });
   if (archive.length > 100) archive.length = 100;
   localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+  trackEvent("result_saved", {
+    realm,
+    has_question: Boolean(question),
+    answer_length: answer?.length || 0,
+  });
 }
 
 function renderArchive() {
@@ -271,6 +548,15 @@ function renderArchive() {
       </div>`;
     })
     .join("");
+
+  const thirdEntry = list.querySelectorAll(".archive-entry")[2];
+  if (thirdEntry) {
+    const feedAd = createArchiveFeedAdSlot();
+    thirdEntry.insertAdjacentElement("afterend", feedAd);
+    activateAdSlot("oracle-archive-native", { realm: "archive" });
+  }
+
+  activateAdSlot("oracle-archive-bottom-slot", { realm: "archive" });
 }
 
 document.getElementById("btn-clear-archive")?.addEventListener("click", () => {
@@ -298,9 +584,55 @@ const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
 const orbStatus = document.getElementById("orb-status");
+const fortuneFocus = document.getElementById("fortune-focus");
+const fortuneTimeframe = document.getElementById("fortune-timeframe");
+const fortuneOmen = document.getElementById("fortune-omen");
+const fortuneMood = document.getElementById("fortune-mood");
+const fortuneQuestionnaireHint = document.getElementById("fortune-questionnaire-hint");
 
 let conversationHistory = [];
 let chatBusy = false;
+
+function getFortuneProfile() {
+  return {
+    focus: fortuneFocus?.value || "",
+    timeframe: fortuneTimeframe?.value || "",
+    omen: fortuneOmen?.value || "",
+    mood: fortuneMood?.value || "",
+  };
+}
+
+function fortuneProfileReady() {
+  const profile = getFortuneProfile();
+  return Boolean(profile.focus && profile.timeframe);
+}
+
+function describeFortuneProfile(profile = getFortuneProfile()) {
+  const fragments = [];
+  if (profile.focus) fragments.push(`matter: ${profile.focus}`);
+  if (profile.timeframe) fragments.push(`season: ${profile.timeframe}`);
+  if (profile.omen) fragments.push(`omen: ${profile.omen}`);
+  if (profile.mood) fragments.push(`heart: ${profile.mood}`);
+  return fragments.join("; ");
+}
+
+function syncFortuneQuestionnaire() {
+  const ready = fortuneProfileReady();
+  if (chatSend) chatSend.disabled = chatBusy || !ready;
+  if (fortuneQuestionnaireHint) {
+    fortuneQuestionnaireHint.classList.toggle("ready", ready);
+    fortuneQuestionnaireHint.textContent = ready
+      ? `The mirror is tuned to ${describeFortuneProfile()}.`
+      : "Select at least a matter and a season before the mirror opens fully.";
+  }
+  if (orbStatus && !chatBusy) {
+    orbStatus.textContent = ready ? "The mists are listening..." : "Choose a matter and season...";
+  }
+}
+
+for (const el of [fortuneFocus, fortuneTimeframe, fortuneOmen, fortuneMood]) {
+  el?.addEventListener("change", syncFortuneQuestionnaire);
+}
 
 function createMessageEl(role, text) {
   const msg = document.createElement("div");
@@ -346,13 +678,34 @@ function scrollChatToBottom() {
 
 async function sendChatMessage() {
   if (chatBusy || !chatInput || !chatMessages) return;
+  if (!fortuneProfileReady()) {
+    syncFortuneQuestionnaire();
+    fortuneFocus?.focus();
+    return;
+  }
 
   const text = chatInput.value.trim();
   if (!text) return;
+  const readingProfile = getFortuneProfile();
 
   chatBusy = true;
   chatInput.value = "";
   chatSend.disabled = true;
+  setReadingState(true);
+  clearResultAftercare("crystal-ball");
+  trackEvent("question_submitted", {
+    realm: "crystal-ball",
+    question_length: text.length,
+    questionnaire_focus: readingProfile.focus,
+    questionnaire_timeframe: readingProfile.timeframe,
+    questionnaire_has_omen: Boolean(readingProfile.omen),
+    questionnaire_has_mood: Boolean(readingProfile.mood),
+  });
+  trackEvent("reading_started", {
+    realm: "crystal-ball",
+    questionnaire_focus: readingProfile.focus,
+    questionnaire_timeframe: readingProfile.timeframe,
+  });
 
   // Add user message
   conversationHistory.push({ role: "user", content: text });
@@ -368,6 +721,7 @@ async function sendChatMessage() {
   try {
     const data = await callAPI("/api/chat", {
       messages: conversationHistory,
+      readingProfile,
     });
 
     // Remove typing indicator
@@ -384,7 +738,8 @@ async function sendChatMessage() {
     if (orbStatus) orbStatus.textContent = "Ask another question...";
 
     // Save to archive
-    saveToArchive("chat", text, response);
+    saveToArchive("chat", `${text} (${describeFortuneProfile(readingProfile)})`, response);
+    markResultRendered("crystal-ball", response);
   } catch {
     typingEl.remove();
     const errorMsg = createMessageEl(
@@ -396,8 +751,9 @@ async function sendChatMessage() {
     if (orbStatus) orbStatus.textContent = "The mists are clouded...";
   }
 
+  setReadingState(false);
   chatBusy = false;
-  chatSend.disabled = false;
+  syncFortuneQuestionnaire();
   chatInput.focus();
 }
 
@@ -416,14 +772,15 @@ function initChatGreeting() {
     chatMessages.innerHTML = "";
     const greeting = createMessageEl(
       "assistant",
-      "Ahhhh... a new soul approaches the crystal ball. I am Madame Fortuna, and the mists have been expecting you. What question burns within your heart, dear seeker?"
+      "Ahhhh... a new soul approaches the crystal ball. I am Madame Fortuna, and the mists have been expecting you. Set the lens of the mirror, then whisper the question that burns within your heart."
     );
     chatMessages.appendChild(greeting);
     conversationHistory.push({
       role: "assistant",
       content:
-        "Ahhhh... a new soul approaches the crystal ball. I am Madame Fortuna, and the mists have been expecting you. What question burns within your heart, dear seeker?",
+        "Ahhhh... a new soul approaches the crystal ball. I am Madame Fortuna, and the mists have been expecting you. Set the lens of the mirror, then whisper the question that burns within your heart.",
     });
+    syncFortuneQuestionnaire();
   }
 }
 
@@ -466,6 +823,12 @@ for (const btn of document.querySelectorAll(
 
     setOutput(realm, getLoadingMessage(realm), true);
     btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", {
+      realm,
+      question_length: value.length,
+    });
+    trackEvent("reading_started", { realm });
     try {
       const data = await callAPI(endpoint, { [bodyKey]: value });
       if (realm === "tarot" && data.cards) {
@@ -492,9 +855,11 @@ for (const btn of document.querySelectorAll(
         setOutput(realm, answer);
       }
       saveToArchive(realm, value, extractResponse(data));
+      markResultRendered(realm, extractResponse(data));
     } catch {
       setOutput(realm, "The spirits are silent. Please try again later.");
     }
+    setReadingState(false);
     btn.disabled = false;
   });
 
@@ -520,6 +885,13 @@ for (const btn of document.querySelectorAll(".zodiac-btn[data-sign]")) {
     selectedSign = btn.dataset.sign;
 
     setOutput("western-zodiac", getLoadingMessage("western-zodiac"), true);
+    setReadingState(true);
+    trackEvent("question_submitted", {
+      realm: "western-zodiac",
+      question_length: selectedSign.length,
+      selection: selectedSign,
+    });
+    trackEvent("reading_started", { realm: "western-zodiac" });
     try {
       const data = await callAPI("/api/western-zodiac", {
         sign: selectedSign,
@@ -527,12 +899,14 @@ for (const btn of document.querySelectorAll(".zodiac-btn[data-sign]")) {
       const answer = extractResponse(data);
       setOutput("western-zodiac", answer);
       saveToArchive("western-zodiac", selectedSign, answer);
+      markResultRendered("western-zodiac", answer);
     } catch {
       setOutput(
         "western-zodiac",
         "The stars are obscured. Please try again later."
       );
     }
+    setReadingState(false);
   });
 }
 
@@ -565,17 +939,26 @@ document.getElementById("btn-chinese")?.addEventListener("click", async () => {
   const btn = document.getElementById("btn-chinese");
   setOutput("chinese-zodiac", getLoadingMessage("chinese-zodiac"), true);
   btn.disabled = true;
+  setReadingState(true);
+  trackEvent("question_submitted", {
+    realm: "chinese-zodiac",
+    question_length: String(year).length,
+    selection: year,
+  });
+  trackEvent("reading_started", { realm: "chinese-zodiac" });
   try {
     const data = await callAPI("/api/chinese-zodiac", { year });
     const answer = extractResponse(data);
     setOutput("chinese-zodiac", answer);
     saveToArchive("chinese-zodiac", `Born ${year}`, answer);
+    markResultRendered("chinese-zodiac", answer);
   } catch {
     setOutput(
       "chinese-zodiac",
       "The jade pavilion is clouded. Please try again later."
     );
   }
+  setReadingState(false);
   btn.disabled = false;
 });
 
@@ -593,6 +976,12 @@ document.getElementById("btn-love")?.addEventListener("click", async () => {
 
   setOutput("love", getLoadingMessage("love"), true);
   btn.disabled = true;
+  setReadingState(true);
+  trackEvent("question_submitted", {
+    realm: "love",
+    question_length: question.length,
+  });
+  trackEvent("reading_started", { realm: "love" });
   try {
     const body = { question };
     if (name1) body.name1 = name1;
@@ -603,9 +992,11 @@ document.getElementById("btn-love")?.addEventListener("click", async () => {
     const label =
       name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
     saveToArchive("love", label, answer);
+    markResultRendered("love", answer);
   } catch {
     setOutput("love", "The hearts are silent. Please try again later.");
   }
+  setReadingState(false);
   btn.disabled = false;
 });
 
@@ -622,6 +1013,12 @@ document
     const btn = document.getElementById("btn-numerology");
     setOutput("numerology", getLoadingMessage("numerology"), true);
     btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", {
+      realm: "numerology",
+      question_length: birthday.length,
+    });
+    trackEvent("reading_started", { realm: "numerology" });
     try {
       const data = await callAPI("/api/numerology", { birthday });
       const answer = extractResponse(data);
@@ -631,12 +1028,14 @@ document
       }
       setOutput("numerology", answer);
       saveToArchive("numerology", `Birthday: ${birthday}`, answer);
+      markResultRendered("numerology", answer);
     } catch {
       setOutput(
         "numerology",
         "The sacred numbers are veiled. Please try again later."
       );
     }
+    setReadingState(false);
     btn.disabled = false;
   });
 
@@ -648,6 +1047,13 @@ document.getElementById("btn-daily")?.addEventListener("click", async () => {
 
   setOutput("daily-fortune", getLoadingMessage("daily-fortune"), true);
   btn.disabled = true;
+  setReadingState(true);
+  trackEvent("question_submitted", {
+    realm: "daily-fortune",
+    question_length: sign.length,
+    selection: sign || "general",
+  });
+  trackEvent("reading_started", { realm: "daily-fortune" });
   try {
     const body = {};
     if (sign) body.sign = sign;
@@ -655,12 +1061,14 @@ document.getElementById("btn-daily")?.addEventListener("click", async () => {
     const answer = extractResponse(data);
     setOutput("daily-fortune", answer);
     saveToArchive("daily-fortune", sign || "General", answer);
+    markResultRendered("daily-fortune", answer);
   } catch {
     setOutput(
       "daily-fortune",
       "The dawn light is obscured. Please try again later."
     );
   }
+  setReadingState(false);
   btn.disabled = false;
 });
 
@@ -670,3 +1078,35 @@ magic8Ball?.addEventListener("click", () => {
   magic8Ball.classList.add("shaking");
   setTimeout(() => magic8Ball.classList.remove("shaking"), 500);
 });
+
+// --- Boot ---
+initAdSystem();
+syncFortuneQuestionnaire();
+
+const initialRoute = getRouteState();
+showPage(initialRoute.pageId, {
+  push: false,
+  isResult: initialRoute.isResult,
+  scroll: false,
+  emitTracking: false,
+});
+
+trackEvent("page_view", {
+  page_path: window.location.pathname,
+  page_title: document.title,
+  screen: initialRoute.isResult ? `result/${initialRoute.pageId}` : initialRoute.pageId,
+  realm: initialRoute.pageId,
+});
+trackVirtualPage(initialRoute.pageId, initialRoute.isResult);
+
+if (REALM_PAGES.has(initialRoute.pageId) && !initialRoute.isResult) {
+  trackEvent("realm_open", {
+    realm: initialRoute.pageId,
+    page_path: ROUTE_BY_PAGE[initialRoute.pageId],
+  });
+}
+
+if (initialRoute.pageId === "archive") {
+  trackEvent("archive_open", { page_path: ROUTE_BY_PAGE.archive });
+  renderArchive();
+}
