@@ -3,15 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Oracle Mirror — See Beyond. Know Within.</title>
-    <meta name="description" content="Peer into the Oracle Mirror and let Madame Fortuna guide your path. Fortune telling, tarot readings, zodiac horoscopes, numerology and more." />
+    <title>Oracle Mirror | Tarot, Horoscopes, Numerology &amp; Fortune Readings</title>
+    <meta
+      name="description"
+      content="Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror."
+    />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#05030d" />
+    <link rel="canonical" href="https://oraclemirror.com/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Oracle Mirror" />
+    <meta property="og:title" content="Oracle Mirror | Tarot, Horoscopes, Numerology &amp; Fortune Readings" />
+    <meta property="og:url" content="https://oraclemirror.com/" />
+    <meta
+      property="og:description"
+      content="Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Oracle Mirror | Tarot, Horoscopes, Numerology &amp; Fortune Readings" />
+    <meta
+      name="twitter:description"
+      content="Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=MedievalSharp&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Oracle Mirror",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "description": "Interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Crystal ball readings",
+          "Tarot readings",
+          "Western zodiac horoscopes",
+          "Chinese zodiac readings",
+          "Love oracle",
+          "Magic 8 Ball",
+          "Numerology",
+          "Daily fortunes"
+        ]
+      }
+    </script>
   </head>
   <body>
     <canvas id="particles" aria-hidden="true"></canvas>
@@ -19,27 +66,27 @@
     <!-- ===== HEADER / NAV ===== -->
     <header>
       <nav class="nav-container">
-        <a href="#" id="nav-home" class="nav-logo">
+        <a href="/" id="nav-home" class="nav-logo" data-nav="home">
           <span class="logo-icon">&#9788;</span>
           <span class="logo-text">Oracle Mirror</span>
         </a>
         <div class="nav-links" id="nav-links">
-          <a href="#" class="nav-link active" data-nav="home">Home</a>
-          <a href="#" class="nav-link" data-nav="crystal-ball">Crystal Ball</a>
+          <a href="/" class="nav-link active" data-nav="home">Home</a>
+          <a href="/crystal-ball" class="nav-link" data-nav="crystal-ball">Crystal Ball</a>
           <div class="nav-dropdown">
-            <a href="#" class="nav-link nav-dropdown-trigger">Realms <span class="dropdown-arrow">&#9662;</span></a>
+            <a href="/crystal-ball" class="nav-link nav-dropdown-trigger">Realms <span class="dropdown-arrow">&#9662;</span></a>
             <div class="nav-dropdown-menu">
-              <a href="#" class="dropdown-item" data-nav="western-zodiac">&#9734; Western Zodiac</a>
-              <a href="#" class="dropdown-item" data-nav="chinese-zodiac">&#128009; Chinese Zodiac</a>
-              <a href="#" class="dropdown-item" data-nav="tarot">&#127183; Tarot</a>
-              <a href="#" class="dropdown-item" data-nav="love">&#128156; Love Oracle</a>
-              <a href="#" class="dropdown-item" data-nav="magic8">&#127921; Magic 8 Ball</a>
-              <a href="#" class="dropdown-item" data-nav="numerology">&#128290; Numerology</a>
-              <a href="#" class="dropdown-item" data-nav="daily-fortune">&#127773; Daily Fortune</a>
+              <a href="/western-zodiac" class="dropdown-item" data-nav="western-zodiac">&#9734; Western Zodiac</a>
+              <a href="/chinese-zodiac" class="dropdown-item" data-nav="chinese-zodiac">&#128009; Chinese Zodiac</a>
+              <a href="/tarot" class="dropdown-item" data-nav="tarot">&#127183; Tarot</a>
+              <a href="/love-oracle" class="dropdown-item" data-nav="love">&#128156; Love Oracle</a>
+              <a href="/magic-8-ball" class="dropdown-item" data-nav="magic8">&#127921; Magic 8 Ball</a>
+              <a href="/numerology" class="dropdown-item" data-nav="numerology">&#128290; Numerology</a>
+              <a href="/daily-fortune" class="dropdown-item" data-nav="daily-fortune">&#127773; Daily Fortune</a>
             </div>
           </div>
-          <a href="#" class="nav-link" data-nav="personas">Mystics</a>
-          <a href="#" class="nav-link" data-nav="archive">Archive</a>
+          <a href="/mystics" class="nav-link" data-nav="personas">Mystics</a>
+          <a href="/archive" class="nav-link" data-nav="archive">Archive</a>
         </div>
         <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu">
           <span></span><span></span><span></span>
@@ -56,18 +103,14 @@
             <div class="mirror-glow"></div>
             <div class="mirror-inner">
               <p class="mirror-tagline">See Beyond. Know Within.</p>
-              <h2>The answers you seek are already within you.</h2>
-              <p class="mirror-desc">Step closer. The mirror is waiting.</p>
+              <h1>Oracle Mirror</h1>
+              <p class="mirror-headline">The answers you seek are already within you.</p>
+              <p class="mirror-desc">Tarot, horoscopes, numerology, and daily fortunes in one interactive oracle.</p>
               <button class="btn-gold btn-enter" data-nav="crystal-ball">Enter the Mirror</button>
             </div>
           </div>
         </div>
       </section>
-
-      <!-- ADSTERRA: Desktop Leaderboard Banner (728x90) — paste code inside -->
-      <div class="ad-container ad-leaderboard">
-        <div class="ad-placeholder" data-ad="leaderboard-728x90"></div>
-      </div>
 
       <!-- Choose Your Realm -->
       <section id="modules">
@@ -75,70 +118,70 @@
         <h2>Choose Your Realm</h2>
         <p class="section-subtitle">Each realm holds a path to insight, guidance, and magic.</p>
         <div class="cards">
-          <a class="card card-crystal" data-realm="crystal-ball">
+          <a href="/crystal-ball" class="card card-crystal" data-realm="crystal-ball">
             <div class="card-frame">
               <div class="card-icon">&#128302;</div>
               <h3>Madame Fortuna's<br/>Crystal Ball</h3>
               <p class="card-desc">Peer into the mist of possibilities</p>
             </div>
           </a>
-          <a class="card card-western" data-realm="western-zodiac">
+          <a href="/western-zodiac" class="card card-western" data-realm="western-zodiac">
             <div class="card-frame">
               <div class="card-icon">&#9734;</div>
               <h3>Western Zodiac</h3>
               <p class="card-desc">Discover what the stars have aligned for you</p>
             </div>
           </a>
-          <a class="card card-chinese" data-realm="chinese-zodiac">
+          <a href="/chinese-zodiac" class="card card-chinese" data-realm="chinese-zodiac">
             <div class="card-frame">
               <div class="card-icon">&#128009;</div>
               <h3>Chinese Zodiac</h3>
               <p class="card-desc">Ancient wisdom of the Eastern cycle</p>
             </div>
           </a>
-          <a class="card card-tarot" data-realm="tarot">
+          <a href="/tarot" class="card card-tarot" data-realm="tarot">
             <div class="card-frame">
               <div class="card-icon">&#127183;</div>
               <h3>Tarot</h3>
               <p class="card-desc">The cards reveal what words cannot</p>
             </div>
           </a>
-          <a class="card card-love" data-realm="love">
+          <a href="/love-oracle" class="card card-love" data-realm="love">
             <div class="card-frame">
               <div class="card-icon">&#128156;</div>
               <h3>Love Oracle</h3>
               <p class="card-desc">Explore the mysteries of the heart</p>
             </div>
           </a>
-          <a class="card card-magic8" data-realm="magic8">
+          <a href="/magic-8-ball" class="card card-magic8" data-realm="magic8">
             <div class="card-frame">
               <div class="card-icon">&#127921;</div>
               <h3>Magic 8 Ball</h3>
               <p class="card-desc">Ask. Shake. Reveal.</p>
             </div>
           </a>
-          <a class="card card-numerology" data-realm="numerology">
+          <a href="/numerology" class="card card-numerology" data-realm="numerology">
             <div class="card-frame">
               <div class="card-icon">&#128290;</div>
               <h3>Numerology</h3>
               <p class="card-desc">Numbers hold the secrets of you</p>
             </div>
           </a>
-          <a class="card card-daily" data-realm="daily-fortune">
+          <a href="/daily-fortune" class="card card-daily" data-realm="daily-fortune">
             <div class="card-frame">
               <div class="card-icon">&#127773;</div>
               <h3>Daily Fortune</h3>
               <p class="card-desc">Today holds its own sacred message</p>
             </div>
           </a>
-          <a class="card card-personas" data-realm="personas">
+          <a href="/mystics" class="card card-personas" data-realm="personas">
             <div class="card-frame">
               <div class="card-icon">&#129497;</div>
               <h3>Personas</h3>
               <p class="card-desc">Uncover the many faces that shape your fate</p>
             </div>
           </a>
-          <a class="card card-archive" data-realm="archive">
+          <a href="/archive" class="card card-archive" data-realm="archive">
             <div class="card-frame">
               <div class="card-icon">&#128218;</div>
               <h3>Archive</h3>
@@ -148,10 +191,12 @@
         </div>
       </section>
 
-      <!-- ADSTERRA: Native Banner / Rectangle (300x250) -->
-      <div class="ad-container ad-native-home">
-        <div class="ad-placeholder" data-ad="native-300x250"></div>
-      </div>
+      <aside
+        class="oracle-ad oracle-ad-home"
+        data-ad-slot="oracle-home-slot"
+        data-ad-realm="home"
+        aria-label="Advertisement"
+      ></aside>
 
       <!-- Trust Badges -->
       <section class="trust-section">
@@ -183,6 +228,40 @@
           </div>
         </div>
       </section>
+
+      <section class="search-overview" aria-labelledby="search-overview-title">
+        <div class="search-overview-inner">
+          <p class="overview-kicker">Fortune telling guide</p>
+          <h2 id="search-overview-title">Tarot, horoscopes, numerology, and daily fortunes in one mirror</h2>
+          <p class="overview-intro">
+            Oracle Mirror is an interactive fortune-telling experience for crystal ball readings, tarot spreads,
+            western zodiac horoscopes, Chinese zodiac guidance, love questions, numerology, and daily fortunes.
+          </p>
+          <div class="overview-grid">
+            <article class="overview-item">
+              <h3>What can Oracle Mirror read?</h3>
+              <p>
+                Ask for a crystal ball reading, draw a tarot spread, choose a zodiac sign, calculate a life path
+                number, or reveal a daily fortune.
+              </p>
+            </article>
+            <article class="overview-item">
+              <h3>How do the realms work?</h3>
+              <p>
+                Each realm uses a different oracle persona and interaction style, so every reading has a distinct
+                voice, theme, and focus.
+              </p>
+            </article>
+            <article class="overview-item">
+              <h3>Is Oracle Mirror free to use?</h3>
+              <p>
+                Yes. The experience is free to explore and designed for entertainment, reflection, and playful
+                guidance.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- ===== CRYSTAL BALL (Chat with Madame Fortuna) ===== -->
@@ -191,7 +270,7 @@
         <div class="realm-header">
           <button class="btn-back" data-back>&#8592; Return to Realms</button>
           <h2>Madame Fortuna's Crystal Ball</h2>
-          <p class="realm-subtitle">Peer into the mist of possibilities</p>
+          <p class="realm-subtitle">A slower mirror for questions with a pulse, a season, and a hidden turning point.</p>
         </div>
 
         <!-- Crystal Ball Visual -->
@@ -203,6 +282,80 @@
           </div>
         </div>
 
+        <section class="mirror-lore" aria-labelledby="mirror-lore-title">
+          <p class="overview-kicker">The crystal rite</p>
+          <h3 id="mirror-lore-title">The mirror reads the shape around the question</h3>
+          <p>
+            Madame Fortuna listens for the matter on your heart, the season ahead, and the omen that keeps returning.
+            Offer a few signs before you ask, and the mists can answer with a more focused prophecy.
+          </p>
+        </section>
+
+        <section class="fortune-questionnaire" aria-labelledby="fortune-questionnaire-title">
+          <div class="questionnaire-heading">
+            <p class="overview-kicker">Prepare the mirror</p>
+            <h3 id="fortune-questionnaire-title">Choose the lens for your reading</h3>
+          </div>
+          <div class="questionnaire-grid">
+            <label class="questionnaire-field">
+              <span>Matter</span>
+              <select id="fortune-focus" class="realm-select">
+                <option value="">Choose a matter</option>
+                <option value="love and relationships">Love and relationships</option>
+                <option value="career and calling">Career and calling</option>
+                <option value="money and security">Money and security</option>
+                <option value="family and home">Family and home</option>
+                <option value="spiritual path">Spiritual path</option>
+                <option value="a difficult decision">A difficult decision</option>
+              </select>
+            </label>
+            <label class="questionnaire-field">
+              <span>Season</span>
+              <select id="fortune-timeframe" class="realm-select">
+                <option value="">Choose a season</option>
+                <option value="the next seven days">Next seven days</option>
+                <option value="the next lunar month">Next lunar month</option>
+                <option value="the coming season">Coming season</option>
+                <option value="the year ahead">Year ahead</option>
+                <option value="the turning point already near">Turning point near</option>
+              </select>
+            </label>
+            <label class="questionnaire-field">
+              <span>Omen</span>
+              <select id="fortune-omen" class="realm-select">
+                <option value="">Choose an omen</option>
+                <option value="a door opening">A door opening</option>
+                <option value="repeating numbers">Repeating numbers</option>
+                <option value="a vivid dream">A vivid dream</option>
+                <option value="a restless choice">A restless choice</option>
+                <option value="a quiet pull">A quiet pull</option>
+                <option value="a sudden ending">A sudden ending</option>
+              </select>
+            </label>
+            <label class="questionnaire-field">
+              <span>Heart</span>
+              <select id="fortune-mood" class="realm-select">
+                <option value="">Choose a feeling</option>
+                <option value="hopeful">Hopeful</option>
+                <option value="uncertain">Uncertain</option>
+                <option value="guarded">Guarded</option>
+                <option value="impatient">Impatient</option>
+                <option value="ready for change">Ready for change</option>
+              </select>
+            </label>
+          </div>
+          <p class="questionnaire-hint" id="fortune-questionnaire-hint">
+            Select at least a matter and a season before the mirror opens fully.
+          </p>
+        </section>
+
+        <aside
+          class="oracle-ad oracle-ad-realm"
+          data-ad-slot="oracle-realm-slot"
+          data-ad-realm="crystal-ball"
+          aria-label="Advertisement"
+        ></aside>
+
         <!-- Chat Messages -->
         <div class="chat-container">
           <div class="chat-messages" id="chat-messages">
@@ -213,13 +366,9 @@
         <!-- Chat Input -->
         <div class="chat-input-area">
           <input type="text" id="chat-input" class="chat-text-input" placeholder="Whisper your question to Madame Fortuna..." autocomplete="off" />
-          <button id="chat-send" class="btn-gold btn-chat-send">Reveal My Fortune</button>
+          <button id="chat-send" class="btn-gold btn-chat-send" disabled>Reveal My Fortune</button>
         </div>
 
-        <!-- ADSTERRA: In-content rectangle ad -->
-        <div class="ad-container ad-chat-bottom">
-          <div class="ad-placeholder" data-ad="chat-rectangle-300x250"></div>
-        </div>
       </div>
     </section>
 
@@ -233,6 +382,12 @@
       <div class="realm-scene">
         <div class="zodiac-wheel"><div class="zodiac-ring"></div></div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="western-zodiac"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <label class="realm-label">Select Your Zodiac Sign</label>
         <div class="zodiac-grid" id="zodiac-signs">
@@ -265,6 +420,12 @@
         <div class="lantern lantern-2"></div>
         <div class="lantern lantern-3"></div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="chinese-zodiac"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <label class="realm-label" for="birth-year">Enter Your Birth Year</label>
         <input type="number" id="birth-year" class="realm-number-input" min="1900" max="2100" placeholder="e.g. 1990" />
@@ -288,6 +449,12 @@
           <div class="tarot-card-slot" id="tarot-card-3"><div class="tarot-card-back">Future</div></div>
         </div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="tarot"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <textarea class="realm-input" data-input="tarot" placeholder="Focus on your question as the cards are drawn..."></textarea>
         <button class="btn-gold btn-realm" data-endpoint="/api/tarot" data-body-key="question" data-source="tarot">Draw the Cards</button>
@@ -309,6 +476,12 @@
           <div class="floating-heart h3">&#10084;</div>
         </div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="love"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <div class="love-names">
           <input type="text" id="love-name1" class="realm-text-input" placeholder="Your name (optional)" />
@@ -333,6 +506,12 @@
           <div class="magic8-window"><span class="magic8-number">8</span></div>
         </div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="magic8"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <textarea class="realm-input" data-input="magic8" placeholder="Ask a yes or no question, then shake the ball..."></textarea>
         <button class="btn-gold btn-realm btn-neon" data-endpoint="/api/magic8" data-body-key="question" data-source="magic8">Shake the 8-Ball</button>
@@ -355,6 +534,12 @@
           <div class="geo-core" id="life-path-display"></div>
         </div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="numerology"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <label class="realm-label" for="numerology-birthday">Enter Your Birthday</label>
         <input type="date" id="numerology-birthday" class="realm-date-input" />
@@ -373,6 +558,12 @@
       <div class="realm-scene">
         <div class="sunrise-glow"></div>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-realm"
+        data-ad-slot="oracle-realm-slot"
+        data-ad-realm="daily-fortune"
+        aria-label="Advertisement"
+      ></aside>
       <div class="realm-form">
         <label class="realm-label">Your zodiac sign (optional)</label>
         <select id="daily-sign" class="realm-select">
@@ -461,6 +652,65 @@
       <div id="archive-list" class="archive-list">
         <p class="archive-empty">No readings have been saved yet. Visit a realm to begin your journey.</p>
       </div>
+      <aside
+        class="oracle-ad oracle-ad-archive-bottom"
+        data-ad-slot="oracle-archive-bottom-slot"
+        data-ad-realm="archive"
+        aria-label="Advertisement"
+      ></aside>
+    </section>
+
+    <aside
+      class="oracle-ad-rail oracle-ad-rail-left"
+      data-ad-slot="oracle-desktop-rail-left"
+      data-ad-realm="all"
+      aria-label="Advertisement"
+    ></aside>
+
+    <aside
+      class="oracle-ad-rail oracle-ad-rail-right"
+      data-ad-slot="oracle-desktop-rail-right"
+      data-ad-realm="all"
+      aria-label="Advertisement"
+    ></aside>
+
+    <!-- ===== LEGAL / CONTACT ===== -->
+    <section id="page-privacy-policy" class="page legal-page">
+      <div class="legal-panel">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Privacy Policy</h2>
+        <p>
+          Oracle Mirror stores saved readings in your browser only. The site may use analytics events and advertising
+          partners after consent to measure page views, realm activity, ad requests, and ad viewability.
+        </p>
+        <p>
+          Reading requests are sent to Oracle Mirror API endpoints so the selected oracle can generate a response.
+          Avoid submitting sensitive personal information in questions.
+        </p>
+      </div>
+    </section>
+
+    <section id="page-cookie-policy" class="page legal-page">
+      <div class="legal-panel">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Cookie Policy</h2>
+        <p>
+          Essential browser storage keeps local reading history and session preferences. Advertising cookies and
+          third-party ad scripts load only after ad consent where consent is required.
+        </p>
+        <button class="btn-gold btn-small" id="consent-preferences">Cookie Preferences</button>
+      </div>
+    </section>
+
+    <section id="page-contact" class="page legal-page">
+      <div class="legal-panel">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Contact</h2>
+        <p>
+          Questions about Oracle Mirror, privacy, cookies, or advertising can be sent to the site owner through the
+          contact channel configured for oraclemirror.com.
+        </p>
+      </div>
     </section>
 
     <!-- ===== FOOTER ===== -->
@@ -472,15 +722,36 @@
         <div class="footer-badge"><span>&#128274;</span> Private &amp; Secure</div>
         <div class="footer-badge"><span>&#9789;</span> Always Here</div>
       </div>
+      <div class="footer-links" aria-label="Legal links">
+        <a href="/privacy-policy" data-nav="privacy-policy">Privacy Policy</a>
+        <a href="/cookie-policy" data-nav="cookie-policy">Cookie Policy</a>
+        <a href="/cookie-policy" id="footer-cookie-preferences">Cookie Preferences</a>
+        <a href="/contact" data-nav="contact">Contact</a>
+      </div>
       <p class="footer-copy">&copy; 2026 Oracle Mirror. This site is for entertainment purposes only.</p>
     </footer>
 
-    <!-- ===== ADSTERRA: Mobile Sticky Bottom Banner (320x50) ===== -->
-    <div class="ad-mobile-sticky" id="ad-mobile-sticky">
-      <!-- Paste your Adsterra mobile banner (320x50) script here -->
-      <div class="ad-placeholder" data-ad="mobile-sticky-320x50"></div>
+    <div class="oracle-consent-banner" id="oracle-consent-banner" hidden>
+      <div class="consent-copy">
+        <strong>Oracle Mirror uses cookies and sponsor scripts.</strong>
+        <span>Ads load only after consent where required, and readings remain available either way.</span>
+      </div>
+      <div class="consent-actions">
+        <button class="btn-gold btn-small" id="consent-accept">Accept Ads</button>
+        <button class="btn-ghost btn-small" id="consent-reject">Reject Ads</button>
+      </div>
     </div>
 
-    <script src="script.js" type="module"></script>
+    <div class="oracle-mobile-anchor" id="oracle-mobile-anchor" hidden>
+      <button class="mobile-anchor-close" id="oracle-mobile-anchor-close" aria-label="Minimize advertisement">&times;</button>
+      <div
+        class="oracle-mobile-anchor-slot"
+        data-ad-slot="oracle-mobile-anchor"
+        data-ad-realm="all"
+        aria-label="Advertisement"
+      ></div>
+    </div>
+
+    <script src="/script.js" type="module"></script>
   </body>
 </html>

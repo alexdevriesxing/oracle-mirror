@@ -8,3 +8,12 @@ binding = "AI"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+run_worker_first = true
+
+[[routes]]
+pattern = "oraclemirror.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.oraclemirror.com"
+custom_domain = true

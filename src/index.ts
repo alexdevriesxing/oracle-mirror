@@ -16,6 +16,195 @@ const FALLBACK_FORTUNES = [
 
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const GATEWAY_CONFIG = { gateway: { id: "default" } };
+const CANONICAL_HOST = "https://oraclemirror.com";
+
+type AppRouteMeta = {
+  title: string;
+  description: string;
+};
+
+const APP_ROUTES: Record<string, AppRouteMeta> = {
+  "/": {
+    title: "Oracle Mirror | Tarot, Horoscopes, Numerology & Fortune Readings",
+    description:
+      "Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror.",
+  },
+  "/crystal-ball": {
+    title: "Crystal Ball Reading | Oracle Mirror",
+    description:
+      "Ask Madame Fortuna's crystal ball for a mystical fortune reading and save the answer to your Oracle Mirror archive.",
+  },
+  "/western-zodiac": {
+    title: "Western Zodiac Horoscope | Oracle Mirror",
+    description: "Choose your zodiac sign for a celestial horoscope reading from the Oracle Mirror observatory.",
+  },
+  "/chinese-zodiac": {
+    title: "Chinese Zodiac Reading | Oracle Mirror",
+    description: "Enter your birth year for a Chinese zodiac fortune from the Jade Pavilion of Oracle Mirror.",
+  },
+  "/tarot": {
+    title: "Tarot Reading | Oracle Mirror",
+    description: "Draw a Past, Present, and Future tarot spread inside Oracle Mirror's arcane library.",
+  },
+  "/love-oracle": {
+    title: "Love Oracle Reading | Oracle Mirror",
+    description: "Ask the Love Oracle for romantic guidance, compatibility insight, and heart-centered reflection.",
+  },
+  "/magic-8-ball": {
+    title: "Magic 8 Ball Oracle | Oracle Mirror",
+    description: "Shake the Cosmic 8 Ball for a quick mystical answer to your yes-or-no question.",
+  },
+  "/numerology": {
+    title: "Numerology Life Path Reading | Oracle Mirror",
+    description: "Calculate your life path number and receive a numerology reading from Oracle Mirror.",
+  },
+  "/daily-fortune": {
+    title: "Daily Fortune | Oracle Mirror",
+    description: "Reveal today's fortune with the Dawn Oracle and receive a daily mystical affirmation.",
+  },
+  "/mystics": {
+    title: "Oracle Mirror Mystics | Fortune-Telling Personas",
+    description:
+      "Meet the mystics behind Oracle Mirror's crystal ball, tarot, zodiac, love, numerology, and daily fortune realms.",
+  },
+  "/archive": {
+    title: "Reading Archive | Oracle Mirror",
+    description: "Review saved Oracle Mirror readings in your private browser archive.",
+  },
+  "/privacy-policy": {
+    title: "Privacy Policy | Oracle Mirror",
+    description:
+      "Read how Oracle Mirror handles local reading history, analytics events, advertising consent, and API requests.",
+  },
+  "/cookie-policy": {
+    title: "Cookie Policy | Oracle Mirror",
+    description: "Manage Oracle Mirror cookie and advertising script preferences.",
+  },
+  "/contact": {
+    title: "Contact | Oracle Mirror",
+    description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
+  },
+};
+
+const RESULT_ROUTES: Record<string, AppRouteMeta> = {
+  "/result/crystal-ball": {
+    title: "Crystal Ball Reading Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror crystal ball result from Madame Fortuna.",
+  },
+  "/result/western-zodiac": {
+    title: "Western Zodiac Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror western zodiac horoscope result.",
+  },
+  "/result/chinese-zodiac": {
+    title: "Chinese Zodiac Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror Chinese zodiac reading result.",
+  },
+  "/result/tarot": {
+    title: "Tarot Reading Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror tarot spread result.",
+  },
+  "/result/love-oracle": {
+    title: "Love Oracle Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror love oracle result.",
+  },
+  "/result/magic-8-ball": {
+    title: "Magic 8 Ball Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror Magic 8 Ball result.",
+  },
+  "/result/numerology": {
+    title: "Numerology Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror numerology result.",
+  },
+  "/result/daily-fortune": {
+    title: "Daily Fortune Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror daily fortune result.",
+  },
+};
+
+function normalizePath(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
+function routeMeta(pathname: string): AppRouteMeta | undefined {
+  const path = normalizePath(pathname);
+  return APP_ROUTES[path] || RESULT_ROUTES[path];
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function canonicalUrl(pathname: string): string {
+  const path = normalizePath(pathname);
+  return `${CANONICAL_HOST}${path === "/" ? "/" : path}`;
+}
+
+function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): string {
+  const title = escapeHtml(meta.title);
+  const description = escapeHtml(meta.description);
+  const canonical = escapeHtml(canonicalUrl(pathname));
+
+  return html
+    .replace(/<title>.*?<\/title>/s, `<title>${title}</title>`)
+    .replace(/<meta\s+name="description"[^>]*>/s, `<meta name="description" content="${description}" />`)
+    .replace(/<link\s+rel="canonical"[^>]*>/s, `<link rel="canonical" href="${canonical}" />`)
+    .replace(/<meta\s+property="og:title"[^>]*>/s, `<meta property="og:title" content="${title}" />`)
+    .replace(/<meta\s+property="og:description"[^>]*>/s, `<meta property="og:description" content="${description}" />`)
+    .replace(/<meta\s+property="og:url"[^>]*>/s, `<meta property="og:url" content="${canonical}" />`)
+    .replace(/<meta\s+name="twitter:title"[^>]*>/s, `<meta name="twitter:title" content="${title}" />`)
+    .replace(/<meta\s+name="twitter:description"[^>]*>/s, `<meta name="twitter:description" content="${description}" />`);
+}
+
+async function serveAppShell(request: Request, env: Env, pathname: string, meta: AppRouteMeta): Promise<Response> {
+  const url = new URL(request.url);
+  const indexRequest = new Request(`${url.origin}/`, {
+    method: "GET",
+    headers: request.headers,
+  });
+  const response = await env.ASSETS.fetch(indexRequest);
+  const html = injectRouteMeta(await response.text(), pathname, meta);
+  const headers = new Headers(response.headers);
+  headers.set("Content-Type", "text/html; charset=UTF-8");
+  return new Response(html, {
+    status: 200,
+    headers,
+  });
+}
+
+function sitemapResponse(): Response {
+  const routes = [...Object.keys(APP_ROUTES), ...Object.keys(RESULT_ROUTES)];
+  const urls = routes
+    .map(
+      (route) => `  <url>
+    <loc>${canonicalUrl(route)}</loc>
+  </url>`
+    )
+    .join("\n");
+
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`, {
+    headers: { "Content-Type": "application/xml; charset=UTF-8" },
+  });
+}
+
+function robotsResponse(): Response {
+  return new Response(`User-agent: *
+Allow: /
+
+Sitemap: ${CANONICAL_HOST}/sitemap.xml
+`, {
+    headers: { "Content-Type": "text/plain; charset=UTF-8" },
+  });
+}
 
 const MADAME_FORTUNA_SYSTEM = `You are Madame Fortuna, an ancient Romani seer who has gazed into the swirling mists of her enchanted crystal ball for over three hundred years. You dwell within the Oracle Mirror, a mystical realm between worlds where past, present, and future intertwine like threads of silk.
 
@@ -104,7 +293,15 @@ function drawCards(count: number): string[] {
 }
 
 async function handleChat(request: Request, env: Env): Promise<Response> {
-  const body = (await request.json()) as { messages?: Array<{ role: string; content: string }> };
+  const body = (await request.json()) as {
+    messages?: Array<{ role: string; content: string }>;
+    readingProfile?: {
+      focus?: string;
+      timeframe?: string;
+      omen?: string;
+      mood?: string;
+    };
+  };
   const messages = body.messages;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -125,8 +322,25 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     content: m.content.trim().slice(0, 500),
   }));
 
+  const profile = body.readingProfile || {};
+  const cleanProfileValue = (value: unknown) => (typeof value === "string" ? value.trim().slice(0, 80) : "");
+  const profileLines = [
+    cleanProfileValue(profile.focus) ? `Matter: ${cleanProfileValue(profile.focus)}` : "",
+    cleanProfileValue(profile.timeframe) ? `Season: ${cleanProfileValue(profile.timeframe)}` : "",
+    cleanProfileValue(profile.omen) ? `Omen: ${cleanProfileValue(profile.omen)}` : "",
+    cleanProfileValue(profile.mood) ? `Heart: ${cleanProfileValue(profile.mood)}` : "",
+  ].filter(Boolean);
+
   const aiMessages = [
     { role: "system" as const, content: MADAME_FORTUNA_SYSTEM },
+    ...(profileLines.length
+      ? [
+          {
+            role: "system" as const,
+            content: `The seeker prepared the crystal mirror with these signs. Weave them subtly into the prophecy without listing them mechanically:\n${profileLines.join("\n")}`,
+          },
+        ]
+      : []),
     ...recentMessages,
   ];
 
@@ -233,6 +447,22 @@ async function handleDailyFortune(request: Request, env: Env): Promise<Response>
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    const requestHost = request.headers.get("host")?.toLowerCase().split(":")[0];
+
+    if (url.hostname === "www.oraclemirror.com" || requestHost === "www.oraclemirror.com") {
+      url.protocol = "https:";
+      url.hostname = "oraclemirror.com";
+      url.port = "";
+      return Response.redirect(url.toString(), 301);
+    }
+
+    if (url.pathname === "/sitemap.xml") {
+      return sitemapResponse();
+    }
+
+    if (url.pathname === "/robots.txt") {
+      return robotsResponse();
+    }
 
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/health") {
@@ -274,6 +504,11 @@ export default {
         const fallback = randomFallback();
         return jsonResponse({ response: fallback, fallback: true });
       }
+    }
+
+    const meta = routeMeta(url.pathname);
+    if (meta) {
+      return serveAppShell(request, env, url.pathname, meta);
     }
 
     return env.ASSETS.fetch(request);
