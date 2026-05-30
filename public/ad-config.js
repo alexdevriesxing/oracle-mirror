@@ -1,7 +1,7 @@
 export const ORACLE_AD_CONFIG = {
   siteName: "Oracle Mirror",
   canonicalHost: "https://oraclemirror.com",
-  consentRequired: true,
+  consentRequired: false,
   refreshPolicy: {
     enabled: true,
     minIntervalMs: 30000,
@@ -13,7 +13,7 @@ export const ORACLE_AD_CONFIG = {
       name: "oracle-ambient-popunder",
       placement: "ambient after reading value",
       enabled: true,
-      consentRequired: true,
+      consentRequired: false,
       sessionCap: 1,
       minSessionAgeMs: 10000,
       delayAfterValueMs: 3000,
