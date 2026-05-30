@@ -607,8 +607,19 @@ Flawless composition, 8k resolution, highly detailed face, sharp focus, professi
       prompt: imagePrompt
     });
     
-    let binary = '';
-    const bytes = new Uint8Array(imgBuffer as any);
+    // Debug what imgBuffer actually is:
+    if (typeof imgBuffer === "string") {
+      imageBase64 = "data:image/jpeg;base64," + imgBuffer;
+    } else if (imgBuffer && typeof imgBuffer === "object" && !("byteLength" in imgBuffer) && !("buffer" in imgBuffer)) {
+      // It's a JSON object
+      if ("image" in imgBuffer) {
+        imageBase64 = "data:image/jpeg;base64," + (imgBuffer as any).image;
+      } else {
+        imageBase64 = "data:application/json;base64," + btoa(JSON.stringify(imgBuffer));
+      }
+    } else {
+      let binary = '';
+      const bytes = new Uint8Array(imgBuffer as any);
     const len = bytes.byteLength;
     const chunkSize = 8192;
     for (let i = 0; i < len; i += chunkSize) {
@@ -616,6 +627,7 @@ Flawless composition, 8k resolution, highly detailed face, sharp focus, professi
       binary += String.fromCharCode.apply(null, Array.from(chunk));
     }
     imageBase64 = "data:image/jpeg;base64," + btoa(binary);
+    }
   } catch (err) {
     console.error("Image generation failed:", err);
     // If it fails, fallback to a base64 encoded transparent 1x1 pixel so the image tag doesn't break, 
