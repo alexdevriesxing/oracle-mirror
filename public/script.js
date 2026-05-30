@@ -1462,7 +1462,14 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
       return;
     }
     
-    setOutput("love-match", "<p>Summoning cosmic energies to reveal the vision...</p>", true);
+    setOutput("love-match", `
+      <div class="vision-loading">
+        <p>Rosalind is gazing into the cosmic weave. This intense vision may take up to 20 seconds to manifest...</p>
+        <div class="vision-progress-bar">
+          <div class="vision-progress-fill"></div>
+        </div>
+      </div>
+    `, true);
     btn.disabled = true;
     setReadingState(true);
     trackEvent("question_submitted", { realm: "love-match", match_type: "vision" });
