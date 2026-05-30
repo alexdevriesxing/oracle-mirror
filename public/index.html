@@ -924,26 +924,16 @@
 
       <!-- Love themed selector deck -->
       <div class="love-match-selectors">
-        <button type="button" class="love-selector-btn active" data-match-type="zodiac">
-          <span class="selector-icon">🌌</span>
-          <span class="selector-title">Zodiac Match</span>
-        </button>
-        <button type="button" class="love-selector-btn" data-match-type="numerology">
-          <span class="selector-icon">🔢</span>
-          <span class="selector-title">Numerology Vibration</span>
-        </button>
-        <button type="button" class="love-selector-btn" data-match-type="tarot">
-          <span class="selector-icon">🃏</span>
-          <span class="selector-title">Tarot Dual Destiny</span>
-        </button>
-        <button type="button" class="love-selector-btn" data-match-type="quiz">
-          <span class="selector-icon">📝</span>
-          <span class="selector-title">Cosmic Quiz</span>
-        </button>
-        <button type="button" class="love-selector-btn" data-match-type="omen">
-          <span class="selector-icon">🦋</span>
-          <span class="selector-title">Love Omen</span>
-        </button>
+        <label class="love-select-field">
+          <span>Choose Cosmic Match System</span>
+          <select id="love-match-type-selector" class="realm-select">
+            <option value="zodiac">🌌 Zodiac Match</option>
+            <option value="numerology">🔢 Numerology Vibration</option>
+            <option value="tarot">🃏 Tarot Dual Destiny</option>
+            <option value="quiz">📝 Cosmic Quiz</option>
+            <option value="omen">🦋 Love Omen</option>
+          </select>
+        </label>
       </div>
 
       <aside

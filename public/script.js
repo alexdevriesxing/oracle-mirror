@@ -1394,13 +1394,10 @@ magic8Ball?.addEventListener("click", () => {
 let activeLoveMatchPanel = "zodiac";
 
 // --- Love Match Sub-Tab Navigation ---
-for (const selectorBtn of document.querySelectorAll(".love-selector-btn")) {
-  selectorBtn.addEventListener("click", () => {
-    for (const btn of document.querySelectorAll(".love-selector-btn")) {
-      btn.classList.remove("active");
-    }
-    selectorBtn.classList.add("active");
-    activeLoveMatchPanel = selectorBtn.dataset.matchType;
+const loveMatchTypeSelector = document.getElementById("love-match-type-selector");
+if (loveMatchTypeSelector) {
+  loveMatchTypeSelector.addEventListener("change", (e) => {
+    activeLoveMatchPanel = e.target.value;
 
     for (const panel of document.querySelectorAll(".love-option-panel")) {
       panel.classList.remove("active");
