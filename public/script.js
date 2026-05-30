@@ -497,12 +497,17 @@ function setOutput(realm, text, isLoading = false) {
   }
 }
 
-function setOutputHTML(realm, html) {
+function setOutputHTML(realm, html, isLoading = false) {
   const el = document.querySelector(`[data-output="${realm}"]`);
   if (!el) return;
   el.innerHTML = html;
   el.style.display = "block";
-  el.classList.remove("loading");
+  if (isLoading) {
+    el.classList.add("loading");
+    clearResultAftercare(realm);
+  } else {
+    el.classList.remove("loading");
+  }
 }
 
 async function callAPI(endpoint, body) {
@@ -522,6 +527,22 @@ function escapeHTML(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function formatResponse(text) {
+  if (!text) return "";
+  let html = text
+    .replace(/```html/g, '')
+    .replace(/```/g, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ''); // basic XSS protection
+  
+  if (!html.includes('<p>') && !html.includes('<h3>')) {
+    html = escapeHTML(html);
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
+  }
+  return html;
 }
 
 function setReadingState(isAnimating) {
@@ -1161,7 +1182,7 @@ for (const btn of document.querySelectorAll(
         );
       } else {
         const answer = extractResponse(data);
-        setOutput(realm, answer);
+        setOutputHTML(realm, formatResponse(answer));
       }
       saveToArchive(realm, value, extractResponse(data));
       markResultRendered(realm, extractResponse(data));
@@ -1206,7 +1227,7 @@ for (const btn of document.querySelectorAll(".zodiac-btn[data-sign]")) {
         sign: selectedSign,
       });
       const answer = extractResponse(data);
-      setOutput("western-zodiac", answer);
+      setOutputHTML("western-zodiac", formatResponse(answer));
       saveToArchive("western-zodiac", selectedSign, answer);
       markResultRendered("western-zodiac", answer);
     } catch {
@@ -1258,7 +1279,7 @@ document.getElementById("btn-chinese")?.addEventListener("click", async () => {
   try {
     const data = await callAPI("/api/chinese-zodiac", { year });
     const answer = extractResponse(data);
-    setOutput("chinese-zodiac", answer);
+    setOutputHTML("chinese-zodiac", formatResponse(answer));
     saveToArchive("chinese-zodiac", `Born ${year}`, answer);
     markResultRendered("chinese-zodiac", answer);
   } catch {
@@ -1299,7 +1320,7 @@ document
         const core = document.getElementById("life-path-display");
         if (core) core.textContent = data.lifePathNumber;
       }
-      setOutput("numerology", answer);
+      setOutputHTML("numerology", formatResponse(answer));
       saveToArchive("numerology", `Birthday: ${birthday}`, answer);
       markResultRendered("numerology", answer);
     } catch {
@@ -1332,7 +1353,7 @@ document.getElementById("btn-daily")?.addEventListener("click", async () => {
     if (sign) body.sign = sign;
     const data = await callAPI("/api/daily-fortune", body);
     const answer = extractResponse(data);
-    setOutput("daily-fortune", answer);
+    setOutputHTML("daily-fortune", formatResponse(answer));
     saveToArchive("daily-fortune", sign || "General", answer);
     markResultRendered("daily-fortune", answer);
   } catch {
@@ -1462,7 +1483,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
       return;
     }
     
-    setOutput("love-match", `
+    setOutputHTML("love-match", `
       <div class="vision-loading">
         <p>Rosalind is gazing into the cosmic weave. This intense vision may take up to 60 seconds to manifest...</p>
         <div class="vision-progress-bar">
@@ -1526,7 +1547,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
       if (name2) body.name2 = name2;
       const data = await callAPI("/api/love", body);
       const answer = extractResponse(data);
-      displayResult("love-match", answer, "/result/love-oracle");
+      displayResult("love-match", formatResponse(answer), "/result/love-oracle");
       const label = name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
       saveToArchive("love", label, answer);
       scheduleAmbientPopunder("oracle_delivered");
@@ -1646,13 +1667,13 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
           ${escapeHTML(seekerName)} & ${escapeHTML(partnerName)}
         </div>
         <div class="love-match-reading-text">
-          ${escapeHTML(answer)}
+          ${formatResponse(answer)}
         </div>
         <button class="btn-gold btn-save-archive" id="btn-save-love-match-archive">Save Compatibility to Archive</button>
       </div>
     `;
 
-    setOutput("love-match", scoreHtml);
+    setOutputHTML("love-match", scoreHtml);
 
     document.getElementById("btn-save-love-match-archive")?.addEventListener("click", () => {
       saveToArchive(
@@ -1835,7 +1856,7 @@ const TAROT_SYMBOLS = {
       const cardsHTML = drawnCards
         .map((c, i) => `<span class="drawn-card">${labels[i]}: ${escapeHTML(c)}</span>`)
         .join("");
-      setOutputHTML("tarot", `<div class="cards-drawn">${cardsHTML}</div><div>${escapeHTML(answer)}</div>`);
+      setOutputHTML("tarot", `<div class="cards-drawn">${cardsHTML}</div><div class="reading-body">${formatResponse(answer)}</div>`);
       saveToArchive("tarot", `${question} [${drawnCards.join(", ")}]`, answer);
       markResultRendered("tarot", answer);
     } catch {
@@ -1948,7 +1969,7 @@ const TAROT_SYMBOLS = {
       // Highlight all planet nodes
       planetNodes.forEach((n) => n.classList.add("active"));
 
-      setOutput("birthchart", answer);
+      setOutputHTML("birthchart", formatResponse(answer));
       saveToArchive("birthchart", `Born ${birthday} (${sign})`, answer);
       markResultRendered("birthchart", answer);
 
@@ -2032,7 +2053,7 @@ const TAROT_SYMBOLS = {
       // Highlight all lines
       palmLines.forEach((l) => l.classList.add("active"));
 
-      setOutput("palmistry", answer);
+      setOutputHTML("palmistry", formatResponse(answer));
       saveToArchive("palmistry", `${handShape}`, answer);
       markResultRendered("palmistry", answer);
 
