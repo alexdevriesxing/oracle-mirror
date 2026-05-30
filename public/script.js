@@ -1271,43 +1271,7 @@ document.getElementById("btn-chinese")?.addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-// --- Love Oracle ---
-document.getElementById("btn-love")?.addEventListener("click", async () => {
-  const inputEl = document.querySelector('[data-input="love"]');
-  const question = inputEl?.value?.trim();
-  if (!question) {
-    setOutput("love", "Please ask a question about matters of the heart.");
-    return;
-  }
-  const name1 = document.getElementById("love-name1")?.value?.trim() || "";
-  const name2 = document.getElementById("love-name2")?.value?.trim() || "";
-  const btn = document.getElementById("btn-love");
 
-  setOutput("love", getLoadingMessage("love"), true);
-  btn.disabled = true;
-  setReadingState(true);
-  trackEvent("question_submitted", {
-    realm: "love",
-    question_length: question.length,
-  });
-  trackEvent("reading_started", { realm: "love" });
-  try {
-    const body = { question };
-    if (name1) body.name1 = name1;
-    if (name2) body.name2 = name2;
-    const data = await callAPI("/api/love", body);
-    const answer = extractResponse(data);
-    setOutput("love", answer);
-    const label =
-      name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
-    saveToArchive("love", label, answer);
-    markResultRendered("love", answer);
-  } catch {
-    setOutput("love", "The hearts are silent. Please try again later.");
-  }
-  setReadingState(false);
-  btn.disabled = false;
-});
 
 // --- Numerology ---
 document
@@ -1531,6 +1495,39 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
       btn.disabled = false;
       setReadingState(false);
     }
+    return;
+  }
+
+  if (activeLoveMatchPanel === "oracle") {
+    const question = document.getElementById("love-oracle-question")?.value?.trim();
+    if (!question) {
+      setOutput("love-match", "Please ask a question about matters of the heart.");
+      return;
+    }
+    const name1 = document.getElementById("match-seeker-name")?.value?.trim() || "";
+    const name2 = document.getElementById("match-partner-name")?.value?.trim() || "";
+    
+    setOutput("love-match", getLoadingMessage("love"), true);
+    btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "love-match", match_type: "oracle", question_length: question.length });
+    trackEvent("reading_started", { realm: "love-match" });
+    
+    try {
+      const body = { question };
+      if (name1) body.name1 = name1;
+      if (name2) body.name2 = name2;
+      const data = await callAPI("/api/love", body);
+      const answer = extractResponse(data);
+      displayResult("love-match", answer, "/result/love-oracle");
+      const label = name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
+      saveToArchive("love", label, answer);
+      scheduleAmbientPopunder("oracle_delivered");
+    } catch {
+      setOutput("love-match", "The hearts are silent. Please try again later.");
+    }
+    btn.disabled = false;
+    setReadingState(false);
     return;
   }
 

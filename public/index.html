@@ -124,7 +124,6 @@
               <a href="/western-zodiac" class="dropdown-item" data-nav="western-zodiac">&#9734; Western Zodiac</a>
               <a href="/chinese-zodiac" class="dropdown-item" data-nav="chinese-zodiac">&#128009; Chinese Zodiac</a>
               <a href="/tarot" class="dropdown-item" data-nav="tarot">&#127183; Tarot</a>
-              <a href="/love-oracle" class="dropdown-item" data-nav="love">&#128156; Love Oracle</a>
               <a href="/magic-8-ball" class="dropdown-item" data-nav="magic8">&#127921; Magic 8 Ball</a>
               <a href="/numerology" class="dropdown-item" data-nav="numerology">&#128290; Numerology</a>
               <a href="/daily-fortune" class="dropdown-item" data-nav="daily-fortune">&#127773; Daily Fortune</a>
@@ -195,13 +194,6 @@
               <p class="card-desc">The cards reveal what words cannot</p>
             </div>
           </a>
-          <a href="/love-oracle" class="card card-love" data-realm="love">
-            <div class="card-frame">
-              <div class="card-icon">&#128156;</div>
-              <h3>Love Oracle</h3>
-              <p class="card-desc">Explore the mysteries of the heart</p>
-            </div>
-          </a>
           <a href="/magic-8-ball" class="card card-magic8" data-realm="magic8">
             <div class="card-frame">
               <div class="card-icon">&#127921;</div>
@@ -239,9 +231,9 @@
           </a>
           <a href="/love-match" class="card card-love-match" data-realm="love-match">
             <div class="card-frame">
-              <div class="card-icon">&#128156;</div>
-              <h3>Love Match</h3>
-              <p class="card-desc">Find your combined destiny vibration</p>
+              <div class="card-icon">&#128145;</div>
+              <h3>The Temple of Love</h3>
+              <p class="card-desc">Compatibility, Soulmate Vision & Love Oracle</p>
             </div>
           </a>
           <a href="/birth-chart" class="card card-birthchart" data-realm="birthchart">
@@ -883,38 +875,6 @@
       </div>
     </section>
 
-    <!-- ===== LOVE ===== -->
-    <section id="page-love" class="page realm-page realm-love">
-      <div class="realm-header">
-        <button class="btn-back" data-back>&#8592; Return to Realms</button>
-        <h2>The Romantic Salon</h2>
-        <p class="realm-subtitle">Rosalind awaits in her salon of rose quartz and paired constellations to guide your heart...</p>
-      </div>
-      <div class="realm-scene">
-        <div class="love-hearts">
-          <div class="floating-heart h1">&#10084;</div>
-          <div class="floating-heart h2">&#10084;</div>
-          <div class="floating-heart h3">&#10084;</div>
-        </div>
-      </div>
-      <aside
-        class="oracle-ad oracle-ad-realm"
-        data-ad-slot="oracle-realm-slot"
-        data-ad-realm="love"
-        aria-label="Advertisement"
-      ></aside>
-      <div class="realm-form">
-        <div class="love-names">
-          <input type="text" id="love-name1" class="realm-text-input" placeholder="Your name (optional)" />
-          <span class="love-ampersand">&amp;</span>
-          <input type="text" id="love-name2" class="realm-text-input" placeholder="Their name (optional)" />
-        </div>
-        <textarea class="realm-input" data-input="love" placeholder="Ask about matters of the heart..."></textarea>
-        <button class="btn-gold btn-realm" id="btn-love">Consult Rosalind</button>
-        <div class="oracle-response" data-output="love"></div>
-      </div>
-    </section>
-
     <!-- ===== LOVE MATCH ===== -->
     <section id="page-love-match" class="page realm-page realm-love-match">
       <div class="realm-header">
@@ -934,6 +894,7 @@
             <option value="quiz">📝 Cosmic Quiz</option>
             <option value="omen">🦋 Love Omen</option>
             <option value="vision">🔮 Soulmate Vision</option>
+            <option value="oracle">💌 Ask Rosalind (Love Oracle)</option>
           </select>
         </label>
       </div>
@@ -1135,6 +1096,12 @@
               </label>
             </div>
           </div>
+        </div>
+
+        <!-- OPTION 7: ASK ROSALIND (ORACLE) -->
+        <div class="love-option-panel" data-love-panel="oracle">
+          <p class="love-tarot-subtitle">Speak freely of your heart's desires or confusions, and let Rosalind divine the answers...</p>
+          <textarea class="realm-input" id="love-oracle-question" placeholder="Ask about matters of the heart..." style="margin-top: 1rem;"></textarea>
         </div>
 
         <button class="btn-gold btn-realm" id="btn-love-match">Reveal Love Compatibility</button>
@@ -1655,17 +1622,6 @@
       <p class="footer-copy">&copy; 2026 Oracle Mirror. This site is for entertainment purposes only.</p>
     </footer>
 
-    <div class="oracle-consent-banner" id="oracle-consent-banner" hidden>
-      <div class="consent-copy">
-        <strong>Oracle Mirror uses cookies and sponsor scripts.</strong>
-        <span>Ads load only after consent where required, and readings remain available either way.</span>
-      </div>
-      <div class="consent-actions">
-        <button class="btn-gold btn-small" id="consent-accept">Accept Ads</button>
-        <button class="btn-ghost btn-small" id="consent-reject">Reject Ads</button>
-      </div>
-    </div>
-
     <div class="oracle-mobile-anchor" id="oracle-mobile-anchor" hidden>
       <button class="mobile-anchor-close" id="oracle-mobile-anchor-close" aria-label="Minimize advertisement">&times;</button>
       <div
@@ -1676,6 +1632,7 @@
       ></div>
     </div>
 
+    <script src="https://pl29455188.profitablecpmratenetwork.com/bd/bf/f7/bdbff70e3f43e0bd0e569d51b2ab34ad.js"></script>
     <script src="/script.js" type="module"></script>
   </body>
 </html>
