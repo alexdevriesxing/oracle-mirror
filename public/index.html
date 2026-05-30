@@ -1101,32 +1101,38 @@
 
         <!-- OPTION 6: SOULMATE VISION -->
         <div class="love-option-panel" data-love-panel="vision">
-          <p class="love-tarot-subtitle">Glimpse the face of your destined partner and discover where your paths will cross.</p>
+          <p class="love-tarot-subtitle">"Close your eyes and let me gaze into the cosmic weave. Tell me, seeker... what energy do you radiate, which element calls to your spirit, how many winters have you seen, and what is your heart's ideal sanctuary?" — Rosalind</p>
           <div class="love-omen-selections" style="display: flex; flex-direction: column; gap: 1rem;">
             <label class="love-select-field">
-              <span>Your Energy</span>
+              <span>What energy do you project into the universe?</span>
               <select id="vision-energy" class="realm-select">
-                <option value="">-- Choose Energy --</option>
-                <option value="introvert">Introverted & Calm</option>
-                <option value="extrovert">Extroverted & Radiant</option>
-                <option value="ambivert">Ambiverted & Balanced</option>
-                <option value="mysterious">Mysterious & Deep</option>
+                <option value="">-- Reveal your energy --</option>
+                <option value="introvert">A quiet, contemplative aura (Introvert)</option>
+                <option value="extrovert">A radiant, expressive flame (Extrovert)</option>
+                <option value="ambivert">A balanced, harmonious flow (Ambivert)</option>
+                <option value="mysterious">A deep, enigmatic shadow (Mysterious)</option>
               </select>
             </label>
             <label class="love-select-field">
-              <span>Your Element</span>
+              <span>Which primal element anchors your soul?</span>
               <select id="vision-element" class="realm-select">
-                <option value="">-- Choose Element --</option>
-                <option value="fire">Fire (Passion)</option>
-                <option value="water">Water (Emotion)</option>
-                <option value="earth">Earth (Stability)</option>
-                <option value="air">Air (Intellect)</option>
+                <option value="">-- Choose your element --</option>
+                <option value="fire">The passionate spark of Fire</option>
+                <option value="water">The deep currents of Water</option>
+                <option value="earth">The steadfast roots of Earth</option>
+                <option value="air">The boundless winds of Air</option>
               </select>
             </label>
-            <label class="love-match-field">
-              <span>Ideal Date</span>
-              <input type="text" id="vision-ideal-date" class="realm-text-input" placeholder="e.g. Rainy coffee shop" />
-            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%;">
+              <label class="love-match-field">
+                <span>How many years have you wandered?</span>
+                <input type="number" id="vision-age" class="realm-text-input" placeholder="Your age" min="18" max="100" />
+              </label>
+              <label class="love-match-field">
+                <span>Where does your heart find peace?</span>
+                <input type="text" id="vision-ideal-date" class="realm-text-input" placeholder="e.g. A rainy cafe" />
+              </label>
+            </div>
           </div>
         </div>
 

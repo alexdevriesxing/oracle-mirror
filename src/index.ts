@@ -586,18 +586,20 @@ async function handleIChing(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleSoulmateVision(request: Request, env: Env): Promise<Response> {
-  const { energy, element, idealDate } = (await request.json()) as any;
+  const { energy, element, age, idealDate } = (await request.json()) as any;
 
-  if (!energy || !element || !idealDate) {
+  if (!energy || !element || !age || !idealDate) {
     return errorResponse("Missing required parameters for Soulmate Vision", 400);
   }
 
-  const prompt = `You are Rosalind, the mystical guide of Love. The user provided their traits: Energy: ${energy}, Element: ${element}, Ideal Date: ${idealDate}.
+  const prompt = `You are Rosalind, the mystical guide of Love. The user provided their traits: Age: ${age}, Energy: ${energy}, Element: ${element}, Ideal Date: ${idealDate}.
 Write a beautiful, mysterious 1-paragraph description of the exact approximate real-world location (e.g., a specific city, cafe, street, or hidden garden) where they are most likely to cross paths with their soulmate based on these traits. Write directly to the user. Do not explain yourself, just provide the vision.`;
 
   const locationResponse = await runAI(env, prompt);
 
-  const imagePrompt = `High quality, ultra-realistic cinematic portrait photography of an incredibly attractive romantic partner. They embody the ${element} element and an ${energy} energy. They are dressed for a date: ${idealDate}. Beautiful lighting, DSLR, 8k resolution, highly detailed face, safe for work.`;
+  // Strict guardrails to ensure high quality and prevent failures
+  const imagePrompt = `Masterpiece, award-winning photography, ultra-realistic cinematic portrait of an incredibly attractive romantic partner. They are approximately ${age} years old. They embody the ${element} element and an ${energy} energy. They are dressed for a date: ${idealDate}. 
+Flawless composition, 8k resolution, highly detailed face, sharp focus, professional studio lighting, DSLR, extremely high quality, photorealistic, safe for work, no text, no deformities.`;
   
   let imageBase64 = "";
   try {
@@ -616,6 +618,13 @@ Write a beautiful, mysterious 1-paragraph description of the exact approximate r
     imageBase64 = "data:image/jpeg;base64," + btoa(binary);
   } catch (err) {
     console.error("Image generation failed:", err);
+    // If it fails, fallback to a base64 encoded transparent 1x1 pixel so the image tag doesn't break, 
+    // and append an apology to the text response.
+    imageBase64 = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    return jsonResponse({
+      response: locationResponse + "\n\n*(The cosmic currents were too turbulent to render a physical image, but the location remains true.)*",
+      imageBase64: imageBase64
+    });
   }
 
   return jsonResponse({

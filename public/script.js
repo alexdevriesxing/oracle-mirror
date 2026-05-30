@@ -1491,9 +1491,10 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
   if (activeLoveMatchPanel === "vision") {
     const energy = document.getElementById("vision-energy")?.value;
     const element = document.getElementById("vision-element")?.value;
+    const age = document.getElementById("vision-age")?.value?.trim();
     const idealDate = document.getElementById("vision-ideal-date")?.value?.trim();
-    if (!energy || !element || !idealDate) {
-      setOutput("love-match", "Please fill out all Soulmate Vision fields to glimpse your cosmic partner.");
+    if (!energy || !element || !age || !idealDate) {
+      setOutput("love-match", "Please answer all of Rosalind's questions so she may glimpse your cosmic partner.");
       return;
     }
     
@@ -1504,7 +1505,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
     trackEvent("reading_started", { realm: "love-match" });
     
     try {
-      const data = await callAPI("/api/soulmate-vision", { energy, element, idealDate });
+      const data = await callAPI("/api/soulmate-vision", { energy, element, age, idealDate });
       
       const disclaimer = `<div class="vision-disclaimer">
         <i>Disclaimer: This is an AI-generated vision based on probability and astrological symbolism. We do not suggest spending time or money looking for this specific individual.</i>
