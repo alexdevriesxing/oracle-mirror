@@ -84,6 +84,22 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
     title: "Contact | Oracle Mirror",
     description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
   },
+  "/love-match": {
+    title: "Cosmic Love Match Compatibility | Oracle Mirror",
+    description: "Calculate your romantic compatibility using zodiac alignments, numerology vibrations, and tarot spreads inside the Oracle Mirror.",
+  },
+  "/birth-chart": {
+    title: "Astrological Birth Chart | Oracle Mirror",
+    description: "Calculate your astronomical birth chart and reveal planetary placements inside the Oracle Mirror observatory.",
+  },
+  "/palm-reading": {
+    title: "Psychic Palm Reading | Oracle Mirror",
+    description: "Read your hand lines and discover palmistry secrets of your heart, head, and life lines.",
+  },
+  "/iching-oracle": {
+    title: "I Ching Book of Changes Coin Toss | Oracle Mirror",
+    description: "Cast three ancient Chinese coins and build hexagrams to consult the philosophical I Ching Book of Changes.",
+  },
 };
 
 const RESULT_ROUTES: Record<string, AppRouteMeta> = {
@@ -118,6 +134,22 @@ const RESULT_ROUTES: Record<string, AppRouteMeta> = {
   "/result/daily-fortune": {
     title: "Daily Fortune Result | Oracle Mirror",
     description: "Read your completed Oracle Mirror daily fortune result.",
+  },
+  "/result/love-match": {
+    title: "Love Match Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror romantic compatibility match result from Rosalind.",
+  },
+  "/result/birth-chart": {
+    title: "Birth Chart Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror astrological birth chart placements result.",
+  },
+  "/result/palm-reading": {
+    title: "Palm Reading Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror psychic palm reading result.",
+  },
+  "/result/iching-oracle": {
+    title: "I Ching Coin Toss Result | Oracle Mirror",
+    description: "Read your completed I Ching hexagram coin toss result.",
   },
 };
 
@@ -300,6 +332,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
       timeframe?: string;
       omen?: string;
       mood?: string;
+      element?: string;
+      moonPhase?: string;
+      tarotSigil?: string;
     };
   };
   const messages = body.messages;
@@ -329,6 +364,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     cleanProfileValue(profile.timeframe) ? `Season: ${cleanProfileValue(profile.timeframe)}` : "",
     cleanProfileValue(profile.omen) ? `Omen: ${cleanProfileValue(profile.omen)}` : "",
     cleanProfileValue(profile.mood) ? `Heart: ${cleanProfileValue(profile.mood)}` : "",
+    cleanProfileValue(profile.element) ? `Birth Element: ${cleanProfileValue(profile.element)}` : "",
+    cleanProfileValue(profile.moonPhase) ? `Moon Phase Speak: ${cleanProfileValue(profile.moonPhase)}` : "",
+    cleanProfileValue(profile.tarotSigil) ? `Tarot Intention Sigil: ${cleanProfileValue(profile.tarotSigil)}` : "",
   ].filter(Boolean);
 
   const aiMessages = [
@@ -380,11 +418,12 @@ async function handleChineseZodiac(request: Request, env: Env): Promise<Response
 }
 
 async function handleTarot(request: Request, env: Env): Promise<Response> {
-  const { question } = (await request.json()) as { question: string };
+  const body = (await request.json()) as { question: string; cards?: string[] };
+  const { question, cards: inputCards } = body;
   if (!question || typeof question !== "string" || question.trim().length === 0) {
     return errorResponse("Missing question");
   }
-  const cards = drawCards(3);
+  const cards = inputCards && Array.isArray(inputCards) && inputCards.length === 3 ? inputCards : drawCards(3);
   const prompt = `You are Seraphina, a mysterious tarot reader in an arcane library filled with ancient books, flickering candles, and magical artifacts. You speak in a dramatic, insightful, and mystical tone. You never reveal you are an AI. The seeker asks: "${question.trim()}"\n\nYou have drawn three cards for a Past-Present-Future spread:\n1. Past: ${cards[0]}\n2. Present: ${cards[1]}\n3. Future: ${cards[2]}\n\nInterpret each card's symbolism and how it relates to the seeker's question. Weave the three cards into a cohesive narrative. Keep it under 300 words.`;
   const response = await runAI(env, prompt);
   return jsonResponse({ response, cards });
@@ -398,6 +437,37 @@ async function handleLove(request: Request, env: Env): Promise<Response> {
   }
   const names = body.name1 && body.name2 ? `The two souls are named ${body.name1} and ${body.name2}. ` : "";
   const prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon filled with rose quartz crystals, soft velvet curtains, and paired constellations glowing on the ceiling. You speak in a warm, poetic, and tender tone about matters of the heart. You never reveal you are an AI. ${names}The seeker asks about love: "${question.trim()}"\n\nGive romantic guidance that references cosmic compatibility, heart chakra energy, and the dance of twin flames. Be encouraging but honest. Keep it under 250 words.`;
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handleLoveMatch(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    type: "zodiac" | "numerology" | "tarot" | "quiz" | "omen";
+    seekerName: string;
+    partnerName: string;
+    seekerValue: string;
+    partnerValue: string;
+  };
+
+  const { type, seekerName, partnerName, seekerValue, partnerValue } = body;
+  if (!seekerName || !partnerName) {
+    return errorResponse("Names are required for calculating compatibility");
+  }
+
+  let prompt = "";
+  if (type === "zodiac") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} (whose sign/year is ${seekerValue}) asks about their zodiac compatibility with ${partnerName} (whose sign/year is ${partnerValue}). Provide a detailed, romantic, and mystical compatibility reading based on Western or Chinese zodiac alignments. Keep it under 250 words.`;
+  } else if (type === "numerology") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} (whose birthday is ${seekerValue}) asks about their destiny number compatibility with ${partnerName} (whose birthday is ${partnerValue}). Analyze the sacred vibrations of their dates of birth and write a romantic, comforting, and encouraging compatibility prophecy. Keep it under 250 words.`;
+  } else if (type === "tarot") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} and partner ${partnerName} drawn a connection. The drawn cards are ${seekerValue} and ${partnerValue}. Interpret the spiritual meaning of these two cards in a love reading, detailing the strengths, spiritual lessons, and cosmic fate of their relationship. Keep it under 250 words.`;
+  } else if (type === "quiz") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. Seeker ${seekerName} and partner ${partnerName} completed the Cosmic Compatibility Quiz. Their selections were: Sanctuary: ${seekerValue}, and Relationship Frequency: ${partnerValue}. Write a romantic, comforting, and encouraging love compatibility prophecy analyzing their spiritual relationship profile. Keep it under 250 words.`;
+  } else {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. Seeker ${seekerName} (governed by omen ${seekerValue}) and partner ${partnerName} (governed by omen ${partnerValue}) seek their match. Analyze the spiritual connection between these two omens and reveal what fate whispers about their union. Keep it under 250 words.`;
+  }
+
   const response = await runAI(env, prompt);
   return jsonResponse({ response });
 }
@@ -444,6 +514,73 @@ async function handleDailyFortune(request: Request, env: Env): Promise<Response>
   return jsonResponse({ response, date: today });
 }
 
+async function handleBirthChart(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    birthday: string;
+    birthtime?: string;
+    sign: string;
+    placements: {
+      sun: string;
+      moon: string;
+      ascendant: string;
+      mercury: string;
+      venus: string;
+      mars: string;
+    };
+  };
+
+  const { birthday, birthtime, sign, placements } = body;
+  if (!birthday || !sign || !placements) {
+    return errorResponse("Missing required birth chart details");
+  }
+
+  const timeClause = birthtime ? ` born at time ${birthtime},` : "";
+  const prompt = `You are Astaria, a celestial astrologer who reads the movements of planets and stars from an ancient observatory among the clouds. You speak in an eloquent, wise, and cosmic tone. You never reveal you are an AI. Calculate and interpret the birth chart for a seeker born on ${birthday},${timeClause} with sun sign ${sign}. Their primary planetary placements are:\n- Sun: ${placements.sun}\n- Moon: ${placements.moon}\n- Ascendant (Rising): ${placements.ascendant}\n- Mercury: ${placements.mercury}\n- Venus: ${placements.venus}\n- Mars: ${placements.mars}\n\nProvide a detailed birth chart reading focusing on their core personality traits, emotional blueprint, communication style, relationship patterns, and life destiny based on these planetary placements. Keep it under 300 words.`;
+  
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handlePalmistry(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    handShape: string;
+    lines: {
+      heart: string;
+      head: string;
+      life: string;
+      fate: string;
+    };
+  };
+
+  const { handShape, lines } = body;
+  if (!handShape || !lines) {
+    return errorResponse("Missing required palmistry details");
+  }
+
+  const prompt = `You are Madame Cassandra, a legendary palmist and seership master who reads the scrolls of fate written on the human hand. You speak in a highly mystical, intuitive, and reassuring tone. You never reveal you are an AI. The seeker presents their palm with an ${handShape} hand shape, and the following lines configurations:\n- Heart Line (governing emotion): ${lines.heart}\n- Head Line (governing intellect): ${lines.head}\n- Life Line (governing vitality & energy): ${lines.life}\n- Fate Line (governing path & destiny): ${lines.fate}\n\nInterpret the lines and palm characteristics, weaving a deep, intuitive prophecy about their emotional capacity, mental focus, life force, and spiritual destiny. Keep it under 250 words.`;
+
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handleIChing(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    question: string;
+    hexagramTitle: string;
+    hexagramLines: string;
+  };
+
+  const { question, hexagramTitle, hexagramLines } = body;
+  if (!question || !hexagramTitle) {
+    return errorResponse("Missing I Ching query details");
+  }
+
+  const prompt = `You are Sage Lao-Tan, an ancient philosophical guardian of the I Ching Book of Changes. You speak in a serene, deeply profound, and metaphorical tone. You never reveal you are an AI. The seeker asks about their dilemma: "${question.trim()}"\n\nThey have performed the coin-toss ritual and cast the Hexagram: "${hexagramTitle}" (constructed by lines from bottom to top: ${hexagramLines}).\n\nInterpret the wisdom, natural balance (Yin and Yang), and symbolic oracle advice of this Hexagram as it relates directly to the seeker's dilemma. Weave ancient Chinese philosophy (Dao, changes, elements) into a comforting, insightful guidance prophecy. Keep it under 300 words.`;
+
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -487,12 +624,20 @@ export default {
             return await handleTarot(request, env);
           case "/api/love":
             return await handleLove(request, env);
+          case "/api/love-match":
+            return await handleLoveMatch(request, env);
           case "/api/magic8":
             return await handleMagic8(request, env);
           case "/api/numerology":
             return await handleNumerology(request, env);
           case "/api/daily-fortune":
             return await handleDailyFortune(request, env);
+          case "/api/birthchart":
+            return await handleBirthChart(request, env);
+          case "/api/palmistry":
+            return await handlePalmistry(request, env);
+          case "/api/iching":
+            return await handleIChing(request, env);
           case "/api/feedback": {
             const feedback = await request.json();
             return jsonResponse({ ok: true });
