@@ -1464,7 +1464,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
     
     setOutput("love-match", `
       <div class="vision-loading">
-        <p>Rosalind is gazing into the cosmic weave. This intense vision may take up to 20 seconds to manifest...</p>
+        <p>Rosalind is gazing into the cosmic weave. This intense vision may take up to 60 seconds to manifest...</p>
         <div class="vision-progress-bar">
           <div class="vision-progress-fill"></div>
         </div>

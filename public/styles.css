@@ -3947,7 +3947,7 @@ body {
   background: linear-gradient(90deg, #d4af37, #f0d060, #fb7185);
   border-radius: 3px;
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
-  animation: visionProgress 20s ease-out forwards;
+  animation: visionProgress 60s ease-out forwards;
 }
 
 @keyframes visionProgress {
