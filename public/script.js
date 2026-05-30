@@ -1486,9 +1486,55 @@ function calculateCosmicScore(name1, name2, matchType, val1, val2) {
 
 // --- Reveal Love Compatibility ---
 document.getElementById("btn-love-match")?.addEventListener("click", async () => {
+  const btn = document.getElementById("btn-love-match");
+
+  if (activeLoveMatchPanel === "vision") {
+    const energy = document.getElementById("vision-energy")?.value;
+    const element = document.getElementById("vision-element")?.value;
+    const idealDate = document.getElementById("vision-ideal-date")?.value?.trim();
+    if (!energy || !element || !idealDate) {
+      setOutput("love-match", "Please fill out all Soulmate Vision fields to glimpse your cosmic partner.");
+      return;
+    }
+    
+    setOutput("love-match", "<p>Summoning cosmic energies to reveal the vision...</p>", true);
+    btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "love-match", match_type: "vision" });
+    trackEvent("reading_started", { realm: "love-match" });
+    
+    try {
+      const data = await callAPI("/api/soulmate-vision", { energy, element, idealDate });
+      
+      const disclaimer = `<div class="vision-disclaimer">
+        <i>Disclaimer: This is an AI-generated vision based on probability and astrological symbolism. We do not suggest spending time or money looking for this specific individual.</i>
+      </div>`;
+      
+      const resultHtml = `
+        <div class="soulmate-vision-result">
+          <h3 class="vision-title">Your Destined Encounter</h3>
+          <img src="${data.imageBase64}" alt="Your Soulmate Vision" class="vision-image" />
+          <div class="reading-body vision-body">
+            ${formatResponse(data.response || data.message)}
+          </div>
+          ${disclaimer}
+        </div>
+      `;
+      
+      displayResult("love-match", resultHtml, "/result/soulmate-vision");
+      btn.disabled = false;
+      setReadingState(false);
+      scheduleAmbientPopunder("vision_delivered");
+    } catch (err) {
+      setOutput("love-match", getFallbackResponse());
+      btn.disabled = false;
+      setReadingState(false);
+    }
+    return;
+  }
+
   const seekerName = document.getElementById("match-seeker-name")?.value?.trim();
   const partnerName = document.getElementById("match-partner-name")?.value?.trim();
-  const btn = document.getElementById("btn-love-match");
 
   if (!seekerName || !partnerName) {
     setOutput("love-match", "Please enter both names to weigh the cosmic compatibility.");

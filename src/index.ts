@@ -147,6 +147,10 @@ const RESULT_ROUTES: Record<string, AppRouteMeta> = {
     title: "Palm Reading Result | Oracle Mirror",
     description: "Read your completed Oracle Mirror psychic palm reading result.",
   },
+  "/result/soulmate-vision": {
+    title: "Soulmate Vision Result | Oracle Mirror",
+    description: "View the AI generated portrait and destined location of your cosmic soulmate.",
+  },
   "/result/iching-oracle": {
     title: "I Ching Coin Toss Result | Oracle Mirror",
     description: "Read your completed I Ching hexagram coin toss result.",
@@ -581,6 +585,45 @@ async function handleIChing(request: Request, env: Env): Promise<Response> {
   return jsonResponse({ response });
 }
 
+async function handleSoulmateVision(request: Request, env: Env): Promise<Response> {
+  const { energy, element, idealDate } = (await request.json()) as any;
+
+  if (!energy || !element || !idealDate) {
+    return errorResponse("Missing required parameters for Soulmate Vision", 400);
+  }
+
+  const prompt = `You are Rosalind, the mystical guide of Love. The user provided their traits: Energy: ${energy}, Element: ${element}, Ideal Date: ${idealDate}.
+Write a beautiful, mysterious 1-paragraph description of the exact approximate real-world location (e.g., a specific city, cafe, street, or hidden garden) where they are most likely to cross paths with their soulmate based on these traits. Write directly to the user. Do not explain yourself, just provide the vision.`;
+
+  const locationResponse = await runAI(env, prompt);
+
+  const imagePrompt = `High quality, ultra-realistic cinematic portrait photography of an incredibly attractive romantic partner. They embody the ${element} element and an ${energy} energy. They are dressed for a date: ${idealDate}. Beautiful lighting, DSLR, 8k resolution, highly detailed face, safe for work.`;
+  
+  let imageBase64 = "";
+  try {
+    const imgBuffer = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+      prompt: imagePrompt
+    });
+    
+    let binary = '';
+    const bytes = new Uint8Array(imgBuffer as any);
+    const len = bytes.byteLength;
+    const chunkSize = 8192;
+    for (let i = 0; i < len; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    imageBase64 = "data:image/jpeg;base64," + btoa(binary);
+  } catch (err) {
+    console.error("Image generation failed:", err);
+  }
+
+  return jsonResponse({
+    response: locationResponse,
+    imageBase64: imageBase64
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -636,6 +679,8 @@ export default {
             return await handleBirthChart(request, env);
           case "/api/palmistry":
             return await handlePalmistry(request, env);
+          case "/api/soulmate-vision":
+            return await handleSoulmateVision(request, env);
           case "/api/iching":
             return await handleIChing(request, env);
           case "/api/feedback": {

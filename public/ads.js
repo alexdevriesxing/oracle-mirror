@@ -387,7 +387,7 @@ const lazyObserver =
             }
           }
         },
-        { rootMargin: "320px 0px" }
+        { rootMargin: "600px 0px" }
       )
     : null;
 
@@ -413,29 +413,20 @@ export function activateSlotsForScreen(screen, realm) {
 
   if (screen === "home") {
     activateAdSlot("oracle-home-slot", { realm: "home" });
-    hideMobileAnchor();
-    return;
-  }
-
-  if (screen === "archive") {
+  } else if (screen === "archive") {
     activateAdSlot("oracle-archive-native", { realm: "archive" });
     activateAdSlot("oracle-archive-bottom-slot", { realm: "archive" });
-    hideMobileAnchor();
-    return;
-  }
-
-  if (screen === "realm") {
+  } else if (screen === "realm") {
     activateAdSlot("oracle-realm-slot", { realm });
     activateAdSlot("oracle-desktop-rail-left", { realm, force: true });
-    showMobileAnchor();
-  }
-
-  if (screen === "result") {
+  } else if (screen === "result") {
     activateAdSlot("oracle-result-slot", { realm });
     activateAdSlot("oracle-desktop-rail-left", { realm, force: true });
     activateAdSlot("oracle-desktop-rail-right", { realm, force: true });
-    showMobileAnchor();
   }
+
+  // Always ensure the mobile sticky banner is shown on mobile view across all screens
+  showMobileAnchor();
 }
 
 export function createResultAdSlot(realm) {
@@ -709,7 +700,6 @@ function canRefreshSlot(host, config, instanceId) {
   if (!host.__oracleAdViewable && policy.requireViewable) return false;
   if (document.visibilityState !== "visible") return false;
   if (!isElementVisible(host)) return false;
-  if (document.activeElement?.matches?.("input, textarea, select")) return false;
   if (document.body.dataset.readingState === "animating") return false;
 
   const count = sessionRefreshCounts.get(instanceId) || 0;
