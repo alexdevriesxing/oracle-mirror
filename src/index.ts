@@ -1,6 +1,7 @@
 export interface Env {
   AI: any;
   ASSETS: Fetcher;
+  AD_CONSENT_REQUIRED?: string;
 }
 
 const FALLBACK_FORTUNES = [
@@ -70,6 +71,10 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/archive": {
     title: "Reading Archive | Oracle Mirror",
     description: "Review saved Oracle Mirror readings in your private browser archive.",
+  },
+  "/ad-debug": {
+    title: "Ad Debug | Oracle Mirror",
+    description: "Review Oracle Mirror ad loading diagnostics for the current browser session.",
   },
   "/privacy-policy": {
     title: "Privacy Policy | Oracle Mirror",
@@ -198,6 +203,19 @@ function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): st
     .replace(/<meta\s+name="twitter:description"[^>]*>/s, `<meta name="twitter:description" content="${description}" />`);
 }
 
+function envFlag(value: string | undefined, defaultValue = false): boolean {
+  if (value === undefined) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function injectRuntimeConfig(html: string, env: Env): string {
+  const runtimeConfig = {
+    consentRequired: envFlag(env.AD_CONSENT_REQUIRED, false),
+  };
+  const script = `<script>window.ORACLE_AD_RUNTIME_CONFIG=${JSON.stringify(runtimeConfig)};</script>`;
+  return html.includes("</head>") ? html.replace("</head>", `${script}\n  </head>`) : `${script}${html}`;
+}
+
 async function serveAppShell(request: Request, env: Env, pathname: string, meta: AppRouteMeta): Promise<Response> {
   const url = new URL(request.url);
   const indexRequest = new Request(`${url.origin}/`, {
@@ -205,7 +223,7 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
     headers: request.headers,
   });
   const response = await env.ASSETS.fetch(indexRequest);
-  const html = injectRouteMeta(await response.text(), pathname, meta);
+  const html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   return new Response(html, {
@@ -215,7 +233,7 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
 }
 
 function sitemapResponse(): Response {
-  const routes = [...Object.keys(APP_ROUTES), ...Object.keys(RESULT_ROUTES)];
+  const routes = [...Object.keys(APP_ROUTES), ...Object.keys(RESULT_ROUTES)].filter((route) => route !== "/ad-debug");
   const urls = routes
     .map(
       (route) => `  <url>

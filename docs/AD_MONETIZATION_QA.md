@@ -41,12 +41,14 @@
 - Confirm sticky anchor has a close/minimize button.
 - Confirm closing the anchor logs `mobile_anchor_closed` and persists for the session.
 - Confirm the anchor does not cover forms, navigation, cookie buttons, or result text.
+- Confirm `/ad-debug` shows registered, requested, loaded, filled, blocked, consent_pending, placeholder_zone, script_error, adblock_possible, device_rule, and lazy_loading counts.
 
 ## Consent QA
 
-- Fresh browser profile: confirm `consent_state` is `pending` and third-party ad scripts do not request before consent.
+- Fresh browser profile with default production config: confirm `consent_state` is `not_required`, contextual ad slots can request, and `ad_slot_requested` includes `ad_mode: contextual_default`.
+- With `AD_CONSENT_REQUIRED=true`: confirm `consent_state` is `pending`, `consent_pending` increments in `/ad-debug`, and third-party ad scripts do not request before consent.
 - Accept ads: confirm configured slots request and `ad_slot_requested` fires.
-- Reject ads: confirm no third-party ad scripts request and slots do not throw errors.
+- Reject ads: confirm no third-party ad scripts request, `consent_rejected`/`blocked` telemetry increments, and slots do not throw errors.
 - Footer Cookie Preferences: confirm the consent banner can be reopened.
 
 ## Adblock QA
@@ -67,6 +69,6 @@
 - No interstitial before a result reveal.
 - No fake loading delay to force ad exposure.
 - No social script loaded by default.
-- Popunder script is not loaded from a button click handler; it loads only through the post-value ambient scheduler after consent, delay, visibility, and idle checks.
+- Popunder script is not loaded from a button click handler; it loads only through the post-value ambient scheduler after delay, visibility, and idle checks, plus consent when `AD_CONSENT_REQUIRED=true`.
 - No synchronous third-party ad script in the initial HTML.
 - No console errors when a zone remains `TODO_ADSTERRA...`.

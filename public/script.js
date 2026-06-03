@@ -214,6 +214,7 @@ const ROUTE_BY_PAGE = {
   iching: "/iching-oracle",
   personas: "/mystics",
   archive: "/archive",
+  "ad-debug": "/ad-debug",
   "privacy-policy": "/privacy-policy",
   "cookie-policy": "/cookie-policy",
   contact: "/contact",
@@ -300,6 +301,10 @@ const SCREEN_META = {
     title: "Reading Archive | Oracle Mirror",
     description: "Review saved Oracle Mirror readings in your private browser archive.",
   },
+  "ad-debug": {
+    title: "Ad Debug | Oracle Mirror",
+    description: "Review Oracle Mirror ad loader diagnostics for the current browser session.",
+  },
   birthchart: {
     title: "Astrological Birth Chart | Oracle Mirror",
     description: "Calculate your astronomical birth chart and reveal planetary placements inside the Oracle Mirror observatory.",
@@ -375,6 +380,7 @@ function adScreenForPage(pageId, isResult = false) {
   if (isResult) return "result";
   if (pageId === "home") return "home";
   if (pageId === "archive") return "archive";
+  if (pageId === "ad-debug") return "debug";
   if (REALM_PAGES.has(pageId)) return "realm";
   return "home";
 }
@@ -2258,4 +2264,3 @@ const TAROT_SYMBOLS = {
     submitBtn.disabled = false;
   });
 })();
-

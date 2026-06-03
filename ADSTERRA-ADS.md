@@ -8,8 +8,10 @@
 - Scripts are requested asynchronously after the slot becomes eligible.
 - Below-the-fold placements use IntersectionObserver lazy loading.
 - Result placements are created only after the reading/result is visible.
-- Consent is checked before requesting third-party ad scripts.
+- Site-level consent gating is configurable through `AD_CONSENT_REQUIRED`; the production default is contextual ad eligibility without a pending-consent block.
+- An explicit local "Reject Ads" preference still opts the browser out of third-party ad scripts.
 - Placeholder zones beginning with `TODO_ADSTERRA...` reserve space and log telemetry without throwing console errors.
+- `/ad-debug` and `window.oracleAdDebug.printSummary()` expose registered, requested, loaded, filled, blocked, consent, placeholder, script error, adblock, device, and lazy-loading counts.
 
 ## Active Slot Map
 
@@ -26,7 +28,7 @@
 
 ## Ambient Popunder
 
-The popunder script is managed by `public/ads.js`, not by button handlers or inline HTML. It is eligible only after consent and after a reading value moment, then waits for the configured session age, post-result delay, and idle time since the last user interaction before loading. This prevents the popunder from firing as a direct consequence of clicking "Reveal My Fortune" or another CTA.
+The popunder script is managed by `public/ads.js`, not by button handlers or inline HTML. It is eligible only after a reading value moment, then waits for the configured session age, post-result delay, and idle time since the last user interaction before loading. If `AD_CONSENT_REQUIRED` is enabled, it also waits for ad consent. This prevents the popunder from firing as a direct consequence of clicking "Reveal My Fortune" or another CTA.
 
 ## Retired Default Scripts
 

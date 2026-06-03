@@ -27,9 +27,10 @@
 - Result screens: result slot is created only after the answer is rendered.
 - Result aftercare: the result ad appears before the “Try Another Reading” action.
 - Archive: native/feed placement after several entries plus a bottom slot before footer.
-- Mobile: sticky bottom anchor is consent-aware, closeable per session, and suppressed during form focus.
+- Mobile: sticky bottom anchor is closeable per session, suppressed during form focus, and follows the site-level consent policy.
 - Desktop: optional side rails on realm/result states for wide screens.
-- Popunder: loaded only through the ambient post-value scheduler, never directly from a button click handler.
+- Popunder: loaded only through the ambient post-value scheduler, never directly from a button click handler, and gated by consent when `AD_CONSENT_REQUIRED=true`.
+- Consent: production defaults to contextual ad eligibility without a pending-consent block; environments can set `AD_CONSENT_REQUIRED=true` to require ad consent before any third-party ad script request.
 
 ## Adsterra Placeholder Policy
 
@@ -46,10 +47,10 @@ If a slot still has a `TODO_ADSTERRA...` zone or no script URL, the loader rende
 
 ## Telemetry
 
-All events are pushed to `window.dataLayer`, including:
+All events are pushed to `window.dataLayer`, and `/ad-debug` plus `window.oracleAdDebug.printSummary()` expose live client-side counts. Events include:
 
 - Navigation/value: `page_view`, `virtual_page_view`, `realm_open`, `question_submitted`, `reading_started`, `result_rendered`, `result_saved`, `archive_open`, `another_reading_click`
-- Ads: `ad_slot_registered`, `ad_slot_requested`, `ad_script_loaded`, `ad_script_error`, `ad_slot_visible_50`, `ad_slot_viewable_1s`, `ad_slot_collapsed`, `ad_block_check`, `mobile_anchor_closed`
+- Ads: `ad_slot_registered`, `ad_slot_deferred`, `ad_slot_requested`, `ad_script_loaded`, `ad_slot_filled`, `ad_slot_unfilled`, `ad_script_error`, `ad_slot_visible_50`, `ad_slot_viewable_1s`, `ad_slot_collapsed`, `ad_block_check`, `mobile_anchor_closed`, `mobile_anchor_suppressed`
 - Privacy: `consent_state`
 
 ## Crystal Ball Concept Update

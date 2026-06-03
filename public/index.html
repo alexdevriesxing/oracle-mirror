@@ -1329,7 +1329,8 @@
         <h2>Privacy Policy</h2>
         <p>
           Oracle Mirror stores saved readings in your browser only. The site may use analytics events and advertising
-          partners after consent to measure page views, realm activity, ad requests, and ad viewability.
+          partners to measure page views, realm activity, ad requests, and ad viewability, with consent gating where
+          required and a local ad opt-out choice.
         </p>
         <p>
           Reading requests are sent to Oracle Mirror API endpoints so the selected oracle can generate a response.
@@ -1358,6 +1359,16 @@
           Questions about Oracle Mirror, privacy, cookies, or advertising can be sent to the site owner through the
           contact channel configured for oraclemirror.com.
         </p>
+      </div>
+    </section>
+
+    <section id="page-ad-debug" class="page legal-page">
+      <div class="legal-panel ad-debug-panel">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Ad Debug</h2>
+        <p>Current browser-session diagnostics for Oracle Mirror ad loading.</p>
+        <dl class="ad-debug-counts" id="ad-debug-counts"></dl>
+        <pre class="ad-debug-json" id="ad-debug-json">{}</pre>
       </div>
     </section>
 
@@ -1632,7 +1643,26 @@
       ></div>
     </div>
 
-    <script src="https://pl29455188.profitablecpmratenetwork.com/bd/bf/f7/bdbff70e3f43e0bd0e569d51b2ab34ad.js"></script>
+    <div
+      class="oracle-consent-banner"
+      id="oracle-consent-banner"
+      role="dialog"
+      aria-label="Cookie and advertising preferences"
+      hidden
+    >
+      <div class="consent-copy">
+        <strong>Cookie and advertising choices</strong>
+        <span>
+          Essential browser storage keeps readings and preferences local. Contextual ads may load where consent is not
+          required; reject ads to opt out of third-party ad scripts in this browser.
+        </span>
+      </div>
+      <div class="consent-actions">
+        <button class="btn-ghost btn-small" id="consent-reject">Reject Ads</button>
+        <button class="btn-gold btn-small" id="consent-accept">Accept Ads</button>
+      </div>
+    </div>
+
     <script src="/script.js" type="module"></script>
   </body>
 </html>
