@@ -819,6 +819,14 @@ export default {
       return llmsTxtResponse();
     }
 
+    // Google Search Console ownership verification; must serve 200 at the exact
+    // .html URL (static asset handling 307-redirects .html paths, which fails it).
+    if (url.pathname === "/google42fd69b18b214d57.html") {
+      return new Response("google-site-verification: google42fd69b18b214d57.html", {
+        headers: { "Content-Type": "text/html; charset=UTF-8" },
+      });
+    }
+
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/health") {
         return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
