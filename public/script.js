@@ -11,54 +11,178 @@ import {
 
 // Oracle Mirror - Client-side application
 
-// --- Particles ---
+window.spawnParticleBurst = window.spawnParticleBurst || (() => {});
+
+// --- Magical Stardust & Twist Sparkle Particle Engine ---
 const canvas = document.getElementById("particles");
 if (canvas) {
   const ctx = canvas.getContext("2d");
   let particles = [];
-  const PARTICLE_COUNT = 60;
+  const BACKGROUND_PARTICLE_COUNT = 70;
 
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   }
 
-  function createParticle() {
+  // Draw a beautiful four-pointed star for stardust sparkles
+  function drawSparkleStar(ctx, cx, cy, spikes, outerRadius, innerRadius, alpha, color) {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    let step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fillStyle = color.replace("ALPHA", alpha.toFixed(2));
+    ctx.fill();
+  }
+
+  function createBackgroundParticle() {
+    const colors = [
+      "rgba(212, 175, 55, ALPHA)", // gold
+      "rgba(240, 208, 96, ALPHA)",  // light gold
+      "rgba(167, 139, 250, ALPHA)", // soft purple
+      "rgba(255, 255, 255, ALPHA)"  // pure white
+    ];
     return {
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: Math.random() * 2 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.3,
-      speedY: (Math.random() - 0.5) * 0.3 - 0.1,
-      opacity: Math.random() * 0.5 + 0.1,
+      size: Math.random() * 2.5 + 0.6,
+      speedX: (Math.random() - 0.5) * 0.2,
+      speedY: (Math.random() - 0.5) * 0.2 - 0.08,
+      opacity: Math.random() * 0.55 + 0.15,
+      pulseSpeed: Math.random() * 0.02 + 0.01,
       pulse: Math.random() * Math.PI * 2,
+      type: Math.random() > 0.68 ? "star" : "dot",
+      colorTemplate: colors[Math.floor(Math.random() * colors.length)]
     };
   }
 
   function initParticles() {
-    particles = Array.from({ length: PARTICLE_COUNT }, createParticle);
+    particles = Array.from({ length: BACKGROUND_PARTICLE_COUNT }, createBackgroundParticle);
   }
+
+  // Interactive Cursor Sparkle Generation
+  function spawnCursorSparkle(mx, my) {
+    const colors = [
+      "rgba(212, 175, 55, ALPHA)", // Gold stardust
+      "rgba(167, 139, 250, ALPHA)", // Purple stardust
+      "rgba(251, 113, 133, ALPHA)"  // Romantic rose stardust
+    ];
+    particles.push({
+      x: mx,
+      y: my,
+      size: Math.random() * 3.5 + 1.5,
+      speedX: (Math.random() - 0.5) * 1.5,
+      speedY: (Math.random() - 0.5) * 1.5 + 0.2,
+      opacity: 1.0,
+      decay: Math.random() * 0.025 + 0.015,
+      pulse: 0,
+      type: Math.random() > 0.4 ? "star" : "dot",
+      colorTemplate: colors[Math.floor(Math.random() * colors.length)],
+      isCursorSparkle: true
+    });
+  }
+
+  // Globally exposed magical stardust burst for compatibility reveals and drawing rituals
+  window.spawnParticleBurst = function(cx, cy, count = 30) {
+    const colors = [
+      "rgba(212, 175, 55, ALPHA)", // Gold stardust
+      "rgba(167, 139, 250, ALPHA)", // Purple stardust
+      "rgba(251, 113, 133, ALPHA)"  // Romantic rose stardust
+    ];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3.5 + 1.5;
+      particles.push({
+        x: cx,
+        y: cy,
+        size: Math.random() * 4.0 + 1.5,
+        speedX: Math.cos(angle) * speed,
+        speedY: Math.sin(angle) * speed - 0.5,
+        opacity: 1.0,
+        decay: Math.random() * 0.018 + 0.012,
+        pulse: 0,
+        type: Math.random() > 0.35 ? "star" : "dot",
+        colorTemplate: colors[Math.floor(Math.random() * colors.length)],
+        isCursorSparkle: true
+      });
+    }
+  };
 
   function drawParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (const p of particles) {
+    
+    // Limit total particles to avoid memory growth
+    if (particles.length > 250) {
+      particles = particles.slice(-250);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
       p.x += p.speedX;
       p.y += p.speedY;
-      p.pulse += 0.02;
-      const alpha = p.opacity * (0.5 + 0.5 * Math.sin(p.pulse));
 
-      if (p.x < 0) p.x = canvas.width;
-      if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = 0;
+      if (p.isCursorSparkle) {
+        // Cursor sparkles shrink, float down, and decay opacity
+        p.opacity -= p.decay;
+        p.size *= 0.97;
+        if (p.opacity <= 0 || p.size < 0.2) {
+          particles.splice(i, 1);
+          continue;
+        }
+      } else {
+        // Background particles float slowly and pulse
+        p.pulse += p.pulseSpeed;
+        
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+      }
 
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(212, 175, 55, ${alpha})`;
-      ctx.fill();
+      const currentAlpha = p.isCursorSparkle 
+        ? p.opacity 
+        : p.opacity * (0.45 + 0.55 * Math.sin(p.pulse));
+
+      if (p.type === "star") {
+        drawSparkleStar(ctx, p.x, p.y, 4, p.size * 2, p.size * 0.45, currentAlpha, p.colorTemplate);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.colorTemplate.replace("ALPHA", currentAlpha.toFixed(2));
+        ctx.fill();
+      }
     }
     requestAnimationFrame(drawParticles);
   }
+
+  // Bind mouse move and mobile touch trails
+  window.addEventListener("mousemove", (e) => {
+    // Spawn 2 stardust particles per move
+    spawnCursorSparkle(e.clientX, e.clientY);
+    if (Math.random() > 0.5) spawnCursorSparkle(e.clientX, e.clientY);
+  });
+
+  window.addEventListener("touchmove", (e) => {
+    if (e.touches && e.touches[0]) {
+      spawnCursorSparkle(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
 
   resizeCanvas();
   initParticles();
@@ -81,11 +205,16 @@ const ROUTE_BY_PAGE = {
   "chinese-zodiac": "/chinese-zodiac",
   tarot: "/tarot",
   love: "/love-oracle",
+  "love-match": "/love-match",
   magic8: "/magic-8-ball",
   numerology: "/numerology",
   "daily-fortune": "/daily-fortune",
+  birthchart: "/birth-chart",
+  palmistry: "/palm-reading",
+  iching: "/iching-oracle",
   personas: "/mystics",
   archive: "/archive",
+  "ad-debug": "/ad-debug",
   "privacy-policy": "/privacy-policy",
   "cookie-policy": "/cookie-policy",
   contact: "/contact",
@@ -97,9 +226,13 @@ const RESULT_ROUTE_BY_REALM = {
   "chinese-zodiac": "/result/chinese-zodiac",
   tarot: "/result/tarot",
   love: "/result/love-oracle",
+  "love-match": "/result/love-match",
   magic8: "/result/magic-8-ball",
   numerology: "/result/numerology",
   "daily-fortune": "/result/daily-fortune",
+  birthchart: "/result/birth-chart",
+  palmistry: "/result/palm-reading",
+  iching: "/result/iching-oracle",
 };
 
 const PAGE_BY_ROUTE = new Map(Object.entries(ROUTE_BY_PAGE).map(([page, path]) => [path, page]));
@@ -110,9 +243,13 @@ const REALM_PAGES = new Set([
   "chinese-zodiac",
   "tarot",
   "love",
+  "love-match",
   "magic8",
   "numerology",
   "daily-fortune",
+  "birthchart",
+  "palmistry",
+  "iching",
 ]);
 
 const SCREEN_META = {
@@ -140,6 +277,10 @@ const SCREEN_META = {
     title: "Love Oracle Reading | Oracle Mirror",
     description: "Ask the Love Oracle for romantic guidance, compatibility insight, and heart-centered reflection.",
   },
+  "love-match": {
+    title: "Love Match Compatibility Reading | Oracle Mirror",
+    description: "Peers into your compatibility using zodiac signs, numerology calculation, and Tarot drawings.",
+  },
   magic8: {
     title: "Magic 8 Ball Oracle | Oracle Mirror",
     description: "Shake the Cosmic 8 Ball for a quick mystical answer to your yes-or-no question.",
@@ -159,6 +300,22 @@ const SCREEN_META = {
   archive: {
     title: "Reading Archive | Oracle Mirror",
     description: "Review saved Oracle Mirror readings in your private browser archive.",
+  },
+  "ad-debug": {
+    title: "Ad Debug | Oracle Mirror",
+    description: "Review Oracle Mirror ad loader diagnostics for the current browser session.",
+  },
+  birthchart: {
+    title: "Astrological Birth Chart | Oracle Mirror",
+    description: "Calculate your astronomical birth chart and reveal planetary placements inside the Oracle Mirror observatory.",
+  },
+  palmistry: {
+    title: "Psychic Palm Reading | Oracle Mirror",
+    description: "Read your hand lines and discover palmistry secrets of your heart, head, and life lines.",
+  },
+  iching: {
+    title: "I Ching Book of Changes Coin Toss | Oracle Mirror",
+    description: "Cast three ancient Chinese coins and build hexagrams to consult the philosophical I Ching Book of Changes.",
   },
   "privacy-policy": {
     title: "Privacy Policy | Oracle Mirror",
@@ -223,6 +380,7 @@ function adScreenForPage(pageId, isResult = false) {
   if (isResult) return "result";
   if (pageId === "home") return "home";
   if (pageId === "archive") return "archive";
+  if (pageId === "ad-debug") return "debug";
   if (REALM_PAGES.has(pageId)) return "realm";
   return "home";
 }
@@ -322,6 +480,9 @@ const LOADING_MESSAGES = {
   magic8: "Shaking the cosmic 8-ball...",
   numerology: "Calculating sacred vibrations...",
   "daily-fortune": "The Dawn Oracle inscribes your fortune...",
+  birthchart: "Astaria reads your planetary placements...",
+  palmistry: "Cassandra studies the lines of your palm...",
+  iching: "Sage Lao-Tan interprets the hexagram...",
   default: "Consulting the spirits...",
 };
 
@@ -342,12 +503,17 @@ function setOutput(realm, text, isLoading = false) {
   }
 }
 
-function setOutputHTML(realm, html) {
+function setOutputHTML(realm, html, isLoading = false) {
   const el = document.querySelector(`[data-output="${realm}"]`);
   if (!el) return;
   el.innerHTML = html;
   el.style.display = "block";
-  el.classList.remove("loading");
+  if (isLoading) {
+    el.classList.add("loading");
+    clearResultAftercare(realm);
+  } else {
+    el.classList.remove("loading");
+  }
 }
 
 async function callAPI(endpoint, body) {
@@ -367,6 +533,22 @@ function escapeHTML(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
+}
+
+function formatResponse(text) {
+  if (!text) return "";
+  let html = text
+    .replace(/```html/g, '')
+    .replace(/```/g, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ''); // basic XSS protection
+  
+  if (!html.includes('<p>') && !html.includes('<h3>')) {
+    html = escapeHTML(html);
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
+  }
+  return html;
 }
 
 function setReadingState(isAnimating) {
@@ -518,9 +700,13 @@ function renderArchive() {
     "chinese-zodiac": "Chinese Zodiac",
     tarot: "Tarot",
     love: "Love Oracle",
+    "love-match": "Love Compatibility",
     magic8: "Magic 8 Ball",
     numerology: "Numerology",
     "daily-fortune": "Daily Fortune",
+    birthchart: "Birth Chart",
+    palmistry: "Palm Reading",
+    iching: "I Ching",
     reading: "Crystal Ball",
     chat: "Crystal Ball Chat",
   };
@@ -578,7 +764,7 @@ for (const link of document.querySelectorAll('[data-nav="archive"]')) {
 }
 
 // =========================================================
-// CRYSTAL BALL CHAT (Madame Fortuna Conversational AI)
+// CRYSTAL BALL CHAT (Madame Fortuna Conversational AI & Wizard)
 // =========================================================
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
@@ -590,29 +776,44 @@ const fortuneOmen = document.getElementById("fortune-omen");
 const fortuneMood = document.getElementById("fortune-mood");
 const fortuneQuestionnaireHint = document.getElementById("fortune-questionnaire-hint");
 
+// --- Expanded Wizard Setup ---
+const wizardContainer = document.getElementById("fortune-wizard");
+const wizardSteps = document.querySelectorAll(".wizard-step");
+const progressBeads = document.querySelectorAll(".progress-bead");
+const progressBar = document.getElementById("wizard-progress-bar");
+const prevBtn = document.getElementById("wizard-prev-btn");
+const nextBtn = document.getElementById("wizard-next-btn");
+
+let currentStep = 1;
 let conversationHistory = [];
 let chatBusy = false;
 
 function getFortuneProfile() {
   return {
-    focus: fortuneFocus?.value || "",
-    timeframe: fortuneTimeframe?.value || "",
-    omen: fortuneOmen?.value || "",
-    mood: fortuneMood?.value || "",
+    focus: document.getElementById("fortune-focus")?.value || "",
+    timeframe: document.getElementById("fortune-timeframe")?.value || "",
+    omen: document.getElementById("fortune-omen")?.value || "",
+    mood: document.getElementById("fortune-mood")?.value || "",
+    element: document.getElementById("fortune-element")?.value || "",
+    moonPhase: document.getElementById("fortune-moonphase")?.value || "",
+    tarotSigil: document.getElementById("fortune-tarotsigil")?.value || "",
   };
 }
 
 function fortuneProfileReady() {
   const profile = getFortuneProfile();
-  return Boolean(profile.focus && profile.timeframe);
+  return Boolean(profile.focus && profile.timeframe && profile.element && profile.moonPhase && profile.tarotSigil);
 }
 
 function describeFortuneProfile(profile = getFortuneProfile()) {
   const fragments = [];
   if (profile.focus) fragments.push(`matter: ${profile.focus}`);
   if (profile.timeframe) fragments.push(`season: ${profile.timeframe}`);
+  if (profile.element) fragments.push(`element: ${profile.element}`);
   if (profile.omen) fragments.push(`omen: ${profile.omen}`);
   if (profile.mood) fragments.push(`heart: ${profile.mood}`);
+  if (profile.moonPhase) fragments.push(`moon: ${profile.moonPhase}`);
+  if (profile.tarotSigil) fragments.push(`sigil: ${profile.tarotSigil}`);
   return fragments.join("; ");
 }
 
@@ -623,16 +824,151 @@ function syncFortuneQuestionnaire() {
     fortuneQuestionnaireHint.classList.toggle("ready", ready);
     fortuneQuestionnaireHint.textContent = ready
       ? `The mirror is tuned to ${describeFortuneProfile()}.`
-      : "Select at least a matter and a season before the mirror opens fully.";
+      : "Complete all 7 steps of the ritual before the mirror opens.";
   }
   if (orbStatus && !chatBusy) {
-    orbStatus.textContent = ready ? "The mists are listening..." : "Choose a matter and season...";
+    orbStatus.textContent = ready ? "The mists are listening..." : "Align your frequencies below...";
   }
 }
 
-for (const el of [fortuneFocus, fortuneTimeframe, fortuneOmen, fortuneMood]) {
-  el?.addEventListener("change", syncFortuneQuestionnaire);
+// Initialise options selection
+function initWizardOptions() {
+  document.querySelectorAll(".wizard-opt-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const field = btn.dataset.field;
+      const value = btn.dataset.value;
+
+      // Deselect siblings
+      btn.parentElement.querySelectorAll(".wizard-opt-btn").forEach((sibling) => {
+        sibling.classList.remove("selected");
+      });
+
+      // Select clicked
+      btn.classList.add("selected");
+
+      // Sync to hidden input/select
+      if (field === "focus") {
+        const sel = document.getElementById("fortune-focus");
+        if (sel) sel.value = value;
+      } else if (field === "timeframe") {
+        const sel = document.getElementById("fortune-timeframe");
+        if (sel) sel.value = value;
+      } else if (field === "mood") {
+        const sel = document.getElementById("fortune-mood");
+        if (sel) sel.value = value;
+      } else if (field === "omen") {
+        const sel = document.getElementById("fortune-omen");
+        if (sel) sel.value = value;
+      } else if (field === "element") {
+        const inp = document.getElementById("fortune-element");
+        if (inp) inp.value = value;
+      } else if (field === "moonphase") {
+        const inp = document.getElementById("fortune-moonphase");
+        if (inp) inp.value = value;
+      }
+
+      trackEvent("wizard_option_selected", { field, value });
+      syncFortuneQuestionnaire();
+      updateWizardNavigation();
+    });
+  });
+
+  // Tarot Sigil Drew
+  document.querySelectorAll(".tarot-draw-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      if (document.getElementById("fortune-tarotsigil").value) return; // Already drew
+
+      const cardName = card.dataset.cardReveal;
+      card.classList.add("flipped", "selected");
+
+      const inp = document.getElementById("fortune-tarotsigil");
+      if (inp) inp.value = cardName;
+
+      const hint = document.getElementById("tarot-draw-hint");
+      if (hint) {
+        hint.innerHTML = `You drew <strong>${cardName}</strong>! The ritual is complete.`;
+        hint.style.color = "var(--gold-light)";
+      }
+
+      trackEvent("wizard_tarot_drawn", { card: cardName });
+      syncFortuneQuestionnaire();
+      updateWizardNavigation();
+    });
+  });
 }
+
+function updateWizardNavigation() {
+  if (!progressBar || !prevBtn || !nextBtn) return;
+  // Update progress
+  progressBar.style.width = `${((currentStep - 1) / 6) * 100}%`;
+
+  // Update beads
+  progressBeads.forEach((bead, i) => {
+    bead.classList.toggle("active", i < currentStep);
+  });
+
+  // Toggle visible panel
+  wizardSteps.forEach((stepPanel) => {
+    const stepNum = parseInt(stepPanel.dataset.stepPanel, 10);
+    stepPanel.classList.toggle("active", stepNum === currentStep);
+  });
+
+  // Enable/Disable Back
+  prevBtn.disabled = currentStep === 1;
+
+  // Next state
+  const isStepComplete = checkCurrentStepComplete();
+  nextBtn.disabled = !isStepComplete;
+
+  if (currentStep === 7) {
+    nextBtn.textContent = "Seal Intention & Enter";
+  } else {
+    nextBtn.textContent = "Next \u2192";
+  }
+}
+
+function checkCurrentStepComplete() {
+  const profile = getFortuneProfile();
+  switch (currentStep) {
+    case 1: return Boolean(profile.focus);
+    case 2: return Boolean(profile.timeframe);
+    case 3: return Boolean(profile.mood);
+    case 4: return Boolean(profile.element);
+    case 5: return Boolean(profile.omen);
+    case 6: return Boolean(profile.moonPhase);
+    case 7: return Boolean(profile.tarotSigil);
+    default: return false;
+  }
+}
+
+prevBtn?.addEventListener("click", () => {
+  if (currentStep > 1) {
+    currentStep--;
+    updateWizardNavigation();
+  }
+});
+
+nextBtn?.addEventListener("click", () => {
+  if (currentStep < 7) {
+    currentStep++;
+    updateWizardNavigation();
+  } else if (currentStep === 7) {
+    sealWizard();
+  }
+});
+
+function sealWizard() {
+  wizardContainer?.classList.add("wizard-sealed");
+  trackEvent("wizard_completed", describeFortuneProfile());
+  
+  if (orbStatus) orbStatus.textContent = "The crystal is fully tuned. Speak your question...";
+  syncFortuneQuestionnaire();
+  chatInput?.focus();
+}
+
+// Initialise options on page load
+initWizardOptions();
+updateWizardNavigation();
 
 function createMessageEl(role, text) {
   const msg = document.createElement("div");
@@ -852,7 +1188,7 @@ for (const btn of document.querySelectorAll(
         );
       } else {
         const answer = extractResponse(data);
-        setOutput(realm, answer);
+        setOutputHTML(realm, formatResponse(answer));
       }
       saveToArchive(realm, value, extractResponse(data));
       markResultRendered(realm, extractResponse(data));
@@ -897,7 +1233,7 @@ for (const btn of document.querySelectorAll(".zodiac-btn[data-sign]")) {
         sign: selectedSign,
       });
       const answer = extractResponse(data);
-      setOutput("western-zodiac", answer);
+      setOutputHTML("western-zodiac", formatResponse(answer));
       saveToArchive("western-zodiac", selectedSign, answer);
       markResultRendered("western-zodiac", answer);
     } catch {
@@ -949,7 +1285,7 @@ document.getElementById("btn-chinese")?.addEventListener("click", async () => {
   try {
     const data = await callAPI("/api/chinese-zodiac", { year });
     const answer = extractResponse(data);
-    setOutput("chinese-zodiac", answer);
+    setOutputHTML("chinese-zodiac", formatResponse(answer));
     saveToArchive("chinese-zodiac", `Born ${year}`, answer);
     markResultRendered("chinese-zodiac", answer);
   } catch {
@@ -962,43 +1298,7 @@ document.getElementById("btn-chinese")?.addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-// --- Love Oracle ---
-document.getElementById("btn-love")?.addEventListener("click", async () => {
-  const inputEl = document.querySelector('[data-input="love"]');
-  const question = inputEl?.value?.trim();
-  if (!question) {
-    setOutput("love", "Please ask a question about matters of the heart.");
-    return;
-  }
-  const name1 = document.getElementById("love-name1")?.value?.trim() || "";
-  const name2 = document.getElementById("love-name2")?.value?.trim() || "";
-  const btn = document.getElementById("btn-love");
 
-  setOutput("love", getLoadingMessage("love"), true);
-  btn.disabled = true;
-  setReadingState(true);
-  trackEvent("question_submitted", {
-    realm: "love",
-    question_length: question.length,
-  });
-  trackEvent("reading_started", { realm: "love" });
-  try {
-    const body = { question };
-    if (name1) body.name1 = name1;
-    if (name2) body.name2 = name2;
-    const data = await callAPI("/api/love", body);
-    const answer = extractResponse(data);
-    setOutput("love", answer);
-    const label =
-      name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
-    saveToArchive("love", label, answer);
-    markResultRendered("love", answer);
-  } catch {
-    setOutput("love", "The hearts are silent. Please try again later.");
-  }
-  setReadingState(false);
-  btn.disabled = false;
-});
 
 // --- Numerology ---
 document
@@ -1026,7 +1326,7 @@ document
         const core = document.getElementById("life-path-display");
         if (core) core.textContent = data.lifePathNumber;
       }
-      setOutput("numerology", answer);
+      setOutputHTML("numerology", formatResponse(answer));
       saveToArchive("numerology", `Birthday: ${birthday}`, answer);
       markResultRendered("numerology", answer);
     } catch {
@@ -1059,7 +1359,7 @@ document.getElementById("btn-daily")?.addEventListener("click", async () => {
     if (sign) body.sign = sign;
     const data = await callAPI("/api/daily-fortune", body);
     const answer = extractResponse(data);
-    setOutput("daily-fortune", answer);
+    setOutputHTML("daily-fortune", formatResponse(answer));
     saveToArchive("daily-fortune", sign || "General", answer);
     markResultRendered("daily-fortune", answer);
   } catch {
@@ -1077,6 +1377,339 @@ const magic8Ball = document.getElementById("magic8-ball");
 magic8Ball?.addEventListener("click", () => {
   magic8Ball.classList.add("shaking");
   setTimeout(() => magic8Ball.classList.remove("shaking"), 500);
+});
+
+// =========================================================
+// THE TEMPLE OF MATCHES (Love Match & Compatibility Systems)
+// =========================================================
+let activeLoveMatchPanel = "zodiac";
+
+// --- Love Match Sub-Tab Navigation ---
+const loveMatchTypeSelector = document.getElementById("love-match-type-selector");
+if (loveMatchTypeSelector) {
+  loveMatchTypeSelector.addEventListener("change", (e) => {
+    activeLoveMatchPanel = e.target.value;
+
+    for (const panel of document.querySelectorAll(".love-option-panel")) {
+      panel.classList.remove("active");
+    }
+    const targetPanel = document.querySelector(`[data-love-panel="${activeLoveMatchPanel}"]`);
+    if (targetPanel) {
+      targetPanel.classList.add("active");
+    }
+    trackEvent("love_match_tab_switch", { tab: activeLoveMatchPanel });
+  });
+}
+
+// --- Interactive Dual Tarot Draw Deck ---
+const LOVE_TAROT_CARDS = [
+  { name: "The Lovers", symbol: "❤️" },
+  { name: "The Empress", symbol: "🌸" },
+  { name: "The Emperor", symbol: "👑" },
+  { name: "The Sun", symbol: "☀️" },
+  { name: "The Star", symbol: "⭐" },
+  { name: "The Moon", symbol: "🌙" },
+  { name: "The World", symbol: "🌍" },
+  { name: "The High Priestess", symbol: "🔮" },
+  { name: "The Magician", symbol: "⚡" },
+  { name: "Wheel of Fortune", symbol: "🌀" }
+];
+
+const seekerCardReveal = document.getElementById("love-seeker-card-reveal");
+const partnerCardReveal = document.getElementById("love-partner-card-reveal");
+const matchSeekerCardInput = document.getElementById("match-seeker-card");
+const matchPartnerCardInput = document.getElementById("match-partner-card");
+
+function checkLoveTarotHint() {
+  const isSeekerFlipped = seekerCardReveal?.classList.contains("flipped");
+  const isPartnerFlipped = partnerCardReveal?.classList.contains("flipped");
+  const hintEl = document.getElementById("love-tarot-hint");
+  if (hintEl) {
+    if (isSeekerFlipped && isPartnerFlipped) {
+      hintEl.innerHTML = "✨ Your combined destiny is drawn. Click below to reveal compatibility! ✨";
+    } else if (isSeekerFlipped) {
+      hintEl.textContent = "Draw their destiny card to proceed...";
+    } else if (isPartnerFlipped) {
+      hintEl.textContent = "Draw your destiny card to proceed...";
+    } else {
+      hintEl.textContent = "Click cards to draw your combined destiny...";
+    }
+  }
+}
+
+seekerCardReveal?.addEventListener("click", () => {
+  if (seekerCardReveal.classList.contains("flipped")) return;
+  const card = LOVE_TAROT_CARDS[Math.floor(Math.random() * LOVE_TAROT_CARDS.length)];
+  const backName = seekerCardReveal.querySelector(".card-back .card-name");
+  const backArt = seekerCardReveal.querySelector(".card-back .card-art");
+  if (backName) backName.textContent = card.name;
+  if (backArt) backArt.innerHTML = card.symbol;
+  if (matchSeekerCardInput) matchSeekerCardInput.value = card.name;
+  seekerCardReveal.classList.add("flipped");
+  checkLoveTarotHint();
+  const rect = seekerCardReveal.getBoundingClientRect();
+  window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
+});
+
+partnerCardReveal?.addEventListener("click", () => {
+  if (partnerCardReveal.classList.contains("flipped")) return;
+  const card = LOVE_TAROT_CARDS[Math.floor(Math.random() * LOVE_TAROT_CARDS.length)];
+  const backName = partnerCardReveal.querySelector(".card-back .card-name");
+  const backArt = partnerCardReveal.querySelector(".card-back .card-art");
+  if (backName) backName.textContent = card.name;
+  if (backArt) backArt.innerHTML = card.symbol;
+  if (matchPartnerCardInput) matchPartnerCardInput.value = card.name;
+  partnerCardReveal.classList.add("flipped");
+  checkLoveTarotHint();
+  const rect = partnerCardReveal.getBoundingClientRect();
+  window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20);
+});
+
+// --- Deterministic Cosmic Compatibility Score ---
+function calculateCosmicScore(name1, name2, matchType, val1, val2) {
+  const combinedStr = `${name1.trim().toLowerCase()}+${name2.trim().toLowerCase()}+${matchType}+${(val1 || "").toLowerCase()}+${(val2 || "").toLowerCase()}`;
+  let hash = 0;
+  for (let i = 0; i < combinedStr.length; i++) {
+    hash = combinedStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash % 55) + 45; // Deterministic score between 45% and 99%
+}
+
+// --- Reveal Love Compatibility ---
+document.getElementById("btn-love-match")?.addEventListener("click", async () => {
+  const btn = document.getElementById("btn-love-match");
+
+  if (activeLoveMatchPanel === "vision") {
+    const energy = document.getElementById("vision-energy")?.value;
+    const element = document.getElementById("vision-element")?.value;
+    const age = document.getElementById("vision-age")?.value?.trim();
+    const idealDate = document.getElementById("vision-ideal-date")?.value?.trim();
+    if (!energy || !element || !age || !idealDate) {
+      setOutput("love-match", "Please answer all of Rosalind's questions so she may glimpse your cosmic partner.");
+      return;
+    }
+    
+    setOutputHTML("love-match", `
+      <div class="vision-loading">
+        <p>Rosalind is gazing into the cosmic weave. This intense vision may take up to 60 seconds to manifest...</p>
+        <div class="vision-progress-bar">
+          <div class="vision-progress-fill"></div>
+        </div>
+      </div>
+    `, true);
+    btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "love-match", match_type: "vision" });
+    trackEvent("reading_started", { realm: "love-match" });
+    
+    try {
+      const data = await callAPI("/api/soulmate-vision", { energy, element, age, idealDate });
+      
+      const disclaimer = `<div class="vision-disclaimer">
+        <i>Disclaimer: This is an AI-generated vision based on probability and astrological symbolism. We do not suggest spending time or money looking for this specific individual.</i>
+      </div>`;
+      
+      const resultHtml = `
+        <div class="soulmate-vision-result">
+          <h3 class="vision-title">Your Destined Encounter</h3>
+          <img src="${data.imageBase64}" alt="Your Soulmate Vision" class="vision-image" />
+          <div class="reading-body vision-body">
+            ${formatResponse(data.response || data.message)}
+          </div>
+          ${disclaimer}
+        </div>
+      `;
+      
+      displayResult("love-match", resultHtml, "/result/soulmate-vision");
+      btn.disabled = false;
+      setReadingState(false);
+      scheduleAmbientPopunder("vision_delivered");
+    } catch (err) {
+      setOutput("love-match", getFallbackResponse());
+      btn.disabled = false;
+      setReadingState(false);
+    }
+    return;
+  }
+
+  if (activeLoveMatchPanel === "oracle") {
+    const question = document.getElementById("love-oracle-question")?.value?.trim();
+    if (!question) {
+      setOutput("love-match", "Please ask a question about matters of the heart.");
+      return;
+    }
+    const name1 = document.getElementById("match-seeker-name")?.value?.trim() || "";
+    const name2 = document.getElementById("match-partner-name")?.value?.trim() || "";
+    
+    setOutput("love-match", getLoadingMessage("love"), true);
+    btn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "love-match", match_type: "oracle", question_length: question.length });
+    trackEvent("reading_started", { realm: "love-match" });
+    
+    try {
+      const body = { question };
+      if (name1) body.name1 = name1;
+      if (name2) body.name2 = name2;
+      const data = await callAPI("/api/love", body);
+      const answer = extractResponse(data);
+      displayResult("love-match", formatResponse(answer), "/result/love-oracle");
+      const label = name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
+      saveToArchive("love", label, answer);
+      scheduleAmbientPopunder("oracle_delivered");
+    } catch {
+      setOutput("love-match", "The hearts are silent. Please try again later.");
+    }
+    btn.disabled = false;
+    setReadingState(false);
+    return;
+  }
+
+  const seekerName = document.getElementById("match-seeker-name")?.value?.trim();
+  const partnerName = document.getElementById("match-partner-name")?.value?.trim();
+
+  if (!seekerName || !partnerName) {
+    setOutput("love-match", "Please enter both names to weigh the cosmic compatibility.");
+    return;
+  }
+
+  let seekerValue = "";
+  let partnerValue = "";
+
+  if (activeLoveMatchPanel === "zodiac") {
+    seekerValue = document.getElementById("match-seeker-zodiac")?.value;
+    partnerValue = document.getElementById("match-partner-zodiac")?.value;
+    if (!seekerValue || !partnerValue) {
+      setOutput("love-match", "Please select zodiac signs for both seekers.");
+      return;
+    }
+  } else if (activeLoveMatchPanel === "numerology") {
+    seekerValue = document.getElementById("match-seeker-birthday")?.value;
+    partnerValue = document.getElementById("match-partner-birthday")?.value;
+    if (!seekerValue || !partnerValue) {
+      setOutput("love-match", "Please enter dates of birth for both seekers.");
+      return;
+    }
+  } else if (activeLoveMatchPanel === "tarot") {
+    seekerValue = matchSeekerCardInput?.value;
+    partnerValue = matchPartnerCardInput?.value;
+    if (!seekerValue || !partnerValue) {
+      setOutput("love-match", "Please flip and draw a destiny card for both partners first.");
+      return;
+    }
+  } else if (activeLoveMatchPanel === "quiz") {
+    seekerValue = document.getElementById("match-quiz-sanctuary")?.value;
+    partnerValue = document.getElementById("match-quiz-frequency")?.value;
+    if (!seekerValue || !partnerValue) {
+      setOutput("love-match", "Please select answers for both cosmic quiz questions.");
+      return;
+    }
+  } else if (activeLoveMatchPanel === "omen") {
+    seekerValue = document.getElementById("match-seeker-omen")?.value;
+    partnerValue = document.getElementById("match-partner-omen")?.value;
+    if (!seekerValue || !partnerValue) {
+      setOutput("love-match", "Please choose a prevailing omen for both individuals.");
+      return;
+    }
+  }
+
+  setOutput("love-match", getLoadingMessage("love"), true);
+  btn.disabled = true;
+  setReadingState(true);
+  trackEvent("question_submitted", {
+    realm: "love-match",
+    match_type: activeLoveMatchPanel,
+  });
+  trackEvent("reading_started", { realm: "love-match" });
+
+  try {
+    const score = calculateCosmicScore(seekerName, partnerName, activeLoveMatchPanel, seekerValue, partnerValue);
+    const body = {
+      type: activeLoveMatchPanel,
+      seekerName,
+      partnerName,
+      seekerValue,
+      partnerValue
+    };
+
+    const data = await callAPI("/api/love-match", body);
+    const answer = extractResponse(data);
+
+    let tier = "Karmic Partners";
+    let color = "var(--rose)";
+    if (score >= 90) {
+      tier = "Twin Flames (Divine Union)";
+      color = "#ff3b70";
+    } else if (score >= 75) {
+      tier = "Cosmic Resonance (High Affinity)";
+      color = "#d4af37";
+    } else if (score >= 60) {
+      tier = "Karmic Partners (Soul Growth)";
+      color = "#a78bfa";
+    } else if (score >= 45) {
+      tier = "Spiritual Crossroads (Aligned Journey)";
+      color = "#60a5fa";
+    } else {
+      tier = "Restless Constellations (Karmic Mirror)";
+      color = "#94a3b8";
+    }
+
+    const scoreHtml = `
+      <div class="love-match-result-card">
+        <div class="love-match-badge-container">
+          <svg class="love-match-circle" viewBox="0 0 100 100">
+            <circle class="circle-bg" cx="50" cy="50" r="42" />
+            <circle class="circle-fill" cx="50" cy="50" r="42" style="stroke: ${color}; stroke-dasharray: 264; stroke-dashoffset: ${264 - (264 * score) / 100};" />
+          </svg>
+          <div class="love-match-score-text" style="color: ${color};">
+            <span class="score-num">${score}%</span>
+            <span class="score-label">CHEMISTRY</span>
+          </div>
+        </div>
+        <div class="love-match-tier" style="background: rgba(251, 113, 133, 0.08); border-color: ${color}; color: ${color};">
+          💝 ${tier} 💝
+        </div>
+        <div class="love-match-couple-names">
+          ${escapeHTML(seekerName)} & ${escapeHTML(partnerName)}
+        </div>
+        <div class="love-match-reading-text">
+          ${formatResponse(answer)}
+        </div>
+        <button class="btn-gold btn-save-archive" id="btn-save-love-match-archive">Save Compatibility to Archive</button>
+      </div>
+    `;
+
+    setOutputHTML("love-match", scoreHtml);
+
+    document.getElementById("btn-save-love-match-archive")?.addEventListener("click", () => {
+      saveToArchive(
+        "love-match",
+        `${seekerName} & ${partnerName} (${activeLoveMatchPanel.toUpperCase()})`,
+        `Chemistry Score: ${score}% (${tier})\n\nProphecy:\n${answer}`
+      );
+      const saveBtn = document.getElementById("btn-save-love-match-archive");
+      if (saveBtn) {
+        saveBtn.textContent = "Saved to Archive ✓";
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.7";
+      }
+    });
+
+    markResultRendered("love-match", answer);
+
+    setTimeout(() => {
+      const badge = document.querySelector(".love-match-badge-container");
+      if (badge) {
+        const rect = badge.getBoundingClientRect();
+        window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 45);
+      }
+    }, 150);
+
+  } catch (err) {
+    setOutput("love-match", "The hearts are silent. Please check your connection and try again.");
+  }
+  setReadingState(false);
+  btn.disabled = false;
 });
 
 // --- Boot ---
@@ -1110,3 +1743,524 @@ if (initialRoute.pageId === "archive") {
   trackEvent("archive_open", { page_path: ROUTE_BY_PAGE.archive });
   renderArchive();
 }
+
+// =========================================================
+// TAROT FULL SESSION (Interactive Fan Deck Drawing)
+// =========================================================
+const TAROT_MAJOR_ARCANA = [
+  "The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor",
+  "The Hierophant", "The Lovers", "The Chariot", "Strength", "The Hermit",
+  "Wheel of Fortune", "Justice", "The Hanged Man", "Death", "Temperance",
+  "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World",
+];
+
+const TAROT_SYMBOLS = {
+  "The Fool": "🃏", "The Magician": "⚡", "The High Priestess": "🌙",
+  "The Empress": "🌸", "The Emperor": "👑", "The Hierophant": "📿",
+  "The Lovers": "❤️", "The Chariot": "⚔️", "Strength": "🦁",
+  "The Hermit": "🏔️", "Wheel of Fortune": "🌀", "Justice": "⚖️",
+  "The Hanged Man": "🔮", "Death": "💀", "Temperance": "☯",
+  "The Devil": "😈", "The Tower": "🗼", "The Star": "⭐",
+  "The Moon": "🌕", "The Sun": "☀️", "Judgement": "📯", "The World": "🌍",
+};
+
+(function initTarotSession() {
+  const fanDeck = document.getElementById("tarot-fan-deck");
+  const sessionHint = document.getElementById("tarot-session-hint");
+  const formSection = document.getElementById("tarot-form-section");
+  const mistsOverlay = document.getElementById("tarot-mists-overlay");
+  const questionInput = document.getElementById("tarot-question-input");
+  const submitBtn = document.getElementById("btn-tarot-submit");
+  if (!fanDeck) return;
+
+  const shuffled = [...TAROT_MAJOR_ARCANA].sort(() => Math.random() - 0.5);
+  let drawnCount = 0;
+  const drawnCards = [];
+
+  // Build fan of face-down cards
+  shuffled.forEach((cardName, i) => {
+    const card = document.createElement("div");
+    card.className = "fan-card";
+    card.style.setProperty("--fan-index", i);
+    card.style.setProperty("--fan-total", shuffled.length);
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-front"><div class="gold-seal">&#127183;</div></div>
+        <div class="card-back">
+          <span class="card-art">${TAROT_SYMBOLS[cardName] || "✨"}</span>
+          <span class="card-name">${cardName}</span>
+        </div>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      if (drawnCount >= 3 || card.classList.contains("drawn")) return;
+      drawnCount++;
+      drawnCards.push(cardName);
+      card.classList.add("drawn", "flipped");
+
+      // Update the spread slot
+      const slot = document.getElementById(`tarot-slot-${drawnCount}`);
+      if (slot) {
+        const backName = slot.querySelector(".card-name");
+        const backArt = slot.querySelector(".card-art");
+        if (backName) backName.textContent = cardName;
+        if (backArt) backArt.innerHTML = TAROT_SYMBOLS[cardName] || "✨";
+        slot.classList.add("flipped");
+        const rect = slot.getBoundingClientRect();
+        window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 25);
+      }
+
+      // Store in hidden inputs
+      const hiddenInput = document.getElementById(`tarot-card-input-${drawnCount}`);
+      if (hiddenInput) hiddenInput.value = cardName;
+
+      const labels = ["Past", "Present", "Future"];
+      if (sessionHint) {
+        if (drawnCount < 3) {
+          sessionHint.textContent = `✨ Card ${drawnCount} drawn: ${cardName}. Draw your ${labels[drawnCount]} card... ✨`;
+        } else {
+          sessionHint.innerHTML = `✨ All three cards drawn! The spread is complete. Ask your question below... ✨`;
+        }
+      }
+
+      // Unlock form after 3 cards
+      if (drawnCount === 3 && formSection) {
+        formSection.classList.remove("locked");
+        formSection.classList.add("unlocked");
+        if (mistsOverlay) mistsOverlay.style.display = "none";
+        if (questionInput) questionInput.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        questionInput?.focus();
+        trackEvent("tarot_deck_complete", { cards: drawnCards.join(", ") });
+      }
+    });
+    fanDeck.appendChild(card);
+  });
+
+  // Tarot submit handler
+  submitBtn?.addEventListener("click", async () => {
+    const question = questionInput?.value?.trim();
+    if (!question) {
+      setOutput("tarot", "Please enter your question for the cards.");
+      return;
+    }
+    if (drawnCards.length < 3) {
+      setOutput("tarot", "Please draw three cards from the deck first.");
+      return;
+    }
+
+    setOutput("tarot", getLoadingMessage("tarot"), true);
+    submitBtn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "tarot", question_length: question.length });
+    trackEvent("reading_started", { realm: "tarot" });
+
+    try {
+      const data = await callAPI("/api/tarot", { question, cards: drawnCards });
+      const answer = extractResponse(data);
+      const labels = ["Past", "Present", "Future"];
+      const cardsHTML = drawnCards
+        .map((c, i) => `<span class="drawn-card">${labels[i]}: ${escapeHTML(c)}</span>`)
+        .join("");
+      setOutputHTML("tarot", `<div class="cards-drawn">${cardsHTML}</div><div class="reading-body">${formatResponse(answer)}</div>`);
+      saveToArchive("tarot", `${question} [${drawnCards.join(", ")}]`, answer);
+      markResultRendered("tarot", answer);
+    } catch {
+      setOutput("tarot", "The cards are silent. Please try again later.");
+    }
+    setReadingState(false);
+    submitBtn.disabled = false;
+  });
+})();
+
+// =========================================================
+// BIRTH CHART (Astrological Natal Chart)
+// =========================================================
+(function initBirthChart() {
+  const planetNodes = document.querySelectorAll(".planet-node");
+  const planetDisplay = document.getElementById("birthchart-planet-display");
+  const btnBirthChart = document.getElementById("btn-birthchart");
+  if (!btnBirthChart) return;
+
+  const PLANET_INFO = {
+    Sun: { sign: "Leo", symbol: "☀️", desc: "Your core identity, ego, and vital force" },
+    Moon: { sign: "Cancer", symbol: "🌙", desc: "Your emotional nature, instincts, and inner self" },
+    Ascendant: { sign: "Libra", symbol: "⬆️", desc: "Your outward personality and first impression" },
+    Mercury: { sign: "Virgo", symbol: "☿", desc: "Your communication style and intellectual approach" },
+    Venus: { sign: "Taurus", symbol: "♀️", desc: "Your love language, beauty, and values" },
+    Mars: { sign: "Aries", symbol: "♂️", desc: "Your drive, ambition, and energy" },
+  };
+
+  // Deterministic sign assignment based on birthday
+  const SIGNS_ORDER = [
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+  ];
+
+  function computePlacements(birthday) {
+    const dateStr = birthday.replace(/\D/g, "");
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) {
+      hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return {
+      sun: SIGNS_ORDER[Math.abs(hash) % 12],
+      moon: SIGNS_ORDER[Math.abs(hash * 7 + 3) % 12],
+      ascendant: SIGNS_ORDER[Math.abs(hash * 13 + 5) % 12],
+      mercury: SIGNS_ORDER[Math.abs(hash * 17 + 7) % 12],
+      venus: SIGNS_ORDER[Math.abs(hash * 23 + 11) % 12],
+      mars: SIGNS_ORDER[Math.abs(hash * 31 + 13) % 12],
+    };
+  }
+
+  // Planet node click interactivity
+  planetNodes.forEach((node) => {
+    node.addEventListener("click", () => {
+      planetNodes.forEach((n) => n.classList.remove("active"));
+      node.classList.add("active");
+      const planet = node.dataset.planet;
+      const info = PLANET_INFO[planet];
+      if (planetDisplay && info) {
+        planetDisplay.innerHTML = `
+          <h4>${info.symbol} ${planet} — Ruler of ${info.sign}</h4>
+          <p>${info.desc}</p>
+          <p class="planet-detail-hint">Fill in your details below for a personalized reading.</p>
+        `;
+      }
+      const rect = node.getBoundingClientRect();
+      window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 15);
+      trackEvent("birthchart_planet_click", { planet });
+    });
+  });
+
+  // Birth chart form submission
+  btnBirthChart.addEventListener("click", async () => {
+    const birthday = document.getElementById("birthchart-date")?.value;
+    const birthtime = document.getElementById("birthchart-time")?.value || "";
+    const sign = document.getElementById("birthchart-sign")?.value;
+
+    if (!birthday || !sign) {
+      setOutput("birthchart", "Please enter your date of birth and select your sun sign.");
+      return;
+    }
+
+    const placements = computePlacements(birthday);
+
+    setOutput("birthchart", getLoadingMessage("birthchart"), true);
+    btnBirthChart.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "birthchart", selection: sign });
+    trackEvent("reading_started", { realm: "birthchart" });
+
+    try {
+      const data = await callAPI("/api/birthchart", {
+        birthday,
+        birthtime,
+        sign,
+        placements,
+      });
+      const answer = extractResponse(data);
+
+      // Update planet display with computed placements
+      if (planetDisplay) {
+        const placementHTML = Object.entries(placements)
+          .map(([planet, signName]) => `<span class="placement-tag">${planet}: ${signName}</span>`)
+          .join("");
+        planetDisplay.innerHTML = `
+          <h4>🌌 Your Natal Placements</h4>
+          <div class="placements-grid">${placementHTML}</div>
+        `;
+      }
+
+      // Highlight all planet nodes
+      planetNodes.forEach((n) => n.classList.add("active"));
+
+      setOutputHTML("birthchart", formatResponse(answer));
+      saveToArchive("birthchart", `Born ${birthday} (${sign})`, answer);
+      markResultRendered("birthchart", answer);
+
+      // Particle burst on the wheel
+      const wheel = document.getElementById("birthchart-svg-wheel");
+      if (wheel) {
+        const rect = wheel.getBoundingClientRect();
+        window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
+      }
+    } catch {
+      setOutput("birthchart", "The stars are veiled. Please try again later.");
+    }
+    setReadingState(false);
+    btnBirthChart.disabled = false;
+  });
+})();
+
+// =========================================================
+// PALMISTRY (Psychic Palm Reading)
+// =========================================================
+(function initPalmistry() {
+  const btnPalmistry = document.getElementById("btn-palmistry");
+  const palmLines = document.querySelectorAll(".palm-line");
+  const lineDisplay = document.getElementById("palmistry-line-display");
+  if (!btnPalmistry) return;
+
+  const LINE_INFO = {
+    "palm-line-heart": { name: "Heart Line", color: "rose", desc: "Governs emotions, romantic nature, and emotional stability" },
+    "palm-line-head": { name: "Head Line", color: "violet", desc: "Governs intellect, creativity, and mental approach" },
+    "palm-line-life": { name: "Life Line", color: "gold", desc: "Governs vitality, life force, and physical wellbeing" },
+    "palm-line-fate": { name: "Fate Line", color: "blue", desc: "Governs destiny, career path, and life direction" },
+  };
+
+  // Palm line click interactivity
+  palmLines.forEach((line) => {
+    line.addEventListener("click", () => {
+      palmLines.forEach((l) => l.classList.remove("active"));
+      line.classList.add("active");
+      const info = LINE_INFO[line.id];
+      if (lineDisplay && info) {
+        lineDisplay.innerHTML = `
+          <h4>✋ ${info.name}</h4>
+          <p>${info.desc}</p>
+          <p class="planet-detail-hint">Configure your line readings below for Cassandra's prophecy.</p>
+        `;
+      }
+      trackEvent("palmistry_line_click", { line: info?.name });
+    });
+
+    // Hover highlighting
+    line.addEventListener("mouseenter", () => line.classList.add("hover"));
+    line.addEventListener("mouseleave", () => line.classList.remove("hover"));
+  });
+
+  // Palmistry form submission
+  btnPalmistry.addEventListener("click", async () => {
+    const handShape = document.getElementById("palmistry-shape")?.value;
+    const heart = document.getElementById("palmistry-heart")?.value;
+    const head = document.getElementById("palmistry-head")?.value;
+    const life = document.getElementById("palmistry-life")?.value;
+    const fate = document.getElementById("palmistry-fate")?.value;
+
+    if (!handShape) {
+      setOutput("palmistry", "Please select your hand shape.");
+      return;
+    }
+
+    setOutput("palmistry", getLoadingMessage("palmistry"), true);
+    btnPalmistry.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "palmistry", hand_shape: handShape });
+    trackEvent("reading_started", { realm: "palmistry" });
+
+    try {
+      const data = await callAPI("/api/palmistry", {
+        handShape,
+        lines: { heart, head, life, fate },
+      });
+      const answer = extractResponse(data);
+
+      // Highlight all lines
+      palmLines.forEach((l) => l.classList.add("active"));
+
+      setOutputHTML("palmistry", formatResponse(answer));
+      saveToArchive("palmistry", `${handShape}`, answer);
+      markResultRendered("palmistry", answer);
+
+      // Particle burst on the hand
+      const handSvg = document.getElementById("palmistry-hand-svg");
+      if (handSvg) {
+        const rect = handSvg.getBoundingClientRect();
+        window.spawnParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 35);
+      }
+    } catch {
+      setOutput("palmistry", "The palm lines fade. Please try again later.");
+    }
+    setReadingState(false);
+    btnPalmistry.disabled = false;
+  });
+})();
+
+// =========================================================
+// I CHING COIN TOSS ORACLE
+// =========================================================
+(function initIChing() {
+  const btnToss = document.getElementById("btn-iching-toss");
+  const tossHint = document.getElementById("iching-toss-hint");
+  const hexTitleDisplay = document.getElementById("hexagram-title-display");
+  const formSection = document.getElementById("iching-form-section");
+  const mistsOverlay = document.getElementById("iching-mists-overlay");
+  const questionInput = document.getElementById("iching-question-input");
+  const submitBtn = document.getElementById("btn-iching-submit");
+  const hexTitleInput = document.getElementById("iching-hexagram-title");
+  const hexLinesInput = document.getElementById("iching-hexagram-lines");
+  const coins = [
+    document.getElementById("iching-coin-1"),
+    document.getElementById("iching-coin-2"),
+    document.getElementById("iching-coin-3"),
+  ];
+  if (!btnToss) return;
+
+  // I Ching hexagram lookup table (simplified — 64 hexagrams)
+  const HEXAGRAM_NAMES = [
+    "Ch'ien (The Creative)", "K'un (The Receptive)", "Chun (Difficulty at the Beginning)",
+    "Mêng (Youthful Folly)", "Hsü (Waiting)", "Sung (Conflict)",
+    "Shih (The Army)", "Pi (Holding Together)", "Hsiao Ch'u (Small Taming)",
+    "Lü (Treading)", "T'ai (Peace)", "P'i (Standstill)",
+    "T'ung Jên (Fellowship)", "Ta Yu (Great Possession)", "Ch'ien (Modesty)",
+    "Yü (Enthusiasm)", "Sui (Following)", "Ku (Work on the Decayed)",
+    "Lin (Approach)", "Kuan (Contemplation)", "Shih Ho (Biting Through)",
+    "Pi (Grace)", "Po (Splitting Apart)", "Fu (Return)",
+    "Wu Wang (Innocence)", "Ta Ch'u (Great Taming)", "I (Nourishment)",
+    "Ta Kuo (Great Exceeding)", "K'an (The Abysmal)", "Li (The Clinging Fire)",
+    "Hsien (Influence)", "Hêng (Duration)", "Tun (Retreat)",
+    "Ta Chuang (Great Power)", "Chin (Progress)", "Ming I (Darkening of the Light)",
+    "Chia Jên (The Family)", "K'uei (Opposition)", "Chien (Obstruction)",
+    "Hsieh (Deliverance)", "Sun (Decrease)", "I (Increase)",
+    "Kuai (Breakthrough)", "Kou (Coming to Meet)", "Ts'ui (Gathering Together)",
+    "Shêng (Pushing Upward)", "K'un (Oppression)", "Ching (The Well)",
+    "Ko (Revolution)", "Ting (The Cauldron)", "Chên (The Arousing Thunder)",
+    "Kên (Keeping Still Mountain)", "Chien (Development)", "Kuei Mei (The Marrying Maiden)",
+    "Fêng (Abundance)", "Lü (The Wanderer)", "Sun (The Gentle Wind)",
+    "Tui (The Joyous Lake)", "Huan (Dispersion)", "Chieh (Limitation)",
+    "Chung Fu (Inner Truth)", "Hsiao Kuo (Small Exceeding)",
+    "Chi Chi (After Completion)", "Wei Chi (Before Completion)",
+  ];
+
+  let tossCount = 0;
+  const lineResults = []; // stores yang/yin from bottom (1) to top (6)
+  let isTossing = false;
+
+  btnToss.addEventListener("click", () => {
+    if (tossCount >= 6 || isTossing) return;
+    isTossing = true;
+    btnToss.disabled = true;
+
+    // Animate coins
+    coins.forEach((coin) => {
+      coin.classList.remove("flipped");
+      coin.classList.add("tossing");
+    });
+
+    setTimeout(() => {
+      // Determine each coin: heads (2) or tails (3)
+      const results = coins.map(() => (Math.random() > 0.5 ? 2 : 3));
+      const sum = results.reduce((a, b) => a + b, 0); // 6, 7, 8, or 9
+      const isYang = sum === 7 || sum === 9; // yang = solid, yin = broken
+
+      // Show coin results
+      coins.forEach((coin, i) => {
+        coin.classList.remove("tossing");
+        if (results[i] === 3) {
+          coin.classList.add("flipped");
+        }
+      });
+
+      tossCount++;
+      lineResults.push(isYang ? "yang" : "yin");
+
+      // Update hexagram stack (build from bottom)
+      const lineEl = document.getElementById(`hexagram-line-${tossCount}`);
+      if (lineEl) {
+        lineEl.classList.add(isYang ? "yang" : "yin", "revealed");
+      }
+
+      // Update hint
+      if (tossHint) {
+        if (tossCount < 6) {
+          tossHint.textContent = `Toss ${tossCount} complete (${isYang ? "Yang ━━━" : "Yin ━ ━"}). Click to make Toss ${tossCount + 1}...`;
+        } else {
+          tossHint.textContent = "✨ The hexagram is complete! Enter your dilemma below...";
+        }
+      }
+
+      // Update hexagram title area
+      if (hexTitleDisplay) {
+        hexTitleDisplay.innerHTML = `
+          <h4>${tossCount < 6 ? "Hexagram building..." : "✨ Hexagram Complete ✨"}</h4>
+          <p>Tosses remaining: ${6 - tossCount}</p>
+        `;
+      }
+
+      // Particle burst
+      const deckRect = document.querySelector(".iching-coins-deck")?.getBoundingClientRect();
+      if (deckRect) {
+        window.spawnParticleBurst(deckRect.left + deckRect.width / 2, deckRect.top + deckRect.height / 2, 20);
+      }
+
+      // Unlock form after 6 tosses
+      if (tossCount === 6) {
+        const hexIndex = lineResults.reduce((acc, line, i) => acc + (line === "yang" ? (1 << i) : 0), 0) % 64;
+        const hexTitle = HEXAGRAM_NAMES[hexIndex] || "Unknown Hexagram";
+        const hexLinesStr = lineResults.map((l) => (l === "yang" ? "━━━" : "━ ━")).join(" / ");
+
+        if (hexTitleInput) hexTitleInput.value = hexTitle;
+        if (hexLinesInput) hexLinesInput.value = hexLinesStr;
+
+        if (hexTitleDisplay) {
+          hexTitleDisplay.innerHTML = `<h4>✨ ${hexTitle} ✨</h4><p>${hexLinesStr}</p>`;
+        }
+
+        if (formSection) {
+          formSection.classList.remove("locked");
+          formSection.classList.add("unlocked");
+        }
+        if (mistsOverlay) mistsOverlay.style.display = "none";
+        if (questionInput) questionInput.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        questionInput?.focus();
+
+        trackEvent("iching_hexagram_complete", { hexagram: hexTitle });
+      }
+
+      isTossing = false;
+      btnToss.disabled = tossCount >= 6;
+    }, 800);
+  });
+
+  // I Ching submit handler
+  submitBtn?.addEventListener("click", async () => {
+    const question = questionInput?.value?.trim();
+    const hexagramTitle = hexTitleInput?.value;
+    const hexagramLines = hexLinesInput?.value;
+
+    if (!question) {
+      setOutput("iching", "Please describe your dilemma for Sage Lao-Tan.");
+      return;
+    }
+    if (!hexagramTitle) {
+      setOutput("iching", "Please complete the coin toss ritual first.");
+      return;
+    }
+
+    setOutput("iching", getLoadingMessage("iching"), true);
+    submitBtn.disabled = true;
+    setReadingState(true);
+    trackEvent("question_submitted", { realm: "iching", question_length: question.length });
+    trackEvent("reading_started", { realm: "iching" });
+
+    try {
+      const data = await callAPI("/api/iching", {
+        question,
+        hexagramTitle,
+        hexagramLines,
+      });
+      const answer = extractResponse(data);
+
+      setOutputHTML("iching", `
+        <div class="iching-result-header">
+          <span class="hexagram-badge">☯ ${escapeHTML(hexagramTitle)}</span>
+        </div>
+        <div>${escapeHTML(answer)}</div>
+      `);
+      saveToArchive("iching", `${question} [${hexagramTitle}]`, answer);
+      markResultRendered("iching", answer);
+
+      // Big particle burst
+      const arenaRect = document.querySelector(".iching-arena")?.getBoundingClientRect();
+      if (arenaRect) {
+        window.spawnParticleBurst(arenaRect.left + arenaRect.width / 2, arenaRect.top + arenaRect.height / 2, 50);
+      }
+    } catch {
+      setOutput("iching", "The coins are silent. Please try again later.");
+    }
+    setReadingState(false);
+    submitBtn.disabled = false;
+  });
+})();

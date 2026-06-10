@@ -9,6 +9,7 @@ const loadedInstances = new Set();
 const pendingConsentSlots = new Set();
 const sessionRefreshCounts = new Map();
 const lastRefreshAt = new Map();
+const mobileAnchorDecisionKeys = new Set();
 
 let displayLoadQueue = Promise.resolve();
 let activeScreen = "home";
@@ -18,8 +19,160 @@ let sessionStartedAt = Date.now();
 let lastUserInteractionAt = 0;
 let ambientValueDelivered = false;
 let ambientPopunderTimer = null;
+let socialBarLoaded = false;
+
+const AD_DEBUG_COUNTERS = [
+  "registered",
+  "requested",
+  "loaded",
+  "filled",
+  "blocked",
+  "consent_pending",
+  "placeholder_zone",
+  "script_error",
+  "adblock_possible",
+  "device_rule",
+  "lazy_loading",
+];
+const AD_BLOCK_REASONS = new Set([
+  "consent_pending",
+  "consent_rejected",
+  "device_rule",
+  "disabled",
+  "placeholder_zone",
+  "script_error",
+]);
+const adDebugState = {
+  startedAt: new Date().toISOString(),
+  counts: Object.fromEntries(AD_DEBUG_COUNTERS.map((counter) => [counter, 0])),
+  consent: null,
+  slots: {},
+  recentEvents: [],
+};
+
+function cloneDebugValue(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function incrementDebugCounter(counter) {
+  if (!counter) return;
+  adDebugState.counts[counter] = (adDebugState.counts[counter] || 0) + 1;
+}
+
+function slotDebugRecord(payload) {
+  const slotId = payload.slot_id || payload.slotId;
+  if (!slotId) return null;
+  const instanceId = payload.ad_instance_id || payload.adInstanceId || slotId;
+  const key = `${slotId}:${instanceId}`;
+  adDebugState.slots[key] = {
+    ...(adDebugState.slots[key] || {}),
+    slot_id: slotId,
+    ad_instance_id: instanceId,
+    placement: payload.placement || adDebugState.slots[key]?.placement,
+    format: payload.format || adDebugState.slots[key]?.format,
+    zone_id: payload.zone_id || adDebugState.slots[key]?.zone_id,
+    screen: payload.screen || payload.screen_type || activeScreen,
+    realm: payload.realm || payload.realm_type || activeRealm,
+    updated_at: new Date().toISOString(),
+  };
+  return adDebugState.slots[key];
+}
+
+function renderAdDebugPanel() {
+  const countsEl = document.getElementById("ad-debug-counts");
+  const jsonEl = document.getElementById("ad-debug-json");
+  const summary = getAdDebugSummary();
+
+  if (countsEl) {
+    countsEl.innerHTML = AD_DEBUG_COUNTERS.map(
+      (counter) => `<div class="ad-debug-count"><dt>${counter}</dt><dd>${summary.counts[counter] || 0}</dd></div>`
+    ).join("");
+  }
+
+  if (jsonEl) {
+    jsonEl.textContent = JSON.stringify(summary, null, 2);
+  }
+}
+
+function recordAdDebug(event, payload = {}) {
+  if (event === "consent_state") {
+    adDebugState.consent = {
+      state: payload.state,
+      ads: payload.ads,
+      analytics: payload.analytics,
+      source: payload.source,
+      consent_required: payload.consent_required,
+    };
+  }
+
+  const slotRecord = slotDebugRecord(payload);
+  if (slotRecord) {
+    slotRecord.last_event = event;
+    slotRecord.last_reason = payload.reason || payload.error_reason || slotRecord.last_reason;
+    if (event === "ad_slot_registered") slotRecord.status = "registered";
+    if (event === "ad_slot_deferred") slotRecord.status = "deferred";
+    if (event === "ad_slot_requested") slotRecord.status = "requested";
+    if (event === "ad_script_loaded") slotRecord.status = "loaded";
+    if (event === "ad_slot_filled") slotRecord.status = "filled";
+    if (event === "ad_script_error" || event === "ad_slot_collapsed") slotRecord.status = "blocked";
+  }
+
+  if (event === "ad_slot_registered") incrementDebugCounter("registered");
+  if (event === "ad_slot_requested") incrementDebugCounter("requested");
+  if (event === "ad_script_loaded") incrementDebugCounter("loaded");
+  if (event === "ad_slot_filled") incrementDebugCounter("filled");
+  if (event === "ad_slot_deferred" && payload.reason === "lazy_loading") incrementDebugCounter("lazy_loading");
+  if (event === "ad_script_error") {
+    incrementDebugCounter("script_error");
+    incrementDebugCounter("blocked");
+  }
+  if (event === "ad_block_check" && payload.blocked) {
+    incrementDebugCounter("adblock_possible");
+    incrementDebugCounter("blocked");
+  }
+  if (event === "ad_slot_collapsed" && AD_BLOCK_REASONS.has(payload.reason)) {
+    if (payload.reason !== "script_error") {
+      incrementDebugCounter(payload.reason);
+      incrementDebugCounter("blocked");
+    }
+  }
+
+  adDebugState.recentEvents.unshift({
+    event,
+    payload: cloneDebugValue(payload),
+    timestamp: new Date().toISOString(),
+  });
+  adDebugState.recentEvents.length = Math.min(adDebugState.recentEvents.length, 40);
+  renderAdDebugPanel();
+  window.dispatchEvent(new CustomEvent("oracle-ad-debug-update", { detail: getAdDebugSummary() }));
+}
+
+export function getAdDebugSummary() {
+  return {
+    startedAt: adDebugState.startedAt,
+    consentRequired: ORACLE_AD_CONFIG.consentRequired,
+    contextualAdsWithoutConsent: ORACLE_AD_CONFIG.contextualAdsWithoutConsent,
+    consent: adDebugState.consent || getConsentState(),
+    counts: cloneDebugValue(adDebugState.counts),
+    slots: Object.values(cloneDebugValue(adDebugState.slots)),
+    recentEvents: cloneDebugValue(adDebugState.recentEvents),
+  };
+}
+
+function exposeAdDebugApi() {
+  window.oracleAdDebug = {
+    summary: getAdDebugSummary,
+    printSummary() {
+      const summary = getAdDebugSummary();
+      console.info("[Oracle Mirror Ads] Debug summary", summary);
+      console.table(summary.counts);
+      return summary;
+    },
+  };
+}
 
 export function trackEvent(event, payload = {}) {
+  recordAdDebug(event, payload);
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     event,
@@ -43,14 +196,38 @@ function setStoredConsent(consent) {
 
 export function getConsentState() {
   const stored = getStoredConsent();
-  if (!stored) {
-    return { state: "pending", ads: false, analytics: true };
+  if (stored && typeof stored === "object") {
+    return {
+      state: stored.state || (stored.ads ? "accepted" : "rejected"),
+      ads: stored.ads === true,
+      analytics: stored.analytics !== false,
+      source: "stored",
+      consentRequired: ORACLE_AD_CONFIG.consentRequired,
+    };
   }
-  return stored;
+
+  if (ORACLE_AD_CONFIG.consentRequired) {
+    return {
+      state: "pending",
+      ads: false,
+      analytics: true,
+      source: "required_pending",
+      consentRequired: true,
+    };
+  }
+
+  return {
+    state: "not_required",
+    ads: true,
+    analytics: true,
+    source: "contextual_default",
+    consentRequired: false,
+  };
 }
 
 function hasAdConsent() {
   const consent = getConsentState();
+  if (consent.ads === false) return false;
   return !ORACLE_AD_CONFIG.consentRequired || consent.ads === true;
 }
 
@@ -71,6 +248,10 @@ function hasConfiguredAdsterraZone(config) {
 
 function hasConfiguredGlobalScript(config) {
   return Boolean(config?.scriptUrl) && !String(config.zoneId || "").startsWith("TODO_ADSTERRA");
+}
+
+function globalScriptRequiresConsent(config) {
+  return ORACLE_AD_CONFIG.consentRequired || config?.consentRequired === true;
 }
 
 function recordUserInteraction() {
@@ -240,6 +421,48 @@ function setSlotMessage(host, message) {
   if (pending) pending.textContent = message;
 }
 
+function mountHasAdContent(host) {
+  const mount = host.querySelector("[data-ad-mount]");
+  if (!mount) return false;
+  if (mount.querySelector("iframe, ins, img, object, embed")) return true;
+
+  const meaningfulChildren = [...mount.children].filter((child) => child.tagName !== "SCRIPT");
+  return meaningfulChildren.some((child) => {
+    if (child.classList.contains("oracle-ad-pending")) return false;
+    if (child.children.length > 0) return true;
+    return child.textContent.trim().length > 0 && !child.classList.contains("oracle-ad-pending");
+  });
+}
+
+function scheduleFillCheck(host, config, instanceId, format) {
+  window.setTimeout(() => {
+    if (mountHasAdContent(host)) {
+      host.classList.add("oracle-ad-filled");
+      trackEvent("ad_slot_filled", {
+        slot_id: config.slotId,
+        ad_instance_id: instanceId,
+        placement: config.placement,
+        format,
+        zone_id: config.adsterra.zoneId,
+        screen: activeScreen,
+        realm: activeRealm,
+      });
+      return;
+    }
+
+    trackEvent("ad_slot_unfilled", {
+      slot_id: config.slotId,
+      ad_instance_id: instanceId,
+      placement: config.placement,
+      format,
+      zone_id: config.adsterra.zoneId,
+      reason: "no_creative_detected",
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+  }, 3500);
+}
+
 function loadDisplayAd(host, config, instanceId) {
   const mount = host.querySelector("[data-ad-mount]");
   const display = config.adsterra.display;
@@ -250,7 +473,15 @@ function loadDisplayAd(host, config, instanceId) {
     const script = document.createElement("script");
     script.async = true;
     script.src = config.adsterra.scriptUrl;
-    script.onload = () => {
+    let settled = false;
+    const watchdog = window.setTimeout(() => {
+      failScript("timeout_or_adblock");
+    }, 10000);
+
+    const passScript = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(watchdog);
       host.classList.remove("oracle-ad-loading");
       host.classList.add("oracle-ad-loaded");
       trackEvent("ad_script_loaded", {
@@ -259,9 +490,13 @@ function loadDisplayAd(host, config, instanceId) {
         placement: config.placement,
         zone_id: config.adsterra.zoneId,
       });
+      scheduleFillCheck(host, config, instanceId, "display");
       resolve();
     };
-    script.onerror = () => {
+    const failScript = (errorReason = "network_error") => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(watchdog);
       host.classList.remove("oracle-ad-loading");
       host.classList.add("oracle-ad-error");
       setSlotMessage(host, "Sponsor message unavailable.");
@@ -270,10 +505,13 @@ function loadDisplayAd(host, config, instanceId) {
         ad_instance_id: instanceId,
         placement: config.placement,
         zone_id: config.adsterra.zoneId,
+        error_reason: errorReason,
       });
       markSlotCollapsed(host, config, instanceId, "script_error");
       resolve();
     };
+    script.onload = passScript;
+    script.onerror = () => failScript("network_error");
 
     window.atOptions = {
       key: display.key,
@@ -292,6 +530,11 @@ function loadNativeAd(host, config, instanceId) {
 
   mount.innerHTML = "";
   const container = document.createElement("div");
+  let staleContainerIndex = 0;
+  for (const existing of document.querySelectorAll(`[id="${config.adsterra.containerId}"]`)) {
+    staleContainerIndex += 1;
+    existing.id = `${config.adsterra.containerId}-inactive-${Date.now()}-${staleContainerIndex}`;
+  }
   container.id = config.adsterra.containerId;
   mount.appendChild(container);
 
@@ -299,7 +542,15 @@ function loadNativeAd(host, config, instanceId) {
   script.async = true;
   script.dataset.cfasync = "false";
   script.src = config.adsterra.scriptUrl;
-  script.onload = () => {
+  let settled = false;
+  const watchdog = window.setTimeout(() => {
+    failScript("timeout_or_adblock");
+  }, 10000);
+
+  const passScript = () => {
+    if (settled) return;
+    settled = true;
+    window.clearTimeout(watchdog);
     host.classList.remove("oracle-ad-loading");
     host.classList.add("oracle-ad-loaded");
     trackEvent("ad_script_loaded", {
@@ -308,8 +559,12 @@ function loadNativeAd(host, config, instanceId) {
       placement: config.placement,
       zone_id: config.adsterra.zoneId,
     });
+    scheduleFillCheck(host, config, instanceId, "native");
   };
-  script.onerror = () => {
+  const failScript = (errorReason = "network_error") => {
+    if (settled) return;
+    settled = true;
+    window.clearTimeout(watchdog);
     host.classList.remove("oracle-ad-loading");
     host.classList.add("oracle-ad-error");
     setSlotMessage(host, "Sponsor message unavailable.");
@@ -318,9 +573,12 @@ function loadNativeAd(host, config, instanceId) {
       ad_instance_id: instanceId,
       placement: config.placement,
       zone_id: config.adsterra.zoneId,
+      error_reason: errorReason,
     });
     markSlotCollapsed(host, config, instanceId, "script_error");
   };
+  script.onload = passScript;
+  script.onerror = () => failScript("network_error");
   mount.appendChild(script);
 }
 
@@ -363,6 +621,8 @@ function requestSlot(host, config) {
     placement: config.placement,
     format: config.format,
     zone_id: config.adsterra.zoneId,
+    consent_state: getConsentState().state,
+    ad_mode: ORACLE_AD_CONFIG.consentRequired ? "consent_required" : "contextual_default",
     screen: activeScreen,
     realm: activeRealm,
   });
@@ -387,7 +647,7 @@ const lazyObserver =
             }
           }
         },
-        { rootMargin: "320px 0px" }
+        { rootMargin: "600px 0px" }
       )
     : null;
 
@@ -400,6 +660,15 @@ export function activateAdSlot(slotId, { realm = activeRealm, force = false } = 
   for (const host of document.querySelectorAll(`[data-ad-slot="${slotId}"]`)) {
     if (!force && !slotMatchesActiveContext(host, config, realm)) continue;
     if (config.lazy && lazyObserver) {
+      trackEvent("ad_slot_deferred", {
+        slot_id: config.slotId,
+        ad_instance_id: slotInstanceId(host, config),
+        placement: config.placement,
+        format: config.format,
+        reason: "lazy_loading",
+        screen: activeScreen,
+        realm: activeRealm,
+      });
       lazyObserver.observe(host);
     } else {
       requestSlot(host, config);
@@ -413,29 +682,29 @@ export function activateSlotsForScreen(screen, realm) {
 
   if (screen === "home") {
     activateAdSlot("oracle-home-slot", { realm: "home" });
-    hideMobileAnchor();
-    return;
-  }
-
-  if (screen === "archive") {
+    activateAdSlot("oracle-home-leaderboard", { realm: "home" });
+  } else if (screen === "archive") {
     activateAdSlot("oracle-archive-native", { realm: "archive" });
     activateAdSlot("oracle-archive-bottom-slot", { realm: "archive" });
-    hideMobileAnchor();
-    return;
-  }
-
-  if (screen === "realm") {
+  } else if (screen === "realm") {
     activateAdSlot("oracle-realm-slot", { realm });
     activateAdSlot("oracle-desktop-rail-left", { realm, force: true });
-    showMobileAnchor();
-  }
-
-  if (screen === "result") {
+  } else if (screen === "result") {
     activateAdSlot("oracle-result-slot", { realm });
     activateAdSlot("oracle-desktop-rail-left", { realm, force: true });
     activateAdSlot("oracle-desktop-rail-right", { realm, force: true });
-    showMobileAnchor();
   }
+
+  if (screen === "debug") {
+    hideMobileAnchor();
+    return;
+  }
+
+  // Global mid-content banner above the footer is eligible on every content screen
+  activateAdSlot("oracle-footer-banner", { realm: activeRealm, force: true });
+
+  // Always ensure the mobile sticky banner is shown on mobile view across all screens
+  showMobileAnchor();
 }
 
 export function createResultAdSlot(realm) {
@@ -470,7 +739,32 @@ export function showMobileAnchor() {
   const anchor = document.getElementById("oracle-mobile-anchor");
   if (!anchor) return;
   const closed = sessionStorage.getItem(MOBILE_ANCHOR_CLOSED_KEY) === "true";
-  if (closed || currentDevice() !== "mobile" || !hasAdConsent()) {
+  const device = currentDevice();
+  const consent = getConsentState();
+  if (closed || device !== "mobile" || !hasAdConsent()) {
+    const reason = closed ? "closed_by_user" : device !== "mobile" ? "device_rule" : "consent_pending";
+    const decisionKey = `${reason}:${activeScreen}:${activeRealm}`;
+    if (!mobileAnchorDecisionKeys.has(decisionKey)) {
+      mobileAnchorDecisionKeys.add(decisionKey);
+      trackEvent("mobile_anchor_suppressed", {
+        slot_id: "oracle-mobile-anchor",
+        placement: "mobile bottom sticky anchor",
+        reason,
+        device,
+        consent_state: consent.state,
+        screen: activeScreen,
+        realm: activeRealm,
+      });
+      if (reason === "device_rule" || reason === "consent_pending") {
+        trackEvent("ad_slot_collapsed", {
+          slot_id: "oracle-mobile-anchor",
+          placement: "mobile bottom sticky anchor",
+          reason,
+          screen: activeScreen,
+          realm: activeRealm,
+        });
+      }
+    }
     hideMobileAnchor();
     return;
   }
@@ -538,6 +832,8 @@ function applyConsent(consent) {
     state: consent.state,
     ads: consent.ads,
     analytics: consent.analytics,
+    source: "user_choice",
+    consent_required: ORACLE_AD_CONFIG.consentRequired,
   });
 
   if (consent.ads) {
@@ -553,6 +849,7 @@ function applyConsent(consent) {
     }
     if (["realm", "result"].includes(activeScreen)) showMobileAnchor();
     if (ambientValueDelivered) scheduleAmbientPopunder("consent_after_value");
+    scheduleSocialBar("consent_accepted");
   } else {
     for (const host of document.querySelectorAll("[data-ad-slot]")) {
       const config = slotConfigs.get(host.dataset.adSlot);
@@ -568,6 +865,8 @@ function initConsent() {
     state: consent.state,
     ads: consent.ads,
     analytics: consent.analytics,
+    source: consent.source,
+    consent_required: ORACLE_AD_CONFIG.consentRequired,
   });
 
   if (consent.state === "pending") {
@@ -628,7 +927,16 @@ function loadAmbientPopunder(config, reason) {
     });
     return;
   }
-  if (config.consentRequired && !hasAdConsent()) return;
+  if (globalScriptRequiresConsent(config) && !hasAdConsent()) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "consent_pending",
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
   if (!hasConfiguredGlobalScript(config)) {
     trackEvent("ad_slot_collapsed", {
       slot_id: config.name,
@@ -663,6 +971,12 @@ function loadAmbientPopunder(config, reason) {
         format: "popunder",
         zone_id: config.zoneId,
       });
+      trackEvent("ad_slot_filled", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "popunder",
+        zone_id: config.zoneId,
+      });
     };
     script.onerror = () => {
       trackEvent("ad_script_error", {
@@ -676,12 +990,96 @@ function loadAmbientPopunder(config, reason) {
   });
 }
 
+function loadSocialBar(reason = "init") {
+  const config = ORACLE_AD_CONFIG.globalScripts?.socialBar;
+  if (!config || socialBarLoaded) return;
+  if (!config.enabled) return;
+  if (globalScriptRequiresConsent(config) && !hasAdConsent()) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "consent_pending",
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
+  if (!hasConfiguredGlobalScript(config)) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "placeholder_zone",
+      zone_id: config.placeholderZoneId,
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
+  if (getConsentState().ads === false) return;
+
+  socialBarLoaded = true;
+  trackEvent("ad_slot_requested", {
+    slot_id: config.name,
+    placement: config.placement,
+    format: "social_bar",
+    zone_id: config.zoneId,
+    trigger: reason,
+    screen: activeScreen,
+    realm: activeRealm,
+  });
+
+  runWhenIdle(() => {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = config.scriptUrl;
+    script.onload = () => {
+      trackEvent("ad_script_loaded", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+      trackEvent("ad_slot_filled", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+    };
+    script.onerror = () => {
+      socialBarLoaded = false;
+      trackEvent("ad_script_error", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function scheduleSocialBar(reason = "init") {
+  const config = ORACLE_AD_CONFIG.globalScripts?.socialBar;
+  if (!config || !config.enabled || socialBarLoaded) return;
+  window.setTimeout(() => loadSocialBar(reason), config.delayAfterLoadMs || 0);
+}
+
 export function scheduleAmbientPopunder(reason = "value_delivered") {
   const config = ORACLE_AD_CONFIG.globalScripts?.popunder;
   if (!config) return;
   ambientValueDelivered = true;
   if (ambientPopunderLoaded() || ambientPopunderTimer) return;
-  if (config.consentRequired && !hasAdConsent()) return;
+  if (globalScriptRequiresConsent(config) && !hasAdConsent()) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "consent_pending",
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
 
   const now = Date.now();
   const sessionDelay = Math.max(0, config.minSessionAgeMs - (now - sessionStartedAt));
@@ -709,7 +1107,6 @@ function canRefreshSlot(host, config, instanceId) {
   if (!host.__oracleAdViewable && policy.requireViewable) return false;
   if (document.visibilityState !== "visible") return false;
   if (!isElementVisible(host)) return false;
-  if (document.activeElement?.matches?.("input, textarea, select")) return false;
   if (document.body.dataset.readingState === "animating") return false;
 
   const count = sessionRefreshCounts.get(instanceId) || 0;
@@ -743,12 +1140,16 @@ function attemptRefreshes() {
 
 export function initAdSystem() {
   window.dataLayer = window.dataLayer || [];
+  exposeAdDebugApi();
   window.addEventListener("pointerup", recordUserInteraction, { passive: true });
   window.addEventListener("keydown", recordUserInteraction, { passive: true });
   registerAdSlots();
   initConsent();
   initMobileAnchor();
+  scheduleSocialBar("init");
   runAdBlockCheck();
+  renderAdDebugPanel();
+  console.info("[Oracle Mirror Ads] Debug available at /ad-debug or window.oracleAdDebug.printSummary().");
 
   if (ORACLE_AD_CONFIG.refreshPolicy.enabled) {
     window.setInterval(attemptRefreshes, 30000);

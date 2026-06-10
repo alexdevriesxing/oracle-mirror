@@ -662,6 +662,55 @@ header {
 }
 
 /* =========================================================
+   HOME FAQ
+   ========================================================= */
+.faq-section {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.faq-section h2 {
+  color: var(--text-gold);
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.faq-item {
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 8px;
+  background: rgba(5, 3, 13, 0.55);
+  padding: 0.85rem 1.1rem;
+}
+
+.faq-item summary {
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.faq-item summary:hover {
+  color: var(--gold);
+}
+
+.faq-item p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  padding-top: 0.7rem;
+}
+
+/* =========================================================
    CRYSTAL BALL CHAT INTERFACE
    ========================================================= */
 .chat-layout {
@@ -705,20 +754,21 @@ header {
 .fortune-questionnaire {
   width: 100%;
   margin: 0.75rem auto 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
   border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
+  border-radius: 12px;
   background:
     linear-gradient(135deg, rgba(212, 175, 55, 0.07), transparent 42%, rgba(139, 92, 246, 0.08)),
-    rgba(5, 3, 13, 0.58);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 26px rgba(139, 92, 246, 0.08);
+    rgba(5, 3, 13, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 28px rgba(139, 92, 246, 0.1);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mirror-lore h3,
 .fortune-questionnaire h3 {
   color: var(--text-gold);
   font-family: var(--font-heading);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.35;
   margin-bottom: 0.45rem;
 }
@@ -728,33 +778,341 @@ header {
   font-size: 1rem;
 }
 
-.questionnaire-heading {
-  margin-bottom: 0.9rem;
+.lore-intro {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--text-cream);
+  margin-bottom: 1.15rem;
+  line-height: 1.6;
 }
 
-.questionnaire-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.questionnaire-field {
+.lore-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.questionnaire-field span {
-  color: var(--gold);
+.lore-step-item {
+  position: relative;
+  padding-left: 2rem;
+  border-left: 1px dashed rgba(212, 175, 55, 0.25);
+  margin-left: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.lore-num {
+  position: absolute;
+  left: -9px;
+  top: -1px;
+  width: 18px;
+  height: 18px;
+  background: var(--bg-deep);
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--gold-light);
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px var(--gold-glow);
+}
+
+.lore-step-item strong {
+  display: block;
   font-family: var(--font-heading);
-  font-size: 0.78rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  color: var(--gold);
+  font-size: 0.92rem;
+  margin-bottom: 0.2rem;
 }
 
-.questionnaire-field .realm-select {
-  max-width: none;
-  margin-bottom: 0;
+.lore-step-item p {
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5;
+}
+
+/* Questionnaire Sealed transition */
+.fortune-questionnaire#fortune-wizard.wizard-sealed {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  pointer-events: none;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+/* Wizard Header & Progress */
+.wizard-header {
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.wizard-progress {
+  position: relative;
+  margin: 1.25rem auto 0.75rem;
+  max-width: 90%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.wizard-progress .progress-bar {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+  box-shadow: 0 0 10px var(--shadow-gold);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.progress-steps {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.progress-bead {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.progress-bead.active {
+  border-color: var(--gold);
+  color: var(--gold-light);
+  box-shadow: 0 0 12px var(--shadow-gold);
+  transform: scale(1.15);
+}
+
+/* Wizard Step panels */
+.wizard-deck {
+  position: relative;
+  min-height: 240px;
+}
+
+.wizard-step {
+  display: none;
+  animation: stepIn 0.4s ease;
+}
+
+.wizard-step.active {
+  display: block;
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.step-title {
+  color: var(--gold-light);
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.step-subtitle {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-style: italic;
+  margin-bottom: 1.15rem;
+  text-align: center;
+}
+
+/* Option grids & buttons */
+.wizard-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.wizard-opt-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.9rem 0.65rem;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-cream);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+}
+
+.wizard-opt-btn:hover {
+  border-color: var(--glass-border-hover);
+  background: rgba(212, 175, 55, 0.08);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.12);
+  transform: translateY(-2px);
+}
+
+.wizard-opt-btn.selected {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.16);
+  color: var(--gold-light);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+  transform: scale(1.02);
+}
+
+.opt-icon {
+  font-size: 1.45rem;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.1));
+}
+
+/* Custom backgrounds on hover/selected by Element fields */
+.wizard-opt-btn[data-value="fire"]:hover, .wizard-opt-btn[data-value="fire"].selected { border-color: #ef4444; background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+.wizard-opt-btn[data-value="earth"]:hover, .wizard-opt-btn[data-value="earth"].selected { border-color: #b45309; background: rgba(180, 83, 9, 0.12); color: #fcd34d; }
+.wizard-opt-btn[data-value="metal"]:hover, .wizard-opt-btn[data-value="metal"].selected { border-color: #94a3b8; background: rgba(148, 163, 184, 0.12); color: #e2e8f0; }
+.wizard-opt-btn[data-value="water"]:hover, .wizard-opt-btn[data-value="water"].selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+.wizard-opt-btn[data-value="wood"]:hover, .wizard-opt-btn[data-value="wood"].selected { border-color: #10b981; background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
+
+/* Interactive Tarot Draw sigil */
+.tarot-draw-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.8rem auto 1.2rem;
+  perspective: 1000px;
+}
+
+.deck-cards {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.tarot-draw-card {
+  width: 96px;
+  height: 148px;
+  cursor: pointer;
+  perspective: 1000px;
+  transition: transform var(--transition);
+}
+
+.tarot-draw-card:hover {
+  transform: translateY(-6px);
+}
+
+.tarot-draw-card .card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.tarot-draw-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  border: 2px solid var(--gold-dark);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-front {
+  background: linear-gradient(135deg, #1e0b36 0%, #0c0418 100%);
+  color: var(--gold);
+}
+
+.gold-seal {
+  font-size: 2.2rem;
+  animation: pulseCard 3s ease-in-out infinite;
+  text-shadow: 0 0 10px var(--shadow-gold);
+}
+
+@keyframes pulseCard {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.card-back {
+  background: linear-gradient(135deg, #2d184f 0%, #170a2b 100%);
+  color: var(--text-cream);
+  transform: rotateY(180deg);
+  padding: 0.5rem;
+}
+
+.card-back .card-art {
+  font-size: 2rem;
+  color: var(--gold-light);
+  margin-bottom: 0.35rem;
+  filter: drop-shadow(0 0 5px var(--gold-glow));
+}
+
+.card-back .card-name {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-gold);
+  line-height: 1.1;
+  margin-bottom: 0.15rem;
+}
+
+.card-back .card-meaning {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.2;
+}
+
+/* Sigil drawn state */
+.tarot-draw-card.selected {
+  box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.tarot-draw-hint {
+  text-align: center;
+  font-size: 0.92rem;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: 0.8rem;
+  transition: all var(--transition);
+}
+
+/* Wizard actions panel */
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(212,175,55,0.15);
+  padding-top: 0.85rem;
 }
 
 .questionnaire-hint {
@@ -762,6 +1120,7 @@ header {
   font-size: 0.9rem;
   font-style: italic;
   margin-top: 0.75rem;
+  text-align: center;
 }
 
 .questionnaire-hint.ready {
@@ -1596,6 +1955,36 @@ select option {
   text-align: center;
 }
 
+/* Collapse blocked/errored slots so no empty frame lingers */
+.oracle-ad-collapsed,
+.oracle-ad-slot.oracle-ad-collapsed {
+  display: none;
+  min-height: 0;
+}
+
+.oracle-ad-home-leaderboard {
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.oracle-ad-footer {
+  margin-bottom: 0.2rem;
+}
+
+/* Leaderboard is a desktop-only unit (728px creative) */
+@media (max-width: 1199px) {
+  .oracle-ad-home-leaderboard {
+    display: none;
+  }
+}
+
+/* 468x60 mid-content unit is desktop/tablet only */
+@media (max-width: 767px) {
+  .oracle-ad-footer {
+    display: none;
+  }
+}
+
 .oracle-ad-loading .oracle-ad-frame {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
@@ -1772,6 +2161,53 @@ select option {
   flex-shrink: 0;
 }
 
+.ad-debug-panel {
+  max-width: 980px;
+}
+
+.ad-debug-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+}
+
+.ad-debug-count {
+  min-height: 82px;
+  padding: 0.85rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ad-debug-count dt {
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.74rem;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.ad-debug-count dd {
+  margin: 0.35rem 0 0;
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+}
+
+.ad-debug-json {
+  max-height: 520px;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
 /* --- Legal Pages --- */
 .legal-page {
   padding: 3rem 1rem 4rem;
@@ -1808,6 +2244,29 @@ footer {
   border-top: 1px solid rgba(212, 175, 55, 0.15);
   margin-top: auto;
   z-index: 1;
+}
+
+.footer-realms {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.3rem;
+  max-width: 880px;
+  margin: 0 auto 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.footer-realms a {
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.footer-realms a:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
 }
 
 .footer-badges {
@@ -1866,6 +2325,301 @@ footer {
 .realm-daily { background: radial-gradient(ellipse at top, rgba(154, 52, 18, 0.08) 0%, transparent 60%); }
 .realm-personas { background: radial-gradient(ellipse at center, rgba(88, 28, 135, 0.08) 0%, transparent 60%); }
 .realm-archive { background: radial-gradient(ellipse at center, rgba(51, 65, 85, 0.08) 0%, transparent 60%); }
+.realm-love-match { background: radial-gradient(ellipse at center, rgba(244, 63, 94, 0.09) 0%, rgba(234, 179, 8, 0.04) 45%, transparent 75%); }
+
+/* --- Love Match Specific Styles --- */
+.love-match-selectors {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.5rem auto 2.5rem;
+  max-width: 700px;
+  width: 100%;
+}
+
+.love-selector-btn {
+  background: rgba(15, 10, 25, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 50px;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition);
+  backdrop-filter: blur(10px);
+}
+
+.love-selector-btn:hover {
+  border-color: rgba(251, 113, 133, 0.6);
+  color: var(--gold-light);
+  box-shadow: 0 0 10px rgba(251, 113, 133, 0.2);
+  transform: translateY(-2px);
+}
+
+.love-selector-btn.active {
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border-color: rgba(251, 113, 133, 0.8);
+  color: var(--gold);
+  box-shadow: 0 0 15px rgba(251, 113, 133, 0.4), inset 0 0 10px rgba(251, 113, 133, 0.15);
+}
+
+.love-selector-btn .selector-icon {
+  font-size: 1rem;
+}
+
+.love-match-names {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  width: 100%;
+  max-width: 540px;
+  margin-bottom: 2rem;
+}
+
+.love-match-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  text-align: left;
+}
+
+.love-match-field span {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  color: var(--text-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.95;
+  margin-left: 0.2rem;
+}
+
+.love-match-heart {
+  font-size: 1.8rem;
+  color: #ff3b70;
+  filter: drop-shadow(0 0 8px rgba(255, 59, 112, 0.6));
+  animation: pulseHeart 1.8s infinite ease-in-out;
+  margin-top: 1.2rem;
+}
+
+@keyframes pulseHeart {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 59, 112, 0.6)); }
+  50% { transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(255, 59, 112, 0.9)); }
+}
+
+.love-option-panel {
+  display: none;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 1.5rem;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.love-option-panel.active {
+  display: block;
+}
+
+.love-zodiac-selections, .love-numerology-selections, .love-omen-selections, .love-quiz-questions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.love-select-field {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 0.4rem;
+}
+
+.love-select-field span {
+  font-family: var(--font-heading);
+  font-size: 0.76rem;
+  color: rgba(212, 199, 223, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 0.2rem;
+}
+
+.love-tarot-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-style: italic;
+  margin-bottom: 1.2rem;
+}
+
+.love-tarot-draw {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.love-tarot-deck {
+  display: flex;
+  justify-content: center;
+  gap: 2.2rem;
+  width: 100%;
+}
+
+.love-pair-card {
+  width: 104px;
+  height: 160px;
+  cursor: pointer;
+  perspective: 1000px;
+  transition: transform var(--transition);
+  position: relative;
+}
+
+.love-pair-card:hover {
+  transform: translateY(-6px);
+}
+
+.love-pair-card .card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.love-pair-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.pair-card-label {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--text-gold);
+  text-align: center;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.love-match-result-card {
+  background: rgba(25, 12, 45, 0.65);
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 113, 133, 0.1);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 560px;
+  margin: 2.5rem auto 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(15px);
+  animation: slideUp 0.5s ease-out;
+}
+
+.love-match-badge-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 10px rgba(251, 113, 133, 0.3));
+}
+
+.love-match-circle {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 6;
+}
+
+.circle-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.love-match-score-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.score-num {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-label {
+  font-family: var(--font-heading);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  margin-top: 0.15rem;
+}
+
+.love-match-tier {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  padding: 0.4rem 1.2rem;
+  border-radius: 50px;
+  border: 1px solid;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.03);
+  text-align: center;
+}
+
+.love-match-couple-names {
+  font-family: var(--font-display);
+  color: var(--text-cream);
+  font-size: 1.4rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+}
+
+.love-match-reading-text {
+  font-family: var(--font-body);
+  color: rgba(212, 199, 223, 0.95);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: rgba(5, 3, 10, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 1.25rem;
+}
+
+.btn-save-archive {
+  width: auto;
+  min-width: 240px;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.5rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--gold-dark) 0%, #1e113a 100%);
+}
 
 /* =========================================================
    RESPONSIVE
@@ -1881,6 +2635,30 @@ footer {
 }
 
 @media (max-width: 768px) {
+  .love-match-names {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .love-match-heart {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .love-zodiac-selections, .love-numerology-selections, .love-omen-selections, .love-quiz-questions {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .love-tarot-deck {
+    gap: 1.2rem;
+  }
+
+  .love-match-result-card {
+    padding: 1.8rem 1.2rem;
+  }
+
   header { padding: 0; }
 
   .nav-links {
@@ -2019,7 +2797,1312 @@ footer {
   .consent-actions {
     flex-direction: column;
   }
+
+  /* Wizard mobile responsive overrides */
+  .wizard-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .wizard-opt-btn {
+    padding: 0.7rem 0.4rem !important;
+    font-size: 0.76rem !important;
+    gap: 0.3rem !important;
+  }
+
+  .opt-icon {
+    font-size: 1.2rem !important;
+  }
+
+  .deck-cards {
+    gap: 0.6rem !important;
+  }
+
+  .tarot-draw-card {
+    width: 78px !important;
+    height: 120px !important;
+  }
+
+  .card-front .gold-seal {
+    font-size: 1.6rem !important;
+  }
+
+  .card-back {
+    padding: 0.25rem !important;
+  }
+
+  .card-back .card-art {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .card-back .card-name {
+    font-size: 0.65rem !important;
+  }
+
+  .card-back .card-meaning {
+    font-size: 0.52rem !important;
+  }
 }
 
 /* --- Utility --- */
 .hidden { display: none !important; }
+
+/* =========================================================
+   BIRTH CHART REALM
+   ========================================================= */
+
+/* Background Theme */
+.realm-birthchart {
+  background: radial-gradient(ellipse at center, rgba(88, 28, 135, 0.1) 0%, rgba(167, 139, 250, 0.04) 40%, transparent 70%);
+}
+
+/* Scene Layout */
+.birthchart-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0 2rem;
+  min-height: 200px;
+  position: relative;
+}
+
+.birthchart-wheel-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 750px;
+}
+
+/* SVG Wheel */
+.birthchart-wheel {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  flex-shrink: 0;
+  animation: birthchartWheelSpin 60s linear infinite;
+  filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.15));
+}
+
+@keyframes birthchartWheelSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.wheel-border {
+  fill: none;
+  stroke: rgba(167, 139, 250, 0.3);
+  stroke-width: 1.5;
+}
+
+.wheel-spoke {
+  stroke: rgba(167, 139, 250, 0.15);
+  stroke-width: 0.5;
+}
+
+.wheel-inner {
+  fill: rgba(167, 139, 250, 0.03);
+  stroke: rgba(167, 139, 250, 0.25);
+  stroke-width: 1;
+}
+
+.wheel-center {
+  fill: rgba(167, 139, 250, 0.08);
+  stroke: rgba(212, 175, 55, 0.4);
+  stroke-width: 1.5;
+}
+
+/* Planet Nodes */
+.planet-node {
+  fill: var(--gold);
+  stroke: var(--gold-light);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: transform 0.3s ease, fill 0.3s ease, filter 0.3s ease;
+  animation: planetPulse 3s ease-in-out infinite;
+}
+
+.planet-node:hover {
+  transform: scale(1.4);
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.7));
+}
+
+.planet-node.active {
+  fill: #fb7185;
+  stroke: #fb7185;
+  filter: drop-shadow(0 0 14px rgba(251, 113, 133, 0.6));
+  animation: planetPulseActive 2s ease-in-out infinite;
+}
+
+@keyframes planetPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.4));
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.7));
+  }
+}
+
+@keyframes planetPulseActive {
+  0%, 100% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 8px rgba(251, 113, 133, 0.5));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 18px rgba(251, 113, 133, 0.8));
+  }
+}
+
+/* Planet Info Display */
+.birthchart-planet-display {
+  background: rgba(20, 10, 40, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 350px;
+  width: 100%;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(167, 139, 250, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.4s ease;
+}
+
+.birthchart-planet-display h4 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px var(--shadow-gold);
+}
+
+.birthchart-planet-display p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Birth Chart Form */
+.birthchart-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.birthchart-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.birthchart-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.birthchart-inputs .realm-label {
+  font-size: 0.85rem;
+}
+
+
+/* =========================================================
+   PALMISTRY REALM
+   ========================================================= */
+
+/* Background Theme */
+.realm-palmistry {
+  background: radial-gradient(ellipse at center, rgba(159, 18, 57, 0.08) 0%, rgba(251, 113, 133, 0.03) 40%, transparent 70%);
+}
+
+/* Scene Layout */
+.palmistry-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 0 2rem;
+  min-height: 200px;
+  position: relative;
+}
+
+.palmistry-hand-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 700px;
+}
+
+/* Hand SVG */
+.palmistry-hand-svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 15px rgba(167, 139, 250, 0.2));
+  transition: filter 0.4s ease;
+}
+
+.palmistry-hand-svg:hover {
+  filter: drop-shadow(0 0 25px rgba(167, 139, 250, 0.35));
+}
+
+.hand-base-outline {
+  fill: rgba(30, 20, 60, 0.6);
+  stroke: rgba(167, 139, 250, 0.4);
+  stroke-width: 1.5;
+  transition: all 0.4s ease;
+}
+
+/* Palm Lines */
+.palm-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.4;
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+
+.palm-line.neon-rose  { stroke: #fb7185; }
+.palm-line.neon-violet { stroke: #a78bfa; }
+.palm-line.neon-gold  { stroke: #d4af37; }
+.palm-line.neon-blue  { stroke: #60a5fa; }
+
+.palm-line.neon-rose.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(251, 113, 133, 0.6))
+         drop-shadow(0 0 16px rgba(251, 113, 133, 0.3));
+  animation: lineGlow 2s ease-in-out infinite;
+}
+
+.palm-line.neon-violet.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6))
+         drop-shadow(0 0 16px rgba(167, 139, 250, 0.3));
+  animation: lineGlow 2s ease-in-out infinite;
+}
+
+.palm-line.neon-gold.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6))
+         drop-shadow(0 0 16px rgba(212, 175, 55, 0.3));
+  animation: lineGlow 2s ease-in-out infinite;
+}
+
+.palm-line.neon-blue.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.6))
+         drop-shadow(0 0 16px rgba(96, 165, 250, 0.3));
+  animation: lineGlow 2s ease-in-out infinite;
+}
+
+@keyframes lineGlow {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* Line Info Display */
+.palmistry-line-display {
+  background: rgba(20, 10, 40, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 350px;
+  width: 100%;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(167, 139, 250, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.4s ease;
+}
+
+.palmistry-line-display h4 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px var(--shadow-gold);
+}
+
+.palmistry-line-display p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Palmistry Form */
+.palmistry-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.palmistry-selectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.palmistry-selectors label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.palmistry-selectors .realm-label {
+  font-size: 0.85rem;
+}
+
+
+/* =========================================================
+   I CHING REALM
+   ========================================================= */
+
+/* Background Theme */
+.realm-iching {
+  background: radial-gradient(ellipse at center, rgba(76, 29, 149, 0.1) 0%, rgba(212, 175, 55, 0.04) 40%, transparent 70%);
+}
+
+/* Scene Layout */
+.iching-scene {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1.5rem 0 2rem;
+  min-height: 200px;
+  position: relative;
+}
+
+.iching-arena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Coins Deck */
+.iching-coins-deck {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Individual Coin */
+.iching-coin {
+  width: 70px;
+  height: 70px;
+  perspective: 600px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.iching-coin:hover {
+  transform: translateY(-4px);
+}
+
+.coin-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.coin-heads,
+.coin-tails {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+.coin-heads {
+  background: radial-gradient(circle at 40% 35%, #f0d060, #d4af37 50%, #b8941e 100%);
+  color: var(--bg-deep);
+  box-shadow:
+    0 0 15px rgba(212, 175, 55, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(240, 208, 96, 0.6);
+}
+
+.coin-tails {
+  background: radial-gradient(circle at 40% 35%, #6d4aad, #4a3580 50%, #2d1b5e 100%);
+  color: #a78bfa;
+  transform: rotateY(180deg);
+  box-shadow:
+    0 0 15px rgba(167, 139, 250, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(167, 139, 250, 0.4);
+}
+
+/* Coin flip state */
+.iching-coin.flipped .coin-inner {
+  transform: rotateY(180deg);
+}
+
+/* Coin toss animation */
+.iching-coin.tossing .coin-inner {
+  animation: coinToss 0.8s ease-in-out;
+}
+
+@keyframes coinToss {
+  0% {
+    transform: rotateY(0deg) translateY(0);
+  }
+  15% {
+    transform: rotateY(180deg) translateY(-40px);
+  }
+  30% {
+    transform: rotateY(360deg) translateY(-60px);
+  }
+  50% {
+    transform: rotateY(540deg) translateY(-70px);
+  }
+  70% {
+    transform: rotateY(720deg) translateY(-30px);
+  }
+  85% {
+    transform: rotateY(900deg) translateY(-10px);
+  }
+  100% {
+    transform: rotateY(1080deg) translateY(0);
+  }
+}
+
+/* Toss button */
+#btn-iching-toss {
+  margin-top: 0.5rem;
+}
+
+.iching-hint {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: rgba(232, 224, 240, 0.6);
+  font-size: 0.92rem;
+  text-align: center;
+  margin-top: 0.3rem;
+  transition: all var(--transition);
+}
+
+/* Hexagram Box */
+.iching-hexagram-box {
+  background: rgba(20, 10, 40, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  min-width: 200px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(167, 139, 250, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.4s ease;
+}
+
+.hexagram-title-display h4 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 1.1rem;
+  text-align: center;
+  text-shadow: 0 0 10px var(--shadow-gold);
+  margin-bottom: 0.25rem;
+}
+
+.hexagram-title-display p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Hexagram Line Stack */
+.hexagram-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Base hexagram line */
+.hexagram-line {
+  width: 100px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(167, 139, 250, 0.15);
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+/* Yang (solid line) */
+.hexagram-line.yang {
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+/* Yin (broken line — two bars with gap) */
+.hexagram-line.yin {
+  background: transparent;
+}
+
+.hexagram-line.yin::before,
+.hexagram-line.yin::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 40%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4), 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.hexagram-line.yin::before {
+  left: 0;
+}
+
+.hexagram-line.yin::after {
+  right: 0;
+}
+
+/* Revealed entrance animation */
+.hexagram-line.revealed {
+  animation: hexLineReveal 0.4s ease-out;
+}
+
+@keyframes hexLineReveal {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* I Ching Form - Locked / Unlocked */
+.iching-form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  transition: opacity 0.5s ease, filter 0.3s ease;
+}
+
+.iching-form.locked {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(0.3);
+}
+
+.iching-form.unlocked {
+  pointer-events: all;
+  opacity: 1;
+  filter: none;
+}
+
+/* =========================================================
+   MISTS SEAL OVERLAY (shared between Tarot & I Ching)
+   ========================================================= */
+.mists-seal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(5, 3, 13, 0.6);
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.mists-seal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mists-seal-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 12px var(--gold-glow));
+  animation: sealPulse 3s ease-in-out infinite;
+}
+
+@keyframes sealPulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%      { transform: scale(1.12); opacity: 1; }
+}
+
+.mists-seal-text {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* Tarot form locked/unlocked (mirrors iching pattern) */
+.tarot-form.locked {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(0.3);
+}
+
+.tarot-form.unlocked {
+  pointer-events: all;
+  opacity: 1;
+  filter: none;
+}
+
+
+/* =========================================================
+   HOME-PAGE CARD ACCENTS — New Realms
+   ========================================================= */
+.card-birthchart:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(167, 139, 250, 0.2);
+}
+
+.card-palmistry:hover {
+  border-color: #fb7185;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(251, 113, 133, 0.2);
+}
+
+.card-iching:hover {
+  border-color: #2dd4bf;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(45, 212, 191, 0.2);
+}
+
+
+/* =========================================================
+   SLIDE-UP ANIMATION (shared utility)
+   ========================================================= */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* =========================================================
+   RESPONSIVE — New Realms
+   ========================================================= */
+
+@media (max-width: 768px) {
+  /* Birth Chart */
+  .birthchart-wheel-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .birthchart-wheel {
+    max-width: 280px;
+  }
+
+  .birthchart-planet-display {
+    max-width: 100%;
+  }
+
+  .birthchart-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  /* Palmistry */
+  .palmistry-hand-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .palmistry-hand-svg {
+    max-width: 220px;
+  }
+
+  .palmistry-line-display {
+    max-width: 100%;
+  }
+
+  .palmistry-selectors {
+    grid-template-columns: 1fr;
+  }
+
+  /* I Ching */
+  .iching-scene {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .iching-coins-deck {
+    gap: 1rem;
+  }
+
+  .iching-coin {
+    width: 60px;
+    height: 60px;
+  }
+
+  .coin-heads,
+  .coin-tails {
+    font-size: 1.6rem;
+  }
+
+  .iching-hexagram-box {
+    min-width: unset;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .hexagram-line {
+    width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .birthchart-wheel {
+    max-width: 220px;
+  }
+
+  .palmistry-hand-svg {
+    max-width: 180px;
+  }
+
+  .iching-coin {
+    width: 52px;
+    height: 52px;
+  }
+
+  .coin-heads,
+  .coin-tails {
+    font-size: 1.3rem;
+  }
+
+  .iching-coins-deck {
+    gap: 0.75rem;
+  }
+
+  .hexagram-line {
+    width: 65px;
+    height: 12px;
+  }
+}
+
+/* =========================================================
+   TAROT FAN DECK & INTERACTIVE SLOTS
+   ========================================================= */
+.tarot-fan-deck-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 3rem 0;
+  perspective: 1000px;
+}
+
+.tarot-fan-deck {
+  position: relative;
+  width: 300px;
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.fan-card {
+  position: absolute;
+  width: 90px;
+  height: 140px;
+  transform-origin: bottom center;
+  --angle-range: 120deg;
+  --angle-step: calc(var(--angle-range) / max(1, var(--fan-total) - 1));
+  --start-angle: calc(var(--angle-range) / -2);
+  --angle: calc(var(--start-angle) + (var(--fan-index) * var(--angle-step)));
+  
+  transform: rotate(var(--angle)) translateY(0);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s ease;
+  cursor: pointer;
+  z-index: var(--fan-index);
+}
+
+.fan-card:hover:not(.drawn) {
+  transform: rotate(var(--angle)) translateY(-20px) scale(1.1);
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.8));
+  z-index: 100;
+}
+
+.fan-card.drawn {
+  opacity: 0.3;
+  pointer-events: none;
+  transform: rotate(var(--angle)) translateY(30px);
+}
+
+.fan-card .card-inner,
+.tarot-interactive-slot .card-inner,
+.love-pair-card .card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.fan-card.flipped .card-inner,
+.tarot-interactive-slot.flipped .card-inner,
+.love-pair-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.fan-card .card-front,
+.fan-card .card-back,
+.tarot-interactive-slot .card-front,
+.tarot-interactive-slot .card-back,
+.love-pair-card .card-front,
+.love-pair-card .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, rgba(30, 20, 60, 0.9), rgba(15, 10, 35, 0.9));
+  backdrop-filter: blur(4px);
+}
+
+.fan-card .card-back,
+.tarot-interactive-slot .card-back,
+.love-pair-card .card-back {
+  transform: rotateY(180deg);
+  padding: 0.5rem;
+  text-align: center;
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.2);
+}
+
+.fan-card .gold-seal,
+.tarot-interactive-slot .gold-seal,
+.love-pair-card .gold-seal {
+  font-size: 2rem;
+  color: #d4af37;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+}
+
+.tarot-interactive-slot .gold-seal,
+.love-pair-card .gold-seal {
+  font-size: 3rem;
+}
+
+.fan-card .card-art {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.fan-card .card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: #e8e0f0;
+  line-height: 1.2;
+}
+
+.tarot-interactive-slot {
+  width: 120px;
+  height: 180px;
+  perspective: 1000px;
+}
+
+.tarot-interactive-slot .card-art,
+.love-pair-card .card-art {
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tarot-interactive-slot .card-name,
+.love-pair-card .card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: #e8e0f0;
+  line-height: 1.2;
+}
+
+.drawn-card {
+  display: inline-block;
+  background: rgba(167, 139, 250, 0.15);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Cinzel', serif;
+  color: #f0d060;
+  font-size: 0.9rem;
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.1);
+}
+
+.cards-drawn {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .tarot-fan-deck {
+    width: 260px;
+    height: 150px;
+  }
+  .fan-card {
+    width: 70px;
+    height: 110px;
+  }
+  .fan-card .card-art { font-size: 1.5rem; }
+  .fan-card .card-name { font-size: 0.65rem; }
+  .fan-card .gold-seal { font-size: 1.5rem; }
+}
+
+/* =========================================================
+   FINAL VISUAL POLISH (Magical Vibe Enhancements)
+   ========================================================= */
+
+/* 1. Ambient Mystical Background Breathing */
+@keyframes ambientBreathe {
+  0%, 100% { filter: brightness(1) contrast(1.05); }
+  50% { filter: brightness(1.15) contrast(1.1); }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.05), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  animation: ambientBreathe 15s ease-in-out infinite;
+}
+
+/* 2. Realm Card Continuous Levitation */
+@keyframes continuousLevitate {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.realm-card {
+  animation: continuousLevitate 6s ease-in-out infinite;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(167, 139, 250, 0.1);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.realm-card:hover {
+  animation-play-state: paused;
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 15px 35px rgba(167, 139, 250, 0.3), 0 0 0 1px rgba(212, 175, 55, 0.5);
+  border-color: rgba(212, 175, 55, 0.8);
+}
+
+/* 3. Sweeping Shine Effect on Gold Buttons */
+@keyframes sweepShine {
+  0% { background-position: -200% center; }
+  20%, 100% { background-position: 200% center; }
+}
+
+.btn-gold {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.btn-gold::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  animation: sweepShine 6s infinite;
+  pointer-events: none;
+}
+
+.btn-gold:hover {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* 4. Text Shimmer for Main Headings */
+@keyframes textShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+h1, h2 {
+  background: linear-gradient(to right, #d4af37 20%, #fff 40%, #fff 60%, #d4af37 80%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: textShimmer 8s linear infinite;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+}
+
+/* 5. Enhanced Glassmorphism and Neon Glow on Interactive Elements */
+.realm-input, .realm-select, .realm-date-input, .realm-text-input {
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.realm-input:focus, .realm-select:focus, .realm-date-input:focus, .realm-text-input:focus {
+  border-color: #a78bfa;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(167, 139, 250, 0.4);
+}
+
+/* 6. Mystical Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #05030d;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.3);
+  border-radius: 5px;
+  border: 2px solid #05030d;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
+}
+
+/* 7. Enhanced Pulse for Tarot Cards */
+@keyframes mysticalPulse {
+  0%, 100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 4px 25px rgba(167, 139, 250, 0.6); border-color: rgba(167, 139, 250, 0.8); }
+}
+
+.tarot-interactive-slot.flipped .card-inner, .love-pair-card.flipped .card-inner {
+  animation: mysticalPulse 4s infinite alternate;
+}
+
+/* =========================================================
+   ULTIMATE MAGICAL POLISH (Deep Mystery Enhancements)
+   ========================================================= */
+
+/* 8. Mystical Vignette & Star Dust Overlay */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  /* Deep dark vignette around the edges */
+  box-shadow: inset 0 0 150px rgba(3, 1, 8, 0.95);
+  /* Very subtle grain overlay for texture */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+}
+
+/* 9. Floating Star Dust Animation */
+@keyframes starDustFloat {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateY(-150px) rotate(180deg); opacity: 0; }
+}
+
+.app-container::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  /* Simulate floating dust particles with tiny radial gradients */
+  background-image: 
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(212, 175, 55, 0.9), transparent),
+    radial-gradient(2px 2px at 40% 60%, rgba(167, 139, 250, 0.7), transparent),
+    radial-gradient(2px 2px at 80% 30%, rgba(251, 113, 133, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 30% 90%, rgba(212, 175, 55, 0.9), transparent),
+    radial-gradient(2.5px 2.5px at 90% 80%, rgba(167, 139, 250, 0.6), transparent);
+  background-size: 120% 120%;
+  animation: starDustFloat 25s linear infinite;
+}
+
+/* 10. Deep Ethereal Cards */
+.realm-card {
+  background: linear-gradient(145deg, rgba(20, 10, 40, 0.65), rgba(8, 4, 18, 0.9));
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  box-shadow: 
+    inset 0 0 20px rgba(167, 139, 250, 0.05),
+    0 10px 30px rgba(0, 0, 0, 0.9), 
+    0 0 0 1px rgba(167, 139, 250, 0.1);
+}
+
+.realm-card:hover {
+  background: linear-gradient(145deg, rgba(30, 15, 60, 0.8), rgba(15, 8, 30, 0.95));
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 
+    inset 0 0 30px rgba(212, 175, 55, 0.15),
+    0 15px 40px rgba(212, 175, 55, 0.25), 
+    0 0 0 1px rgba(212, 175, 55, 0.5);
+}
+
+/* 11. Liquid Gold Text Effect for Main Titles */
+@keyframes liquidGold {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+h1, h2 {
+  background: linear-gradient(270deg, #d4af37, #f0d060, #fb7185, #d4af37);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquidGold 12s ease infinite;
+  text-shadow: 0px 4px 15px rgba(212, 175, 55, 0.4);
+}
+
+.realm-subtitle {
+  color: #e8e0f0;
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+}
+
+/* Make body background even deeper space */
+body {
+  background-color: #030108;
+}
+
+/* =========================================================
+   SOULMATE VISION
+   ========================================================= */
+.soulmate-vision-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.vision-title {
+  font-family: 'Cinzel', serif;
+  color: #d4af37;
+  font-size: 1.5rem;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.vision-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 30px rgba(167, 139, 250, 0.4);
+  animation: continuousLevitate 8s ease-in-out infinite;
+}
+
+.vision-body {
+  background: rgba(20, 10, 40, 0.6);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+  width: 100%;
+}
+
+.vision-disclaimer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(167, 139, 250, 0.3);
+  padding-top: 0.8rem;
+  color: #a78bfa;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Vision Loading Progress Bar */
+.vision-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  color: #d4af37;
+  font-family: 'Cinzel', serif;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.vision-loading p {
+  font-size: 1.1rem;
+  max-width: 400px;
+}
+
+.vision-progress-bar {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background: rgba(167, 139, 250, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.vision-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #d4af37, #f0d060, #fb7185);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+  animation: visionProgress 60s ease-out forwards;
+}
+
+@keyframes visionProgress {
+  0% { width: 0%; }
+  50% { width: 60%; }
+  80% { width: 85%; }
+  95% { width: 95%; }
+  100% { width: 99%; }
+}

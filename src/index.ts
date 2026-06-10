@@ -1,6 +1,7 @@
 export interface Env {
   AI: any;
   ASSETS: Fetcher;
+  AD_CONSENT_REQUIRED?: string;
 }
 
 const FALLBACK_FORTUNES = [
@@ -21,55 +22,85 @@ const CANONICAL_HOST = "https://oraclemirror.com";
 type AppRouteMeta = {
   title: string;
   description: string;
+  noindex?: boolean;
+};
+
+const BREADCRUMB_NAMES: Record<string, string> = {
+  "/crystal-ball": "Crystal Ball Reading",
+  "/western-zodiac": "Daily Horoscope",
+  "/chinese-zodiac": "Chinese Zodiac",
+  "/tarot": "Tarot Reading",
+  "/love-oracle": "Love Oracle",
+  "/magic-8-ball": "Magic 8 Ball",
+  "/numerology": "Numerology Calculator",
+  "/daily-fortune": "Daily Fortune",
+  "/mystics": "Mystics",
+  "/archive": "Reading Archive",
+  "/love-match": "Love Compatibility",
+  "/birth-chart": "Birth Chart",
+  "/palm-reading": "Palm Reading",
+  "/iching-oracle": "I Ching Oracle",
 };
 
 const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/": {
-    title: "Oracle Mirror | Tarot, Horoscopes, Numerology & Fortune Readings",
+    title: "Free Tarot, Horoscopes & Fortune Telling Online | Oracle Mirror",
     description:
-      "Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror.",
+      "Get free tarot card readings, daily horoscopes, numerology, crystal ball answers, love compatibility, and AI Soulmate Vision — all inside Oracle Mirror.",
   },
   "/crystal-ball": {
-    title: "Crystal Ball Reading | Oracle Mirror",
+    title: "Free Crystal Ball Reading Online — Ask Madame Fortuna | Oracle Mirror",
     description:
-      "Ask Madame Fortuna's crystal ball for a mystical fortune reading and save the answer to your Oracle Mirror archive.",
+      "Ask a question and get a free crystal ball reading online from Madame Fortuna. Personalized mystical fortunes you can save to your private archive.",
   },
   "/western-zodiac": {
-    title: "Western Zodiac Horoscope | Oracle Mirror",
-    description: "Choose your zodiac sign for a celestial horoscope reading from the Oracle Mirror observatory.",
+    title: "Free Daily Horoscope by Zodiac Sign | Oracle Mirror",
+    description:
+      "Pick your zodiac sign for a free horoscope reading covering love, career, health, and your lucky number — from Astaria's celestial observatory.",
   },
   "/chinese-zodiac": {
-    title: "Chinese Zodiac Reading | Oracle Mirror",
-    description: "Enter your birth year for a Chinese zodiac fortune from the Jade Pavilion of Oracle Mirror.",
+    title: "Chinese Zodiac Reading by Birth Year — Find Your Animal | Oracle Mirror",
+    description:
+      "Enter your birth year to discover your Chinese zodiac animal and receive a free fortune on personality, destiny, and compatibility.",
   },
   "/tarot": {
-    title: "Tarot Reading | Oracle Mirror",
-    description: "Draw a Past, Present, and Future tarot spread inside Oracle Mirror's arcane library.",
+    title: "Free Tarot Card Reading Online — Past, Present & Future | Oracle Mirror",
+    description:
+      "Draw a free 3-card tarot spread online. Seraphina interprets your Past, Present, and Future cards and how they answer your question.",
   },
   "/love-oracle": {
-    title: "Love Oracle Reading | Oracle Mirror",
-    description: "Ask the Love Oracle for romantic guidance, compatibility insight, and heart-centered reflection.",
+    title: "Love Oracle — Free Relationship & Romance Reading | Oracle Mirror",
+    description:
+      "Ask the Love Oracle a question about romance, soulmates, or relationships and receive free heart-centered guidance from Rosalind.",
   },
   "/magic-8-ball": {
-    title: "Magic 8 Ball Oracle | Oracle Mirror",
-    description: "Shake the Cosmic 8 Ball for a quick mystical answer to your yes-or-no question.",
+    title: "Magic 8 Ball Online — Free Yes or No Oracle | Oracle Mirror",
+    description:
+      "Shake the Cosmic Magic 8 Ball online for a free, instant yes-or-no answer with a mystical twist. Ask anything.",
   },
   "/numerology": {
-    title: "Numerology Life Path Reading | Oracle Mirror",
-    description: "Calculate your life path number and receive a numerology reading from Oracle Mirror.",
+    title: "Free Numerology Calculator — Life Path Number Meaning | Oracle Mirror",
+    description:
+      "Calculate your life path number from your birthday and get a free numerology reading on your personality, destiny, strengths, and challenges.",
   },
   "/daily-fortune": {
-    title: "Daily Fortune | Oracle Mirror",
-    description: "Reveal today's fortune with the Dawn Oracle and receive a daily mystical affirmation.",
+    title: "Daily Fortune & Affirmation for Today | Oracle Mirror",
+    description:
+      "Reveal today's free daily fortune: a cosmic theme, advice, lucky number, color, element, and a mystical affirmation from the Dawn Oracle.",
   },
   "/mystics": {
-    title: "Oracle Mirror Mystics | Fortune-Telling Personas",
+    title: "Meet the Mystics — Fortune-Telling Guides of Oracle Mirror",
     description:
-      "Meet the mystics behind Oracle Mirror's crystal ball, tarot, zodiac, love, numerology, and daily fortune realms.",
+      "Meet Madame Fortuna, Astaria, Master Longwei, Seraphina, Rosalind, Pythius, and the Dawn Oracle — the seven mystics behind Oracle Mirror's readings.",
   },
   "/archive": {
-    title: "Reading Archive | Oracle Mirror",
-    description: "Review saved Oracle Mirror readings in your private browser archive.",
+    title: "Your Reading Archive | Oracle Mirror",
+    description: "Review your saved tarot, horoscope, numerology, and fortune readings in your private browser archive.",
+  },
+  "/ad-debug": {
+    title: "Ad Debug | Oracle Mirror",
+    description: "Review Oracle Mirror ad loading diagnostics for the current browser session.",
+    noindex: true,
   },
   "/privacy-policy": {
     title: "Privacy Policy | Oracle Mirror",
@@ -83,6 +114,26 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/contact": {
     title: "Contact | Oracle Mirror",
     description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
+  },
+  "/love-match": {
+    title: "Love Compatibility Calculator — Zodiac, Numerology & Tarot | Oracle Mirror",
+    description:
+      "Test your love compatibility free: zodiac match, numerology, tarot, quiz, and omens combine into a Cosmic Chemistry Score plus AI Soulmate Vision.",
+  },
+  "/birth-chart": {
+    title: "Free Birth Chart Reading — Sun, Moon & Rising Signs | Oracle Mirror",
+    description:
+      "Map your natal placements — Sun, Moon, Ascendant, Mercury, Venus, and Mars — and get a free astrological birth chart interpretation.",
+  },
+  "/palm-reading": {
+    title: "Palm Reading Online — Heart, Head, Life & Fate Lines | Oracle Mirror",
+    description:
+      "Learn palmistry online: trace your heart, head, life, and fate lines for a free palm reading on emotion, intellect, vitality, and destiny.",
+  },
+  "/iching-oracle": {
+    title: "I Ching Online — Free Coin Toss Hexagram Reading | Oracle Mirror",
+    description:
+      "Cast three coins to build your hexagram and consult the I Ching Book of Changes online for free philosophical guidance on any dilemma.",
   },
 };
 
@@ -119,6 +170,26 @@ const RESULT_ROUTES: Record<string, AppRouteMeta> = {
     title: "Daily Fortune Result | Oracle Mirror",
     description: "Read your completed Oracle Mirror daily fortune result.",
   },
+  "/result/love-match": {
+    title: "Love Match Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror romantic compatibility match result from Rosalind.",
+  },
+  "/result/birth-chart": {
+    title: "Birth Chart Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror astrological birth chart placements result.",
+  },
+  "/result/palm-reading": {
+    title: "Palm Reading Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror psychic palm reading result.",
+  },
+  "/result/soulmate-vision": {
+    title: "Soulmate Vision Result | Oracle Mirror",
+    description: "View the AI generated portrait and destined location of your cosmic soulmate.",
+  },
+  "/result/iching-oracle": {
+    title: "I Ching Coin Toss Result | Oracle Mirror",
+    description: "Read your completed I Ching hexagram coin toss result.",
+  },
 };
 
 function normalizePath(pathname: string): string {
@@ -130,7 +201,11 @@ function normalizePath(pathname: string): string {
 
 function routeMeta(pathname: string): AppRouteMeta | undefined {
   const path = normalizePath(pathname);
-  return APP_ROUTES[path] || RESULT_ROUTES[path];
+  if (APP_ROUTES[path]) return APP_ROUTES[path];
+  // Result pages are session-specific shells with no unique crawlable content;
+  // keep them reachable but out of the index to avoid thin-content penalties.
+  if (RESULT_ROUTES[path]) return { ...RESULT_ROUTES[path], noindex: true };
+  return undefined;
 }
 
 function escapeHtml(value: string): string {
@@ -146,20 +221,56 @@ function canonicalUrl(pathname: string): string {
   return `${CANONICAL_HOST}${path === "/" ? "/" : path}`;
 }
 
+function breadcrumbJsonLd(pathname: string): string {
+  const path = normalizePath(pathname);
+  const name = BREADCRUMB_NAMES[path];
+  if (!name) return "";
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Oracle Mirror", item: `${CANONICAL_HOST}/` },
+      { "@type": "ListItem", position: 2, name, item: canonicalUrl(path) },
+    ],
+  };
+  return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
+}
+
 function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): string {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
   const canonical = escapeHtml(canonicalUrl(pathname));
+  const robots = meta.noindex ? "noindex,nofollow" : "index,follow,max-image-preview:large";
 
-  return html
+  let output = html
     .replace(/<title>.*?<\/title>/s, `<title>${title}</title>`)
     .replace(/<meta\s+name="description"[^>]*>/s, `<meta name="description" content="${description}" />`)
+    .replace(/<meta\s+name="robots"[^>]*>/s, `<meta name="robots" content="${robots}" />`)
     .replace(/<link\s+rel="canonical"[^>]*>/s, `<link rel="canonical" href="${canonical}" />`)
     .replace(/<meta\s+property="og:title"[^>]*>/s, `<meta property="og:title" content="${title}" />`)
     .replace(/<meta\s+property="og:description"[^>]*>/s, `<meta property="og:description" content="${description}" />`)
     .replace(/<meta\s+property="og:url"[^>]*>/s, `<meta property="og:url" content="${canonical}" />`)
     .replace(/<meta\s+name="twitter:title"[^>]*>/s, `<meta name="twitter:title" content="${title}" />`)
     .replace(/<meta\s+name="twitter:description"[^>]*>/s, `<meta name="twitter:description" content="${description}" />`);
+
+  const breadcrumb = breadcrumbJsonLd(pathname);
+  if (breadcrumb && output.includes("</head>")) {
+    output = output.replace("</head>", `${breadcrumb}\n  </head>`);
+  }
+  return output;
+}
+
+function envFlag(value: string | undefined, defaultValue = false): boolean {
+  if (value === undefined) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function injectRuntimeConfig(html: string, env: Env): string {
+  const runtimeConfig = {
+    consentRequired: envFlag(env.AD_CONSENT_REQUIRED, false),
+  };
+  const script = `<script>window.ORACLE_AD_RUNTIME_CONFIG=${JSON.stringify(runtimeConfig)};</script>`;
+  return html.includes("</head>") ? html.replace("</head>", `${script}\n  </head>`) : `${script}${html}`;
 }
 
 async function serveAppShell(request: Request, env: Env, pathname: string, meta: AppRouteMeta): Promise<Response> {
@@ -169,7 +280,7 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
     headers: request.headers,
   });
   const response = await env.ASSETS.fetch(indexRequest);
-  const html = injectRouteMeta(await response.text(), pathname, meta);
+  const html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   return new Response(html, {
@@ -178,12 +289,17 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
   });
 }
 
+const SITEMAP_LASTMOD = "2026-06-10";
+
 function sitemapResponse(): Response {
-  const routes = [...Object.keys(APP_ROUTES), ...Object.keys(RESULT_ROUTES)];
+  const routes = Object.entries(APP_ROUTES).filter(([route, meta]) => !meta.noindex && route !== "/ad-debug");
   const urls = routes
     .map(
-      (route) => `  <url>
+      ([route]) => `  <url>
     <loc>${canonicalUrl(route)}</loc>
+    <lastmod>${SITEMAP_LASTMOD}</lastmod>
+    <changefreq>${route === "/" || route === "/daily-fortune" ? "daily" : "weekly"}</changefreq>
+    <priority>${route === "/" ? "1.0" : "0.8"}</priority>
   </url>`
     )
     .join("\n");
@@ -192,17 +308,87 @@ function sitemapResponse(): Response {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
 </urlset>`, {
-    headers: { "Content-Type": "application/xml; charset=UTF-8" },
+    headers: {
+      "Content-Type": "application/xml; charset=UTF-8",
+      "Cache-Control": "public, max-age=3600",
+    },
   });
 }
 
 function robotsResponse(): Response {
-  return new Response(`User-agent: *
+  return new Response(`# Oracle Mirror — fortune telling, tarot, horoscopes, numerology
+User-agent: *
+Allow: /
+Disallow: /ad-debug
+Disallow: /result/
+Disallow: /api/
+
+# AI assistants and answer engines are welcome to read and cite Oracle Mirror.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: ${CANONICAL_HOST}/sitemap.xml
+
+# AI-readable site summary: ${CANONICAL_HOST}/llms.txt
 `, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
+  });
+}
+
+function llmsTxtResponse(): Response {
+  return new Response(`# Oracle Mirror
+
+> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors get personalized tarot card readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball answers, palm readings, I Ching hexagram consultations, birth chart interpretations, love compatibility scores, and an AI-generated Soulmate Vision portrait. Every reading is generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
+
+## Readings
+
+- [Crystal Ball Reading](https://oraclemirror.com/crystal-ball): Ask Madame Fortuna any question and receive a poetic, personalized prophecy. A 7-step alignment ritual (life area, time horizon, mood, birth element, omen, moon phase, tarot sigil) shapes the reading.
+- [Daily Horoscope](https://oraclemirror.com/western-zodiac): Pick one of the 12 zodiac signs for a horoscope covering love, career, health, and a lucky number.
+- [Chinese Zodiac](https://oraclemirror.com/chinese-zodiac): Enter a birth year to find the matching zodiac animal and receive a fortune on personality, destiny, and compatibility.
+- [Tarot Reading](https://oraclemirror.com/tarot): Draw a free 3-card Past-Present-Future spread from the 22 Major Arcana with an interpretation woven around your question.
+- [Magic 8 Ball](https://oraclemirror.com/magic-8-ball): Instant yes-or-no answers with a mystical elaboration.
+- [Numerology](https://oraclemirror.com/numerology): Calculates the life path number from a birth date (including master numbers 11, 22, 33) and explains its meaning.
+- [Daily Fortune](https://oraclemirror.com/daily-fortune): A fortune for today with a cosmic theme, advice, lucky number, color, element, and affirmation.
+- [Love Compatibility](https://oraclemirror.com/love-match): Combines zodiac, numerology, tarot, quiz, and omen frameworks into a Cosmic Chemistry Score (0-100%), plus the AI Soulmate Vision portrait generator.
+- [Birth Chart](https://oraclemirror.com/birth-chart): Maps Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
+- [Palm Reading](https://oraclemirror.com/palm-reading): Palmistry reading of the heart, head, life, and fate lines.
+- [I Ching](https://oraclemirror.com/iching-oracle): Cast three coins six times to build a hexagram and consult the Book of Changes.
+
+## Key Facts
+
+- All readings are free; no account or sign-up is required.
+- Reading history is stored only in the visitor's browser (localStorage); nothing is uploaded to a server.
+- Readings are AI-assisted, presented through fortune-teller personas, and intended for entertainment.
+- Canonical host: https://oraclemirror.com (www redirects here).
+
+## Pages
+
+- [Meet the Mystics](https://oraclemirror.com/mystics): The personas behind each realm.
+- [Privacy Policy](https://oraclemirror.com/privacy-policy)
+- [Contact](https://oraclemirror.com/contact)
+`, {
+    headers: { "Content-Type": "text/plain; charset=UTF-8", "Cache-Control": "public, max-age=3600" },
   });
 }
 
@@ -300,6 +486,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
       timeframe?: string;
       omen?: string;
       mood?: string;
+      element?: string;
+      moonPhase?: string;
+      tarotSigil?: string;
     };
   };
   const messages = body.messages;
@@ -329,6 +518,9 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
     cleanProfileValue(profile.timeframe) ? `Season: ${cleanProfileValue(profile.timeframe)}` : "",
     cleanProfileValue(profile.omen) ? `Omen: ${cleanProfileValue(profile.omen)}` : "",
     cleanProfileValue(profile.mood) ? `Heart: ${cleanProfileValue(profile.mood)}` : "",
+    cleanProfileValue(profile.element) ? `Birth Element: ${cleanProfileValue(profile.element)}` : "",
+    cleanProfileValue(profile.moonPhase) ? `Moon Phase Speak: ${cleanProfileValue(profile.moonPhase)}` : "",
+    cleanProfileValue(profile.tarotSigil) ? `Tarot Intention Sigil: ${cleanProfileValue(profile.tarotSigil)}` : "",
   ].filter(Boolean);
 
   const aiMessages = [
@@ -380,11 +572,12 @@ async function handleChineseZodiac(request: Request, env: Env): Promise<Response
 }
 
 async function handleTarot(request: Request, env: Env): Promise<Response> {
-  const { question } = (await request.json()) as { question: string };
+  const body = (await request.json()) as { question: string; cards?: string[] };
+  const { question, cards: inputCards } = body;
   if (!question || typeof question !== "string" || question.trim().length === 0) {
     return errorResponse("Missing question");
   }
-  const cards = drawCards(3);
+  const cards = inputCards && Array.isArray(inputCards) && inputCards.length === 3 ? inputCards : drawCards(3);
   const prompt = `You are Seraphina, a mysterious tarot reader in an arcane library filled with ancient books, flickering candles, and magical artifacts. You speak in a dramatic, insightful, and mystical tone. You never reveal you are an AI. The seeker asks: "${question.trim()}"\n\nYou have drawn three cards for a Past-Present-Future spread:\n1. Past: ${cards[0]}\n2. Present: ${cards[1]}\n3. Future: ${cards[2]}\n\nInterpret each card's symbolism and how it relates to the seeker's question. Weave the three cards into a cohesive narrative. Keep it under 300 words.`;
   const response = await runAI(env, prompt);
   return jsonResponse({ response, cards });
@@ -398,6 +591,37 @@ async function handleLove(request: Request, env: Env): Promise<Response> {
   }
   const names = body.name1 && body.name2 ? `The two souls are named ${body.name1} and ${body.name2}. ` : "";
   const prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon filled with rose quartz crystals, soft velvet curtains, and paired constellations glowing on the ceiling. You speak in a warm, poetic, and tender tone about matters of the heart. You never reveal you are an AI. ${names}The seeker asks about love: "${question.trim()}"\n\nGive romantic guidance that references cosmic compatibility, heart chakra energy, and the dance of twin flames. Be encouraging but honest. Keep it under 250 words.`;
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handleLoveMatch(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    type: "zodiac" | "numerology" | "tarot" | "quiz" | "omen";
+    seekerName: string;
+    partnerName: string;
+    seekerValue: string;
+    partnerValue: string;
+  };
+
+  const { type, seekerName, partnerName, seekerValue, partnerValue } = body;
+  if (!seekerName || !partnerName) {
+    return errorResponse("Names are required for calculating compatibility");
+  }
+
+  let prompt = "";
+  if (type === "zodiac") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} (whose sign/year is ${seekerValue}) asks about their zodiac compatibility with ${partnerName} (whose sign/year is ${partnerValue}). Provide a detailed, romantic, and mystical compatibility reading based on Western or Chinese zodiac alignments. Keep it under 250 words.`;
+  } else if (type === "numerology") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} (whose birthday is ${seekerValue}) asks about their destiny number compatibility with ${partnerName} (whose birthday is ${partnerValue}). Analyze the sacred vibrations of their dates of birth and write a romantic, comforting, and encouraging compatibility prophecy. Keep it under 250 words.`;
+  } else if (type === "tarot") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. The seeker ${seekerName} and partner ${partnerName} drawn a connection. The drawn cards are ${seekerValue} and ${partnerValue}. Interpret the spiritual meaning of these two cards in a love reading, detailing the strengths, spiritual lessons, and cosmic fate of their relationship. Keep it under 250 words.`;
+  } else if (type === "quiz") {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. Seeker ${seekerName} and partner ${partnerName} completed the Cosmic Compatibility Quiz. Their selections were: Sanctuary: ${seekerValue}, and Relationship Frequency: ${partnerValue}. Write a romantic, comforting, and encouraging love compatibility prophecy analyzing their spiritual relationship profile. Keep it under 250 words.`;
+  } else {
+    prompt = `You are Rosalind, a romantic oracle who resides in an enchanted salon. You speak in a warm, poetic, and tender tone. Seeker ${seekerName} (governed by omen ${seekerValue}) and partner ${partnerName} (governed by omen ${partnerValue}) seek their match. Analyze the spiritual connection between these two omens and reveal what fate whispers about their union. Keep it under 250 words.`;
+  }
+
   const response = await runAI(env, prompt);
   return jsonResponse({ response });
 }
@@ -444,6 +668,133 @@ async function handleDailyFortune(request: Request, env: Env): Promise<Response>
   return jsonResponse({ response, date: today });
 }
 
+async function handleBirthChart(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    birthday: string;
+    birthtime?: string;
+    sign: string;
+    placements: {
+      sun: string;
+      moon: string;
+      ascendant: string;
+      mercury: string;
+      venus: string;
+      mars: string;
+    };
+  };
+
+  const { birthday, birthtime, sign, placements } = body;
+  if (!birthday || !sign || !placements) {
+    return errorResponse("Missing required birth chart details");
+  }
+
+  const timeClause = birthtime ? ` born at time ${birthtime},` : "";
+  const prompt = `You are Astaria, a celestial astrologer who reads the movements of planets and stars from an ancient observatory among the clouds. You speak in an eloquent, wise, and cosmic tone. You never reveal you are an AI. Calculate and interpret the birth chart for a seeker born on ${birthday},${timeClause} with sun sign ${sign}. Their primary planetary placements are:\n- Sun: ${placements.sun}\n- Moon: ${placements.moon}\n- Ascendant (Rising): ${placements.ascendant}\n- Mercury: ${placements.mercury}\n- Venus: ${placements.venus}\n- Mars: ${placements.mars}\n\nProvide a detailed birth chart reading focusing on their core personality traits, emotional blueprint, communication style, relationship patterns, and life destiny based on these planetary placements. Keep it under 300 words.`;
+  
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handlePalmistry(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    handShape: string;
+    lines: {
+      heart: string;
+      head: string;
+      life: string;
+      fate: string;
+    };
+  };
+
+  const { handShape, lines } = body;
+  if (!handShape || !lines) {
+    return errorResponse("Missing required palmistry details");
+  }
+
+  const prompt = `You are Madame Cassandra, a legendary palmist and seership master who reads the scrolls of fate written on the human hand. You speak in a highly mystical, intuitive, and reassuring tone. You never reveal you are an AI. The seeker presents their palm with an ${handShape} hand shape, and the following lines configurations:\n- Heart Line (governing emotion): ${lines.heart}\n- Head Line (governing intellect): ${lines.head}\n- Life Line (governing vitality & energy): ${lines.life}\n- Fate Line (governing path & destiny): ${lines.fate}\n\nInterpret the lines and palm characteristics, weaving a deep, intuitive prophecy about their emotional capacity, mental focus, life force, and spiritual destiny. Keep it under 250 words.`;
+
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handleIChing(request: Request, env: Env): Promise<Response> {
+  const body = (await request.json()) as {
+    question: string;
+    hexagramTitle: string;
+    hexagramLines: string;
+  };
+
+  const { question, hexagramTitle, hexagramLines } = body;
+  if (!question || !hexagramTitle) {
+    return errorResponse("Missing I Ching query details");
+  }
+
+  const prompt = `You are Sage Lao-Tan, an ancient philosophical guardian of the I Ching Book of Changes. You speak in a serene, deeply profound, and metaphorical tone. You never reveal you are an AI. The seeker asks about their dilemma: "${question.trim()}"\n\nThey have performed the coin-toss ritual and cast the Hexagram: "${hexagramTitle}" (constructed by lines from bottom to top: ${hexagramLines}).\n\nInterpret the wisdom, natural balance (Yin and Yang), and symbolic oracle advice of this Hexagram as it relates directly to the seeker's dilemma. Weave ancient Chinese philosophy (Dao, changes, elements) into a comforting, insightful guidance prophecy. Keep it under 300 words.`;
+
+  const response = await runAI(env, prompt);
+  return jsonResponse({ response });
+}
+
+async function handleSoulmateVision(request: Request, env: Env): Promise<Response> {
+  const { energy, element, age, idealDate } = (await request.json()) as any;
+
+  if (!energy || !element || !age || !idealDate) {
+    return errorResponse("Missing required parameters for Soulmate Vision", 400);
+  }
+
+  const prompt = `You are Rosalind, the mystical guide of Love. The user provided their traits: Age: ${age}, Energy: ${energy}, Element: ${element}, Ideal Date: ${idealDate}.
+Write a beautiful, mysterious 1-paragraph description of the exact approximate real-world location (e.g., a specific city, cafe, street, or hidden garden) where they are most likely to cross paths with their soulmate based on these traits. Write directly to the user. Do not explain yourself, just provide the vision.`;
+
+  const locationResponse = await runAI(env, prompt);
+
+  // Strict guardrails to ensure high quality and prevent failures
+  const imagePrompt = `Masterpiece, award-winning photography, ultra-realistic cinematic portrait of an incredibly attractive romantic partner. They are approximately ${age} years old. They embody the ${element} element and an ${energy} energy. They are dressed for a date: ${idealDate}. 
+Flawless composition, 8k resolution, highly detailed face, sharp focus, professional studio lighting, DSLR, extremely high quality, photorealistic, safe for work, no text, no deformities.`;
+  
+  let imageBase64 = "";
+  try {
+    const imgBuffer = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+      prompt: imagePrompt
+    });
+    
+    // Debug what imgBuffer actually is:
+    if (typeof imgBuffer === "string") {
+      imageBase64 = "data:image/jpeg;base64," + imgBuffer;
+    } else if (imgBuffer && typeof imgBuffer === "object" && !("byteLength" in imgBuffer) && !("buffer" in imgBuffer)) {
+      // It's a JSON object
+      if ("image" in imgBuffer) {
+        imageBase64 = "data:image/jpeg;base64," + (imgBuffer as any).image;
+      } else {
+        imageBase64 = "data:application/json;base64," + btoa(JSON.stringify(imgBuffer));
+      }
+    } else {
+      let binary = '';
+      const bytes = new Uint8Array(imgBuffer as any);
+    const len = bytes.byteLength;
+    const chunkSize = 8192;
+    for (let i = 0; i < len; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    imageBase64 = "data:image/jpeg;base64," + btoa(binary);
+    }
+  } catch (err) {
+    console.error("Image generation failed:", err);
+    // If it fails, fallback to a base64 encoded transparent 1x1 pixel so the image tag doesn't break, 
+    // and append an apology to the text response.
+    imageBase64 = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    return jsonResponse({
+      response: locationResponse + "\n\n*(The cosmic currents were too turbulent to render a physical image, but the location remains true.)*",
+      imageBase64: imageBase64
+    });
+  }
+
+  return jsonResponse({
+    response: locationResponse,
+    imageBase64: imageBase64
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -462,6 +813,10 @@ export default {
 
     if (url.pathname === "/robots.txt") {
       return robotsResponse();
+    }
+
+    if (url.pathname === "/llms.txt") {
+      return llmsTxtResponse();
     }
 
     if (url.pathname.startsWith("/api/")) {
@@ -487,12 +842,22 @@ export default {
             return await handleTarot(request, env);
           case "/api/love":
             return await handleLove(request, env);
+          case "/api/love-match":
+            return await handleLoveMatch(request, env);
           case "/api/magic8":
             return await handleMagic8(request, env);
           case "/api/numerology":
             return await handleNumerology(request, env);
           case "/api/daily-fortune":
             return await handleDailyFortune(request, env);
+          case "/api/birthchart":
+            return await handleBirthChart(request, env);
+          case "/api/palmistry":
+            return await handlePalmistry(request, env);
+          case "/api/soulmate-vision":
+            return await handleSoulmateVision(request, env);
+          case "/api/iching":
+            return await handleIChing(request, env);
           case "/api/feedback": {
             const feedback = await request.json();
             return jsonResponse({ ok: true });
