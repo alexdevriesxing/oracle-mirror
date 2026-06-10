@@ -662,6 +662,55 @@ header {
 }
 
 /* =========================================================
+   HOME FAQ
+   ========================================================= */
+.faq-section {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.faq-section h2 {
+  color: var(--text-gold);
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.6vw, 1.7rem);
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.faq-item {
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 8px;
+  background: rgba(5, 3, 13, 0.55);
+  padding: 0.85rem 1.1rem;
+}
+
+.faq-item summary {
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.faq-item summary:hover {
+  color: var(--gold);
+}
+
+.faq-item p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  padding-top: 0.7rem;
+}
+
+/* =========================================================
    CRYSTAL BALL CHAT INTERFACE
    ========================================================= */
 .chat-layout {
@@ -2195,6 +2244,29 @@ footer {
   border-top: 1px solid rgba(212, 175, 55, 0.15);
   margin-top: auto;
   z-index: 1;
+}
+
+.footer-realms {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.3rem;
+  max-width: 880px;
+  margin: 0 auto 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.footer-realms a {
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.footer-realms a:hover {
+  color: var(--gold-light);
+  text-decoration: underline;
 }
 
 .footer-badges {

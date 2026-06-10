@@ -22,59 +22,85 @@ const CANONICAL_HOST = "https://oraclemirror.com";
 type AppRouteMeta = {
   title: string;
   description: string;
+  noindex?: boolean;
+};
+
+const BREADCRUMB_NAMES: Record<string, string> = {
+  "/crystal-ball": "Crystal Ball Reading",
+  "/western-zodiac": "Daily Horoscope",
+  "/chinese-zodiac": "Chinese Zodiac",
+  "/tarot": "Tarot Reading",
+  "/love-oracle": "Love Oracle",
+  "/magic-8-ball": "Magic 8 Ball",
+  "/numerology": "Numerology Calculator",
+  "/daily-fortune": "Daily Fortune",
+  "/mystics": "Mystics",
+  "/archive": "Reading Archive",
+  "/love-match": "Love Compatibility",
+  "/birth-chart": "Birth Chart",
+  "/palm-reading": "Palm Reading",
+  "/iching-oracle": "I Ching Oracle",
 };
 
 const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/": {
-    title: "Oracle Mirror | Tarot, Horoscopes, Numerology & Fortune Readings",
+    title: "Free Tarot, Horoscopes & Fortune Telling Online | Oracle Mirror",
     description:
-      "Explore interactive tarot readings, zodiac horoscopes, numerology, daily fortunes, and crystal ball guidance inside Oracle Mirror.",
+      "Get free tarot card readings, daily horoscopes, numerology, crystal ball answers, love compatibility, and AI Soulmate Vision — all inside Oracle Mirror.",
   },
   "/crystal-ball": {
-    title: "Crystal Ball Reading | Oracle Mirror",
+    title: "Free Crystal Ball Reading Online — Ask Madame Fortuna | Oracle Mirror",
     description:
-      "Ask Madame Fortuna's crystal ball for a mystical fortune reading and save the answer to your Oracle Mirror archive.",
+      "Ask a question and get a free crystal ball reading online from Madame Fortuna. Personalized mystical fortunes you can save to your private archive.",
   },
   "/western-zodiac": {
-    title: "Western Zodiac Horoscope | Oracle Mirror",
-    description: "Choose your zodiac sign for a celestial horoscope reading from the Oracle Mirror observatory.",
+    title: "Free Daily Horoscope by Zodiac Sign | Oracle Mirror",
+    description:
+      "Pick your zodiac sign for a free horoscope reading covering love, career, health, and your lucky number — from Astaria's celestial observatory.",
   },
   "/chinese-zodiac": {
-    title: "Chinese Zodiac Reading | Oracle Mirror",
-    description: "Enter your birth year for a Chinese zodiac fortune from the Jade Pavilion of Oracle Mirror.",
+    title: "Chinese Zodiac Reading by Birth Year — Find Your Animal | Oracle Mirror",
+    description:
+      "Enter your birth year to discover your Chinese zodiac animal and receive a free fortune on personality, destiny, and compatibility.",
   },
   "/tarot": {
-    title: "Tarot Reading | Oracle Mirror",
-    description: "Draw a Past, Present, and Future tarot spread inside Oracle Mirror's arcane library.",
+    title: "Free Tarot Card Reading Online — Past, Present & Future | Oracle Mirror",
+    description:
+      "Draw a free 3-card tarot spread online. Seraphina interprets your Past, Present, and Future cards and how they answer your question.",
   },
   "/love-oracle": {
-    title: "Love Oracle Reading | Oracle Mirror",
-    description: "Ask the Love Oracle for romantic guidance, compatibility insight, and heart-centered reflection.",
+    title: "Love Oracle — Free Relationship & Romance Reading | Oracle Mirror",
+    description:
+      "Ask the Love Oracle a question about romance, soulmates, or relationships and receive free heart-centered guidance from Rosalind.",
   },
   "/magic-8-ball": {
-    title: "Magic 8 Ball Oracle | Oracle Mirror",
-    description: "Shake the Cosmic 8 Ball for a quick mystical answer to your yes-or-no question.",
+    title: "Magic 8 Ball Online — Free Yes or No Oracle | Oracle Mirror",
+    description:
+      "Shake the Cosmic Magic 8 Ball online for a free, instant yes-or-no answer with a mystical twist. Ask anything.",
   },
   "/numerology": {
-    title: "Numerology Life Path Reading | Oracle Mirror",
-    description: "Calculate your life path number and receive a numerology reading from Oracle Mirror.",
+    title: "Free Numerology Calculator — Life Path Number Meaning | Oracle Mirror",
+    description:
+      "Calculate your life path number from your birthday and get a free numerology reading on your personality, destiny, strengths, and challenges.",
   },
   "/daily-fortune": {
-    title: "Daily Fortune | Oracle Mirror",
-    description: "Reveal today's fortune with the Dawn Oracle and receive a daily mystical affirmation.",
+    title: "Daily Fortune & Affirmation for Today | Oracle Mirror",
+    description:
+      "Reveal today's free daily fortune: a cosmic theme, advice, lucky number, color, element, and a mystical affirmation from the Dawn Oracle.",
   },
   "/mystics": {
-    title: "Oracle Mirror Mystics | Fortune-Telling Personas",
+    title: "Meet the Mystics — Fortune-Telling Guides of Oracle Mirror",
     description:
-      "Meet the mystics behind Oracle Mirror's crystal ball, tarot, zodiac, love, numerology, and daily fortune realms.",
+      "Meet Madame Fortuna, Astaria, Master Longwei, Seraphina, Rosalind, Pythius, and the Dawn Oracle — the seven mystics behind Oracle Mirror's readings.",
   },
   "/archive": {
-    title: "Reading Archive | Oracle Mirror",
-    description: "Review saved Oracle Mirror readings in your private browser archive.",
+    title: "Your Reading Archive | Oracle Mirror",
+    description: "Review your saved tarot, horoscope, numerology, and fortune readings in your private browser archive.",
   },
   "/ad-debug": {
     title: "Ad Debug | Oracle Mirror",
     description: "Review Oracle Mirror ad loading diagnostics for the current browser session.",
+    noindex: true,
   },
   "/privacy-policy": {
     title: "Privacy Policy | Oracle Mirror",
@@ -90,20 +116,24 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
     description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
   },
   "/love-match": {
-    title: "Cosmic Love Match Compatibility | Oracle Mirror",
-    description: "Calculate your romantic compatibility using zodiac alignments, numerology vibrations, and tarot spreads inside the Oracle Mirror.",
+    title: "Love Compatibility Calculator — Zodiac, Numerology & Tarot | Oracle Mirror",
+    description:
+      "Test your love compatibility free: zodiac match, numerology, tarot, quiz, and omens combine into a Cosmic Chemistry Score plus AI Soulmate Vision.",
   },
   "/birth-chart": {
-    title: "Astrological Birth Chart | Oracle Mirror",
-    description: "Calculate your astronomical birth chart and reveal planetary placements inside the Oracle Mirror observatory.",
+    title: "Free Birth Chart Reading — Sun, Moon & Rising Signs | Oracle Mirror",
+    description:
+      "Map your natal placements — Sun, Moon, Ascendant, Mercury, Venus, and Mars — and get a free astrological birth chart interpretation.",
   },
   "/palm-reading": {
-    title: "Psychic Palm Reading | Oracle Mirror",
-    description: "Read your hand lines and discover palmistry secrets of your heart, head, and life lines.",
+    title: "Palm Reading Online — Heart, Head, Life & Fate Lines | Oracle Mirror",
+    description:
+      "Learn palmistry online: trace your heart, head, life, and fate lines for a free palm reading on emotion, intellect, vitality, and destiny.",
   },
   "/iching-oracle": {
-    title: "I Ching Book of Changes Coin Toss | Oracle Mirror",
-    description: "Cast three ancient Chinese coins and build hexagrams to consult the philosophical I Ching Book of Changes.",
+    title: "I Ching Online — Free Coin Toss Hexagram Reading | Oracle Mirror",
+    description:
+      "Cast three coins to build your hexagram and consult the I Ching Book of Changes online for free philosophical guidance on any dilemma.",
   },
 };
 
@@ -171,7 +201,11 @@ function normalizePath(pathname: string): string {
 
 function routeMeta(pathname: string): AppRouteMeta | undefined {
   const path = normalizePath(pathname);
-  return APP_ROUTES[path] || RESULT_ROUTES[path];
+  if (APP_ROUTES[path]) return APP_ROUTES[path];
+  // Result pages are session-specific shells with no unique crawlable content;
+  // keep them reachable but out of the index to avoid thin-content penalties.
+  if (RESULT_ROUTES[path]) return { ...RESULT_ROUTES[path], noindex: true };
+  return undefined;
 }
 
 function escapeHtml(value: string): string {
@@ -187,20 +221,43 @@ function canonicalUrl(pathname: string): string {
   return `${CANONICAL_HOST}${path === "/" ? "/" : path}`;
 }
 
+function breadcrumbJsonLd(pathname: string): string {
+  const path = normalizePath(pathname);
+  const name = BREADCRUMB_NAMES[path];
+  if (!name) return "";
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Oracle Mirror", item: `${CANONICAL_HOST}/` },
+      { "@type": "ListItem", position: 2, name, item: canonicalUrl(path) },
+    ],
+  };
+  return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
+}
+
 function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): string {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
   const canonical = escapeHtml(canonicalUrl(pathname));
+  const robots = meta.noindex ? "noindex,nofollow" : "index,follow,max-image-preview:large";
 
-  return html
+  let output = html
     .replace(/<title>.*?<\/title>/s, `<title>${title}</title>`)
     .replace(/<meta\s+name="description"[^>]*>/s, `<meta name="description" content="${description}" />`)
+    .replace(/<meta\s+name="robots"[^>]*>/s, `<meta name="robots" content="${robots}" />`)
     .replace(/<link\s+rel="canonical"[^>]*>/s, `<link rel="canonical" href="${canonical}" />`)
     .replace(/<meta\s+property="og:title"[^>]*>/s, `<meta property="og:title" content="${title}" />`)
     .replace(/<meta\s+property="og:description"[^>]*>/s, `<meta property="og:description" content="${description}" />`)
     .replace(/<meta\s+property="og:url"[^>]*>/s, `<meta property="og:url" content="${canonical}" />`)
     .replace(/<meta\s+name="twitter:title"[^>]*>/s, `<meta name="twitter:title" content="${title}" />`)
     .replace(/<meta\s+name="twitter:description"[^>]*>/s, `<meta name="twitter:description" content="${description}" />`);
+
+  const breadcrumb = breadcrumbJsonLd(pathname);
+  if (breadcrumb && output.includes("</head>")) {
+    output = output.replace("</head>", `${breadcrumb}\n  </head>`);
+  }
+  return output;
 }
 
 function envFlag(value: string | undefined, defaultValue = false): boolean {
@@ -232,12 +289,17 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
   });
 }
 
+const SITEMAP_LASTMOD = "2026-06-10";
+
 function sitemapResponse(): Response {
-  const routes = [...Object.keys(APP_ROUTES), ...Object.keys(RESULT_ROUTES)].filter((route) => route !== "/ad-debug");
+  const routes = Object.entries(APP_ROUTES).filter(([route, meta]) => !meta.noindex && route !== "/ad-debug");
   const urls = routes
     .map(
-      (route) => `  <url>
+      ([route]) => `  <url>
     <loc>${canonicalUrl(route)}</loc>
+    <lastmod>${SITEMAP_LASTMOD}</lastmod>
+    <changefreq>${route === "/" || route === "/daily-fortune" ? "daily" : "weekly"}</changefreq>
+    <priority>${route === "/" ? "1.0" : "0.8"}</priority>
   </url>`
     )
     .join("\n");
@@ -246,17 +308,87 @@ function sitemapResponse(): Response {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
 </urlset>`, {
-    headers: { "Content-Type": "application/xml; charset=UTF-8" },
+    headers: {
+      "Content-Type": "application/xml; charset=UTF-8",
+      "Cache-Control": "public, max-age=3600",
+    },
   });
 }
 
 function robotsResponse(): Response {
-  return new Response(`User-agent: *
+  return new Response(`# Oracle Mirror — fortune telling, tarot, horoscopes, numerology
+User-agent: *
+Allow: /
+Disallow: /ad-debug
+Disallow: /result/
+Disallow: /api/
+
+# AI assistants and answer engines are welcome to read and cite Oracle Mirror.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
 Allow: /
 
 Sitemap: ${CANONICAL_HOST}/sitemap.xml
+
+# AI-readable site summary: ${CANONICAL_HOST}/llms.txt
 `, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
+  });
+}
+
+function llmsTxtResponse(): Response {
+  return new Response(`# Oracle Mirror
+
+> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors get personalized tarot card readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball answers, palm readings, I Ching hexagram consultations, birth chart interpretations, love compatibility scores, and an AI-generated Soulmate Vision portrait. Every reading is generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
+
+## Readings
+
+- [Crystal Ball Reading](https://oraclemirror.com/crystal-ball): Ask Madame Fortuna any question and receive a poetic, personalized prophecy. A 7-step alignment ritual (life area, time horizon, mood, birth element, omen, moon phase, tarot sigil) shapes the reading.
+- [Daily Horoscope](https://oraclemirror.com/western-zodiac): Pick one of the 12 zodiac signs for a horoscope covering love, career, health, and a lucky number.
+- [Chinese Zodiac](https://oraclemirror.com/chinese-zodiac): Enter a birth year to find the matching zodiac animal and receive a fortune on personality, destiny, and compatibility.
+- [Tarot Reading](https://oraclemirror.com/tarot): Draw a free 3-card Past-Present-Future spread from the 22 Major Arcana with an interpretation woven around your question.
+- [Magic 8 Ball](https://oraclemirror.com/magic-8-ball): Instant yes-or-no answers with a mystical elaboration.
+- [Numerology](https://oraclemirror.com/numerology): Calculates the life path number from a birth date (including master numbers 11, 22, 33) and explains its meaning.
+- [Daily Fortune](https://oraclemirror.com/daily-fortune): A fortune for today with a cosmic theme, advice, lucky number, color, element, and affirmation.
+- [Love Compatibility](https://oraclemirror.com/love-match): Combines zodiac, numerology, tarot, quiz, and omen frameworks into a Cosmic Chemistry Score (0-100%), plus the AI Soulmate Vision portrait generator.
+- [Birth Chart](https://oraclemirror.com/birth-chart): Maps Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
+- [Palm Reading](https://oraclemirror.com/palm-reading): Palmistry reading of the heart, head, life, and fate lines.
+- [I Ching](https://oraclemirror.com/iching-oracle): Cast three coins six times to build a hexagram and consult the Book of Changes.
+
+## Key Facts
+
+- All readings are free; no account or sign-up is required.
+- Reading history is stored only in the visitor's browser (localStorage); nothing is uploaded to a server.
+- Readings are AI-assisted, presented through fortune-teller personas, and intended for entertainment.
+- Canonical host: https://oraclemirror.com (www redirects here).
+
+## Pages
+
+- [Meet the Mystics](https://oraclemirror.com/mystics): The personas behind each realm.
+- [Privacy Policy](https://oraclemirror.com/privacy-policy)
+- [Contact](https://oraclemirror.com/contact)
+`, {
+    headers: { "Content-Type": "text/plain; charset=UTF-8", "Cache-Control": "public, max-age=3600" },
   });
 }
 
@@ -681,6 +813,10 @@ export default {
 
     if (url.pathname === "/robots.txt") {
       return robotsResponse();
+    }
+
+    if (url.pathname === "/llms.txt") {
+      return llmsTxtResponse();
     }
 
     if (url.pathname.startsWith("/api/")) {
