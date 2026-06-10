@@ -1906,6 +1906,36 @@ select option {
   text-align: center;
 }
 
+/* Collapse blocked/errored slots so no empty frame lingers */
+.oracle-ad-collapsed,
+.oracle-ad-slot.oracle-ad-collapsed {
+  display: none;
+  min-height: 0;
+}
+
+.oracle-ad-home-leaderboard {
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.oracle-ad-footer {
+  margin-bottom: 0.2rem;
+}
+
+/* Leaderboard is a desktop-only unit (728px creative) */
+@media (max-width: 1199px) {
+  .oracle-ad-home-leaderboard {
+    display: none;
+  }
+}
+
+/* 468x60 mid-content unit is desktop/tablet only */
+@media (max-width: 767px) {
+  .oracle-ad-footer {
+    display: none;
+  }
+}
+
 .oracle-ad-loading .oracle-ad-frame {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),

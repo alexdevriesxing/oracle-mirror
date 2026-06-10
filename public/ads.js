@@ -19,6 +19,7 @@ let sessionStartedAt = Date.now();
 let lastUserInteractionAt = 0;
 let ambientValueDelivered = false;
 let ambientPopunderTimer = null;
+let socialBarLoaded = false;
 
 const AD_DEBUG_COUNTERS = [
   "registered",
@@ -681,6 +682,7 @@ export function activateSlotsForScreen(screen, realm) {
 
   if (screen === "home") {
     activateAdSlot("oracle-home-slot", { realm: "home" });
+    activateAdSlot("oracle-home-leaderboard", { realm: "home" });
   } else if (screen === "archive") {
     activateAdSlot("oracle-archive-native", { realm: "archive" });
     activateAdSlot("oracle-archive-bottom-slot", { realm: "archive" });
@@ -697,6 +699,9 @@ export function activateSlotsForScreen(screen, realm) {
     hideMobileAnchor();
     return;
   }
+
+  // Global mid-content banner above the footer is eligible on every content screen
+  activateAdSlot("oracle-footer-banner", { realm: activeRealm, force: true });
 
   // Always ensure the mobile sticky banner is shown on mobile view across all screens
   showMobileAnchor();
@@ -844,6 +849,7 @@ function applyConsent(consent) {
     }
     if (["realm", "result"].includes(activeScreen)) showMobileAnchor();
     if (ambientValueDelivered) scheduleAmbientPopunder("consent_after_value");
+    scheduleSocialBar("consent_accepted");
   } else {
     for (const host of document.querySelectorAll("[data-ad-slot]")) {
       const config = slotConfigs.get(host.dataset.adSlot);
@@ -984,6 +990,81 @@ function loadAmbientPopunder(config, reason) {
   });
 }
 
+function loadSocialBar(reason = "init") {
+  const config = ORACLE_AD_CONFIG.globalScripts?.socialBar;
+  if (!config || socialBarLoaded) return;
+  if (!config.enabled) return;
+  if (globalScriptRequiresConsent(config) && !hasAdConsent()) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "consent_pending",
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
+  if (!hasConfiguredGlobalScript(config)) {
+    trackEvent("ad_slot_collapsed", {
+      slot_id: config.name,
+      placement: config.placement,
+      reason: "placeholder_zone",
+      zone_id: config.placeholderZoneId,
+      screen: activeScreen,
+      realm: activeRealm,
+    });
+    return;
+  }
+  if (getConsentState().ads === false) return;
+
+  socialBarLoaded = true;
+  trackEvent("ad_slot_requested", {
+    slot_id: config.name,
+    placement: config.placement,
+    format: "social_bar",
+    zone_id: config.zoneId,
+    trigger: reason,
+    screen: activeScreen,
+    realm: activeRealm,
+  });
+
+  runWhenIdle(() => {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = config.scriptUrl;
+    script.onload = () => {
+      trackEvent("ad_script_loaded", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+      trackEvent("ad_slot_filled", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+    };
+    script.onerror = () => {
+      socialBarLoaded = false;
+      trackEvent("ad_script_error", {
+        slot_id: config.name,
+        placement: config.placement,
+        format: "social_bar",
+        zone_id: config.zoneId,
+      });
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function scheduleSocialBar(reason = "init") {
+  const config = ORACLE_AD_CONFIG.globalScripts?.socialBar;
+  if (!config || !config.enabled || socialBarLoaded) return;
+  window.setTimeout(() => loadSocialBar(reason), config.delayAfterLoadMs || 0);
+}
+
 export function scheduleAmbientPopunder(reason = "value_delivered") {
   const config = ORACLE_AD_CONFIG.globalScripts?.popunder;
   if (!config) return;
@@ -1065,6 +1146,7 @@ export function initAdSystem() {
   registerAdSlots();
   initConsent();
   initMobileAnchor();
+  scheduleSocialBar("init");
   runAdBlockCheck();
   renderAdDebugPanel();
   console.info("[Oracle Mirror Ads] Debug available at /ad-debug or window.oracleAdDebug.printSummary().");
