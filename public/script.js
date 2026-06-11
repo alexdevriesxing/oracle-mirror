@@ -206,6 +206,7 @@ const ROUTE_BY_PAGE = {
   tarot: "/tarot",
   love: "/love-oracle",
   "love-match": "/love-match",
+  olympus: "/oracle-of-olympus",
   magic8: "/magic-8-ball",
   numerology: "/numerology",
   "daily-fortune": "/daily-fortune",
@@ -250,6 +251,7 @@ const REALM_PAGES = new Set([
   "birthchart",
   "palmistry",
   "iching",
+  "olympus",
 ]);
 
 const SCREEN_META = {
@@ -329,6 +331,10 @@ const SCREEN_META = {
     title: "Contact | Oracle Mirror",
     description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
   },
+  olympus: {
+    title: "Oracle of Olympus | Mystical Sports Predictions | Oracle Mirror",
+    description: "Summon Pythia Nikephoros for divine verdicts, omens, and football match outcomes.",
+  },
 };
 
 function canonicalUrl(path) {
@@ -339,6 +345,10 @@ function getRouteState(pathname = window.location.pathname) {
   const normalized = pathname.length > 1 ? pathname.replace(/\/$/, "") : "/";
   if (PAGE_BY_RESULT_ROUTE.has(normalized)) {
     return { pageId: PAGE_BY_RESULT_ROUTE.get(normalized), isResult: true, path: normalized };
+  }
+  if (normalized.startsWith("/oracle-of-olympus")) {
+    const matchId = normalized.substring("/oracle-of-olympus".length + 1);
+    return { pageId: "olympus", isResult: false, path: normalized, matchId: matchId || null };
   }
   return {
     pageId: PAGE_BY_ROUTE.get(normalized) || "home",
@@ -391,18 +401,33 @@ function showPage(pageId, options = {}) {
     p.classList.remove("active");
   }
 
-  const target = document.getElementById(`page-${pageId}`);
+  const targetId = pageId === "olympus" ? "page-olympus" : `page-${pageId}`;
+  const target = document.getElementById(targetId);
   if (target) {
     target.classList.add("active");
     if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const routePath = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
+  const routePath = options.matchId 
+    ? `/oracle-of-olympus/${options.matchId}` 
+    : (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/");
   if (push && routePath && window.location.pathname !== routePath) {
-    history.pushState({ pageId, isResult }, "", routePath);
+    history.pushState({ pageId, isResult, matchId: options.matchId }, "", routePath);
   }
 
   updateDocumentMeta(pageId, isResult);
+
+  if (pageId === "olympus" && options.matchId) {
+    const match = OLYMPUS_MATCHES_JS[options.matchId];
+    if (match) {
+      document.title = `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`;
+      document.querySelector('meta[name="description"]')?.setAttribute("content", `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`);
+    }
+  }
+
+  if (pageId === "olympus" && !options.matchId) {
+    showMatchList();
+  }
 
   for (const link of document.querySelectorAll(".nav-link[data-nav]")) {
     link.classList.toggle("active", link.dataset.nav === pageId || (pageId === "love" && link.dataset.nav === "love"));
@@ -455,7 +480,14 @@ hamburger?.addEventListener("click", () => {
 
 window.addEventListener("popstate", () => {
   const route = getRouteState();
-  showPage(route.pageId, { push: false, isResult: route.isResult, scroll: false });
+  showPage(route.pageId, { push: false, isResult: route.isResult, scroll: false, matchId: route.matchId });
+  if (route.pageId === "olympus") {
+    if (route.matchId) {
+      showMatchDetail(route.matchId);
+    } else {
+      showMatchList();
+    }
+  }
 });
 
 // Close mobile menu on outside click
@@ -1712,9 +1744,352 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
   btn.disabled = false;
 });
 
+// =========================================================
+// ORACLE OF OLYMPUS (Mystical Sports Predictions)
+// =========================================================
+
+const OLYMPUS_MATCHES_JS = {
+  "wc2026-netherlands-japan": {
+    matchId: "wc2026-netherlands-japan",
+    teamA: "Netherlands",
+    teamB: "Japan",
+    competition: "FIFA World Cup 2026",
+    stage: "Group Stage",
+    date: "2026-06-18",
+    venue: "MetLife Stadium",
+    status: "upcoming",
+    predictedScore: "Netherlands 2–1 Japan",
+    probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
+    confidence: "Medium",
+    historicalSummary: "Netherlands have a strong World Cup record and attacking tradition. Japan are disciplined, tactically organized, and dangerous in transition.",
+    dataReasoning: "Historical tournament depth and attacking form give the Netherlands a narrow statistical advantage, though Japan's tactical cohesion keeps the draw probability high."
+  },
+  "wc2026-argentina-france": {
+    matchId: "wc2026-argentina-france",
+    teamA: "Argentina",
+    teamB: "France",
+    competition: "FIFA World Cup 2026",
+    stage: "Quarter-Finals",
+    date: "2026-06-10",
+    venue: "Azteca Stadium",
+    status: "completed",
+    predictedScore: "Argentina 1–2 France",
+    probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
+    confidence: "High",
+    historicalSummary: "A rematch of the legendary 2022 final. Argentina's aging core faces France's explosive young forward lines.",
+    dataReasoning: "France's superior speed in transition and recent squad depth give them a strong statistical edge over Argentina's transitional lineup."
+  },
+  "wc2026-germany-spain": {
+    matchId: "wc2026-germany-spain",
+    teamA: "Germany",
+    teamB: "Spain",
+    competition: "FIFA World Cup 2026",
+    stage: "Group Stage",
+    date: "2026-06-11",
+    venue: "SoFi Stadium",
+    status: "today",
+    predictedScore: "Germany 2–2 Spain",
+    probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
+    confidence: "Medium",
+    historicalSummary: "Two European giants with contrasting styles. Germany's direct counter-pressing versus Spain's high-possession tiki-taka control.",
+    dataReasoning: "A highly balanced matchup. Possession metrics favor Spain, while physical dominance and home-continent proximity favor Germany, pointing strongly to a draw."
+  }
+};
+
+const OLYMPUS_FALLBACK_TEMPLATES = {
+  divineVerdict: [
+    "Nike's gaze flickers over the pitch, where {teamA} and {teamB} clash. The stars align closely, indicating that {winner} shall find the golden paths to victory, leaving the adversary in shadows.",
+    "Ares rattles his shield above the arena. Though {teamA} fights with the strength of lions, the swift spears of {teamB} will strike like lightning at the turning of the tide.",
+    "Hermes stands balanced between the hosts. Neither side holds the supreme favor of the heavens; they shall match goal for goal, and the scales of battle will remain in perfect equilibrium."
+  ],
+  olympianOmen: [
+    "Athena whispers of tactical structure in the midfield, but Poseidon warns that the defense of {loser} may flood under pressure.",
+    "Apollo shines upon the frontline of {winner}, predicting that three key chances will test the keeper's shield.",
+    "Zeus casts a shadow of storm over the pitch; the midfield struggle will be harsh, and a single card of crimson may shift the balance."
+  ],
+  whyTheMirrorSeesThis: [
+    "The statistical mirror reflects the deep tournament legacy and defensive structures of {winner}. They possess the stamina of Heracles in the final minutes.",
+    "The mirror shows a clash of elements: the fire of {teamA}'s attack meets the deep water of {teamB}'s defense, pointing to a dramatic finish."
+  ]
+};
+
+let currentMatchId = null;
+
+function getLocalMysticalProphecy(match) {
+  const winner = match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB;
+  const loser = match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamB : match.teamA;
+  const isDrawFavored = Math.abs(match.probabilities.teamAWin - match.probabilities.teamBWin) <= 5 || match.probabilities.draw > 30;
+
+  let verdictTpl = "";
+  if (isDrawFavored) {
+    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[2];
+  } else if (winner === match.teamA) {
+    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[0];
+  } else {
+    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[1];
+  }
+
+  const omenTpl = OLYMPUS_FALLBACK_TEMPLATES.olympianOmen[Math.floor(Math.random() * OLYMPUS_FALLBACK_TEMPLATES.olympianOmen.length)];
+  const whyTpl = OLYMPUS_FALLBACK_TEMPLATES.whyTheMirrorSeesThis[Math.floor(Math.random() * OLYMPUS_FALLBACK_TEMPLATES.whyTheMirrorSeesThis.length)];
+
+  const replacePlaceholders = (text) => {
+    return text
+      .replace(/{teamA}/g, match.teamA)
+      .replace(/{teamB}/g, match.teamB)
+      .replace(/{winner}/g, winner)
+      .replace(/{loser}/g, loser);
+  };
+
+  return {
+    persona: "Pythia Nikephoros",
+    title: "Oracle of Olympus",
+    divineVerdict: replacePlaceholders(verdictTpl),
+    predictedScore: match.predictedScore,
+    mostLikelyOutcome: isDrawFavored ? "Draw" : `${winner} win`,
+    confidence: match.confidence,
+    whyTheMirrorSeesThis: replacePlaceholders(whyTpl),
+    olympianOmen: replacePlaceholders(omenTpl),
+    mortalWarning: "The clouds over Olympus are temporarily silent, but the statistical mirror still speaks.",
+    disclaimer: "Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes."
+  };
+}
+
+function showMatchList() {
+  const landing = document.getElementById("olympus-landing-view");
+  const detail = document.getElementById("olympus-detail-view");
+  if (landing) landing.style.display = "flex";
+  if (detail) detail.style.display = "none";
+  
+  const container = document.getElementById("olympus-match-list");
+  if (!container) return;
+  
+  container.innerHTML = Object.values(OLYMPUS_MATCHES_JS).map(match => {
+    const statusLabel = match.status === "completed" 
+      ? '<span class="match-status status-completed" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Completed</span>'
+      : (match.status === "today" ? '<span class="match-status status-today" style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Today</span>' : '<span class="match-status status-upcoming" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Upcoming</span>');
+      
+    return `
+      <div class="match-card" data-match-id="${match.matchId}" style="border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-card); padding: 1.25rem; margin-bottom: 1rem; cursor: pointer; transition: all var(--transition);">
+        <div class="match-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(212, 175, 55, 0.1); padding-bottom: 0.5rem;">
+          <span class="match-comp" style="font-family: var(--font-heading); font-size: 0.82rem; color: var(--gold);">${match.competition} — ${match.stage}</span>
+          ${statusLabel}
+        </div>
+        <div class="match-teams" style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1rem 0;">
+          <span class="match-team" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-cream);">${match.teamA}</span>
+          <span class="match-vs" style="font-family: var(--font-body); font-style: italic; color: var(--text-muted); font-size: 0.95rem;">vs</span>
+          <span class="match-team" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-cream);">${match.teamB}</span>
+        </div>
+        <div class="match-meta-info" style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          <span>📅 ${match.date}</span>
+          <span>📍 ${match.venue}</span>
+        </div>
+        <div class="match-prediction-preview" style="display: flex; justify-content: space-between; align-items: center; background: rgba(5, 3, 13, 0.4); padding: 0.75rem; border-radius: 6px;">
+          <div class="predicted-score-preview" style="font-size: 0.95rem;">Score: <strong>${match.predictedScore}</strong></div>
+          <div class="outcome-confidence" style="font-size: 0.9rem;">Confidence: <span class="conf-badge conf-${match.confidence.toLowerCase()}" style="padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;">${match.confidence}</span></div>
+        </div>
+        <p class="entertainment-disclaimer mini-disclaimer" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-top: 0.75rem; opacity: 0.8; line-height: 1.3;">
+          Oracle Mirror sports predictions are mystical entertainment. They are not betting advice or guaranteed outcomes.
+        </p>
+      </div>
+    `;
+  }).join("");
+  
+  container.querySelectorAll(".match-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const matchId = card.dataset.matchId;
+      showPage("olympus", { matchId });
+      showMatchDetail(matchId);
+    });
+  });
+}
+
+function showMatchDetail(matchId) {
+  currentMatchId = matchId;
+  const match = OLYMPUS_MATCHES_JS[matchId];
+  if (!match) return;
+  
+  const landing = document.getElementById("olympus-landing-view");
+  const detail = document.getElementById("olympus-detail-view");
+  if (landing) landing.style.display = "none";
+  if (detail) detail.style.display = "flex";
+  
+  const detailCard = document.getElementById("olympus-detail-card");
+  if (!detailCard) return;
+
+  const totalProb = match.probabilities.teamAWin + match.probabilities.draw + match.probabilities.teamBWin;
+  const teamAWinPct = Math.round((match.probabilities.teamAWin / totalProb) * 100);
+  const drawPct = Math.round((match.probabilities.draw / totalProb) * 100);
+  const teamBWinPct = Math.round((match.probabilities.teamBWin / totalProb) * 100);
+  
+  detailCard.innerHTML = `
+    <div class="match-detail-main" style="border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-card); padding: 2rem 1.5rem; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45); text-align: left;">
+      <div class="match-detail-header" style="display: flex; flex-direction: column; gap: 0.25rem; border-bottom: 1px solid rgba(212, 175, 55, 0.15); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+        <span class="match-comp" style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; font-weight: 700;">${match.competition} — ${match.stage}</span>
+        <span class="match-venue-date" style="font-size: 0.88rem; color: var(--text-muted);">📅 ${match.date} | 📍 ${match.venue}</span>
+      </div>
+      <div class="match-teams-large" style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin: 1.5rem 0;">
+        <div class="match-team-lg" style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--text-gold);">${match.teamA}</div>
+        <div class="match-vs-lg" style="font-family: var(--font-body); font-style: italic; color: var(--text-muted); font-size: 1.15rem;">vs</div>
+        <div class="match-team-lg" style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--text-gold);">${match.teamB}</div>
+      </div>
+      
+      <div class="deterministic-prediction-block" style="background: rgba(5, 3, 13, 0.5); padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.05);">
+        <h3 style="font-family: var(--font-heading); color: var(--gold-light); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.2); padding-bottom: 0.5rem; text-align: center;">Statistical Prediction</h3>
+        <div class="predicted-score-large" style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--gold-light); text-align: center; margin-bottom: 1.25rem; text-shadow: 0 0 12px var(--shadow-gold);">${match.predictedScore}</div>
+        
+        <div class="probabilities-gauge" style="margin: 1.5rem 0;">
+          <div class="gauge-bar" style="height: 16px; width: 100%; display: flex; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div class="gauge-fill fill-team-a" style="width: ${teamAWinPct}%; background: linear-gradient(90deg, #60a5fa, #3b82f6);" title="${match.teamA} Win: ${teamAWinPct}%"></div>
+            <div class="gauge-fill fill-draw" style="width: ${drawPct}%; background: linear-gradient(90deg, #94a3b8, #64748b);" title="Draw: ${drawPct}%"></div>
+            <div class="gauge-fill fill-team-b" style="width: ${teamBWinPct}%; background: linear-gradient(90deg, #f87171, #ef4444);" title="${match.teamB} Win: ${teamBWinPct}%"></div>
+          </div>
+          <div class="gauge-labels" style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.88rem; color: var(--text-cream); font-family: var(--font-heading);">
+            <span>${match.teamA}: ${teamAWinPct}%</span>
+            <span>Draw: ${drawPct}%</span>
+            <span>${match.teamB}: ${teamBWinPct}%</span>
+          </div>
+        </div>
+
+        <div class="match-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 0.75rem 0;">
+          <div class="meta-item" style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <strong style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Confidence</strong>
+            <span class="conf-badge conf-${match.confidence.toLowerCase()}" style="align-self: flex-start; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;">${match.confidence}</span>
+          </div>
+          <div class="meta-item" style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <strong style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Most Likely Outcome</strong>
+            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-cream);">${teamAWinPct > teamBWinPct ? match.teamA + ' Win' : match.teamB + ' Win'}</span>
+          </div>
+        </div>
+
+        <div class="reasoning-text" style="margin-top: 1rem; font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">
+          <strong style="color: var(--text-gold); display: block; margin-bottom: 0.25rem;">Statistical Reasoning:</strong>
+          <p>${match.dataReasoning}</p>
+        </div>
+
+        <div class="history-summary-text" style="margin-top: 1rem; font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">
+          <strong style="color: var(--text-gold); display: block; margin-bottom: 0.25rem;">Historical Summary:</strong>
+          <p>${match.historicalSummary}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("olympus-response-container").style.display = "none";
+  document.getElementById("btn-summon-oracle").style.display = "inline-block";
+  document.getElementById("olympus-loading").style.display = "none";
+}
+
+async function summonOracle() {
+  const match = OLYMPUS_MATCHES_JS[currentMatchId];
+  if (!match) return;
+
+  const btn = document.getElementById("btn-summon-oracle");
+  const loading = document.getElementById("olympus-loading");
+  const container = document.getElementById("olympus-response-container");
+  const output = document.querySelector('[data-output="olympus"]');
+
+  if (btn) btn.style.display = "none";
+  if (loading) loading.style.display = "block";
+  if (container) container.style.display = "none";
+  setReadingState(true);
+
+  trackEvent("question_submitted", {
+    realm: "olympus",
+    question_length: match.matchId.length,
+  });
+  trackEvent("reading_started", { realm: "olympus" });
+
+  let prophecyData = null;
+
+  try {
+    const data = await callAPI("/api/oracle-of-olympus/predict", match);
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    prophecyData = data;
+  } catch (err) {
+    console.warn("API prediction failed, falling back to local templates:", err);
+    prophecyData = getLocalMysticalProphecy(match);
+  }
+
+  if (output) {
+    output.innerHTML = `
+      <div class="oracle-scroll-wrapper" style="border: 2px solid var(--gold); border-radius: 12px; background: linear-gradient(180deg, rgba(20, 10, 45, 0.9) 0%, rgba(5, 3, 13, 0.95) 100%); padding: 2.25rem 1.5rem; margin-top: 2rem; box-shadow: inset 0 0 40px rgba(139, 92, 246, 0.15), 0 0 30px rgba(212, 175, 55, 0.1); position: relative; text-align: left;">
+        <div class="oracle-scroll-title" style="font-family: var(--font-display); color: var(--gold-light); font-size: 1.4rem; text-align: center; margin-bottom: 1.5rem; text-shadow: 0 0 10px var(--shadow-gold);">Pythia Nikephoros Speaks</div>
+        
+        <div class="prophecy-section divine-verdict-section" style="margin-bottom: 1.5rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.15); padding-bottom: 1rem;">
+          <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 1.05rem; margin-bottom: 0.5rem; text-transform: uppercase;">⚡ Divine Verdict</h4>
+          <p class="prophecy-text" style="font-family: var(--font-body); font-size: 1.15rem; line-height: 1.6; color: var(--text-cream); font-style: italic;">"${prophecyData.divineVerdict}"</p>
+        </div>
+
+        <div class="prophecy-two-column" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.15); padding-bottom: 1rem;">
+          <div class="prophecy-section">
+            <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; margin-bottom: 0.35rem; text-transform: uppercase;">🕊️ Olympian Omen</h4>
+            <p class="prophecy-text" style="font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">${prophecyData.olympianOmen}</p>
+          </div>
+          <div class="prophecy-section">
+            <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; margin-bottom: 0.35rem; text-transform: uppercase;">🌟 Why the Mirror Sees This</h4>
+            <p class="prophecy-text" style="font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">${prophecyData.whyTheMirrorSeesThis}</p>
+          </div>
+        </div>
+
+        <div class="prophecy-meta-row" style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; font-family: var(--font-heading); font-size: 0.92rem; color: var(--gold-light); background: rgba(212, 175, 55, 0.05); padding: 0.75rem; border-radius: 6px; justify-content: space-around;">
+          <div><strong>Outcome:</strong> ${prophecyData.mostLikelyOutcome}</div>
+          <div><strong>Predicted Score:</strong> ${prophecyData.predictedScore}</div>
+          <div><strong>Confidence:</strong> ${prophecyData.confidence}</div>
+        </div>
+
+        <div class="prophecy-warning-block" style="background: rgba(239, 68, 68, 0.05); border-left: 3px solid #ef4444; padding: 0.75rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+          <p style="font-size: 0.92rem; line-height: 1.4; color: var(--text-muted);">⚠️ <strong>Mortal Warning:</strong> ${prophecyData.mortalWarning}</p>
+        </div>
+
+        <p class="entertainment-disclaimer prophecy-disclaimer" style="font-size: 0.78rem; color: var(--text-muted); font-style: italic; opacity: 0.8; line-height: 1.4; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem;">
+          ${prophecyData.disclaimer}
+        </p>
+      </div>
+      
+      <div class="prophecy-actions" style="margin-top: 1.5rem; text-align: center;">
+        <button class="btn-gold btn-small" id="btn-save-olympus-archive">Save Prophecy to Archive</button>
+      </div>
+    `;
+  }
+
+  if (loading) loading.style.display = "none";
+  if (container) container.style.display = "block";
+  setReadingState(false);
+
+  const saveBtn = document.getElementById("btn-save-olympus-archive");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const archiveText = `[Oracle of Olympus Prophecy] Verdict: ${prophecyData.divineVerdict}\n\nOutcome: ${prophecyData.mostLikelyOutcome}\nOmen: ${prophecyData.olympianOmen}\n\n${prophecyData.disclaimer}`;
+      saveToArchive("olympus", `${match.teamA} vs ${match.teamB} Prediction`, archiveText, {
+        matchId: match.matchId,
+        predictedScore: prophecyData.predictedScore
+      });
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saved to Archive";
+      saveBtn.style.opacity = "0.6";
+    });
+  }
+
+  // Optimize Adsterra Ad placements:
+  const adSlot = createResultAdSlot("olympus");
+  adSlot.classList.add("result-aftercare");
+  if (output) output.appendChild(adSlot);
+  registerAdSlots(adSlot);
+  activateSlotsForScreen("result", "olympus");
+}
+
 // --- Boot ---
 initAdSystem();
 syncFortuneQuestionnaire();
+
+// Olympus events wireup
+document.getElementById("btn-summon-oracle")?.addEventListener("click", summonOracle);
+document.getElementById("btn-back-to-matches")?.addEventListener("click", () => {
+  showPage("olympus");
+  showMatchList();
+});
 
 const initialRoute = getRouteState();
 showPage(initialRoute.pageId, {
@@ -1722,7 +2097,16 @@ showPage(initialRoute.pageId, {
   isResult: initialRoute.isResult,
   scroll: false,
   emitTracking: false,
+  matchId: initialRoute.matchId,
 });
+
+if (initialRoute.pageId === "olympus") {
+  if (initialRoute.matchId) {
+    showMatchDetail(initialRoute.matchId);
+  } else {
+    showMatchList();
+  }
+}
 
 trackEvent("page_view", {
   page_path: window.location.pathname,

@@ -4106,3 +4106,124 @@ body {
   95% { width: 95%; }
   100% { width: 99%; }
 }
+
+/* =========================================================
+   ORACLE OF OLYMPUS (Mystical Sports Predictions)
+   ========================================================= */
+
+.card-olympus:hover {
+  border-color: var(--gold-light);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(212, 175, 55, 0.2);
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.match-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(212, 175, 55, 0.15) !important;
+}
+
+.match-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  font-family: var(--font-heading);
+}
+
+.status-upcoming {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.status-today {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.status-completed {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.85; box-shadow: 0 0 4px rgba(251, 146, 60, 0.2); }
+  50% { opacity: 1; box-shadow: 0 0 10px rgba(251, 146, 60, 0.5); }
+}
+
+.conf-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+}
+
+.conf-low {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.conf-medium {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.conf-high {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.mist-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(212, 175, 55, 0.1);
+  border-top-color: var(--gold-light);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.oracle-scroll-wrapper {
+  background: linear-gradient(180deg, rgba(20, 10, 45, 0.9) 0%, rgba(5, 3, 13, 0.95) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 2.25rem 1.5rem;
+  margin-top: 2rem;
+  box-shadow: inset 0 0 40px rgba(139, 92, 246, 0.15), 0 0 30px rgba(212, 175, 55, 0.1);
+}
+
+.oracle-response-scroll {
+  animation: fadeIn 0.6s ease;
+}
+
+.seo-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

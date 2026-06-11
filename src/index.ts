@@ -2,6 +2,13 @@ export interface Env {
   AI: any;
   ASSETS: Fetcher;
   AD_CONSENT_REQUIRED?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_AI_GATEWAY_ID?: string;
+  AI_PROVIDER?: string;
+  AI_MODEL?: string;
+  AI_API_KEY?: string;
+  ORACLE_ALLOWED_ORIGIN?: string;
+  ORACLE_CACHE_TTL_SECONDS?: string;
 }
 
 const FALLBACK_FORTUNES = [
@@ -18,6 +25,76 @@ const FALLBACK_FORTUNES = [
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const GATEWAY_CONFIG = { gateway: { id: "default" } };
 const CANONICAL_HOST = "https://oraclemirror.com";
+
+export interface Probabilities {
+  teamAWin: number;
+  draw: number;
+  teamBWin: number;
+}
+
+export interface MatchData {
+  matchId: string;
+  teamA: string;
+  teamB: string;
+  competition: string;
+  stage: string;
+  date: string;
+  venue: string;
+  status: "upcoming" | "completed" | "today";
+  predictedScore: string;
+  probabilities: Probabilities;
+  confidence: "Low" | "Medium" | "High";
+  historicalSummary: string;
+  dataReasoning: string;
+}
+
+export const OLYMPUS_MATCHES: Record<string, MatchData> = {
+  "wc2026-netherlands-japan": {
+    matchId: "wc2026-netherlands-japan",
+    teamA: "Netherlands",
+    teamB: "Japan",
+    competition: "FIFA World Cup 2026",
+    stage: "Group Stage",
+    date: "2026-06-18",
+    venue: "MetLife Stadium",
+    status: "upcoming",
+    predictedScore: "Netherlands 2–1 Japan",
+    probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
+    confidence: "Medium",
+    historicalSummary: "Netherlands have a strong World Cup record and attacking tradition. Japan are disciplined, tactically organized, and dangerous in transition.",
+    dataReasoning: "Historical tournament depth and attacking form give the Netherlands a narrow statistical advantage, though Japan's tactical cohesion keeps the draw probability high."
+  },
+  "wc2026-argentina-france": {
+    matchId: "wc2026-argentina-france",
+    teamA: "Argentina",
+    teamB: "France",
+    competition: "FIFA World Cup 2026",
+    stage: "Quarter-Finals",
+    date: "2026-06-10",
+    venue: "Azteca Stadium",
+    status: "completed",
+    predictedScore: "Argentina 1–2 France",
+    probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
+    confidence: "High",
+    historicalSummary: "A rematch of the legendary 2022 final. Argentina's aging core faces France's explosive young forward lines.",
+    dataReasoning: "France's superior speed in transition and recent squad depth give them a strong statistical edge over Argentina's transitional lineup."
+  },
+  "wc2026-germany-spain": {
+    matchId: "wc2026-germany-spain",
+    teamA: "Germany",
+    teamB: "Spain",
+    competition: "FIFA World Cup 2026",
+    stage: "Group Stage",
+    date: "2026-06-11",
+    venue: "SoFi Stadium",
+    status: "today",
+    predictedScore: "Germany 2–2 Spain",
+    probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
+    confidence: "Medium",
+    historicalSummary: "Two European giants with contrasting styles. Germany's direct counter-pressing versus Spain's high-possession tiki-taka control.",
+    dataReasoning: "A highly balanced matchup. Possession metrics favor Spain, while physical dominance and home-continent proximity favor Germany, pointing strongly to a draw."
+  }
+};
 
 type AppRouteMeta = {
   title: string;
@@ -120,6 +197,10 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
     description:
       "Test your love compatibility free: zodiac match, numerology, tarot, quiz, and omens combine into a Cosmic Chemistry Score plus AI Soulmate Vision.",
   },
+  "/oracle-of-olympus": {
+    title: "Oracle of Olympus — Mystical Football Predictions | Oracle Mirror",
+    description: "Consult Pythia Nikephoros, the sports oracle, for mystical football predictions, match probabilities, and statistical analysis.",
+  },
   "/birth-chart": {
     title: "Free Birth Chart Reading — Sun, Moon & Rising Signs | Oracle Mirror",
     description:
@@ -205,6 +286,20 @@ function routeMeta(pathname: string): AppRouteMeta | undefined {
   // Result pages are session-specific shells with no unique crawlable content;
   // keep them reachable but out of the index to avoid thin-content penalties.
   if (RESULT_ROUTES[path]) return { ...RESULT_ROUTES[path], noindex: true };
+
+  if (path.startsWith("/oracle-of-olympus")) {
+    if (path === "/oracle-of-olympus") {
+      return APP_ROUTES["/oracle-of-olympus"];
+    }
+    const matchId = path.substring("/oracle-of-olympus/".length);
+    const match = OLYMPUS_MATCHES[matchId];
+    if (match) {
+      return {
+        title: `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`,
+        description: `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`,
+      };
+    }
+  }
   return undefined;
 }
 
@@ -280,7 +375,26 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
     headers: request.headers,
   });
   const response = await env.ASSETS.fetch(indexRequest);
-  const html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
+  let html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
+
+  if (pathname.startsWith("/oracle-of-olympus/")) {
+    const matchId = pathname.substring("/oracle-of-olympus/".length);
+    const match = OLYMPUS_MATCHES[matchId];
+    if (match) {
+      const seoHtml = `
+  <div id="seo-match-content" class="seo-only" style="display:none;" aria-hidden="true">
+    <h2>${match.teamA} vs ${match.teamB} - ${match.competition} Prediction</h2>
+    <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
+    <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
+    <p><strong>Confidence:</strong> ${match.confidence}</p>
+    <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
+    <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
+  </div>
+`;
+      html = html.replace("</body>", `${seoHtml}\n</body>`);
+    }
+  }
+
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   return new Response(html, {
@@ -795,6 +909,378 @@ Flawless composition, 8k resolution, highly detailed face, sharp focus, professi
   });
 }
 
+function checkAllowedOrigin(origin: string, env: Env): string | null {
+  const allowed = env.ORACLE_ALLOWED_ORIGIN || "https://oraclemirror.com,https://www.oraclemirror.com";
+  const origins = allowed.split(",").map(o => o.trim().toLowerCase());
+  const normalizedOrigin = origin.trim().toLowerCase();
+  
+  if (normalizedOrigin.startsWith("http://localhost:") || normalizedOrigin.startsWith("http://127.0.0.1:")) {
+    return origin;
+  }
+  
+  if (origins.includes(normalizedOrigin)) {
+    return origin;
+  }
+  
+  return null;
+}
+
+const ipLimits = new Map<string, { count: number; resetTime: number }>();
+
+function checkRateLimit(ip: string): string | null {
+  const now = Date.now();
+  const limitWindow = 60 * 1000;
+  const maxRequests = 10;
+
+  const record = ipLimits.get(ip);
+  if (!record || now > record.resetTime) {
+    ipLimits.set(ip, { count: 1, resetTime: now + limitWindow });
+    return null;
+  }
+
+  if (record.count >= maxRequests) {
+    const secondsLeft = Math.ceil((record.resetTime - now) / 1000);
+    return `Too many prediction requests. Please wait ${secondsLeft} seconds before summoning the Oracle again.`;
+  }
+
+  record.count++;
+  return null;
+}
+
+async function callAIGateway(
+  env: Env,
+  provider: string,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> {
+  if (provider === "workers-ai") {
+    if (!env.AI) {
+      throw new Error("AI binding is not configured");
+    }
+    const gatewayId = env.CLOUDFLARE_AI_GATEWAY_ID || "default";
+    const result = await env.AI.run(model, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ]
+    }, {
+      gateway: { id: gatewayId }
+    });
+    return (result.response ?? result.message ?? JSON.stringify(result)).trim();
+  }
+
+  if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_AI_GATEWAY_ID) {
+    throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_GATEWAY_ID are required for provider-native AI Gateway");
+  }
+
+  const baseUrl = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.CLOUDFLARE_AI_GATEWAY_ID}`;
+  
+  if (provider === "openai") {
+    if (!env.AI_API_KEY) throw new Error("AI_API_KEY is required for OpenAI provider");
+    const response = await fetch(`${baseUrl}/openai/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.AI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`OpenAI gateway call failed: ${response.status} ${await response.text()}`);
+    }
+    const data: any = await response.json();
+    return data.choices[0].message.content.trim();
+  }
+
+  if (provider === "anthropic") {
+    if (!env.AI_API_KEY) throw new Error("AI_API_KEY is required for Anthropic provider");
+    const response = await fetch(`${baseUrl}/anthropic/v1/messages`, {
+      method: "POST",
+      headers: {
+        "x-api-key": env.AI_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          { role: "user", content: userPrompt }
+        ]
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`Anthropic gateway call failed: ${response.status} ${await response.text()}`);
+    }
+    const data: any = await response.json();
+    return data.content[0].text.trim();
+  }
+
+  throw new Error(`Unsupported AI provider: ${provider}`);
+}
+
+function cleanForbiddenWords(text: string): string {
+  let cleaned = text;
+  const replacements: Array<[RegExp, string]> = [
+    [/\bguaranteed\s+win\b/gi, "strong alignment"],
+    [/\bsure\s+bet\b/gi, "promising path"],
+    [/\block\b/gi, "solid outcome"],
+    [/\brisk-free\b/gi, "uncertain but favored"],
+    [/\bbet\s+now\b/gi, "watch closely"],
+    [/\bprofit\b/gi, "mystical reward"],
+    [/\binvestment\b/gi, "venture"]
+  ];
+  for (const [regex, replacement] of replacements) {
+    cleaned = cleaned.replace(regex, replacement);
+  }
+  return cleaned;
+}
+
+function parseAndCleanOracleResponse(rawText: string, requestData: any): any {
+  let text = rawText.trim();
+  if (text.startsWith("```")) {
+    text = text.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[0]);
+    } else {
+      throw new Error("Failed to parse LLM output as JSON");
+    }
+  }
+
+  const result: any = {
+    persona: "Pythia Nikephoros",
+    title: "Oracle of Olympus",
+    divineVerdict: cleanForbiddenWords(parsed.divineVerdict || parsed.verdict || "The oracle is silent."),
+    predictedScore: cleanForbiddenWords(parsed.predictedScore || requestData.predictedScore),
+    mostLikelyOutcome: cleanForbiddenWords(parsed.mostLikelyOutcome || `${requestData.teamA} win`),
+    confidence: cleanForbiddenWords(parsed.confidence || requestData.confidence),
+    whyTheMirrorSeesThis: cleanForbiddenWords(parsed.whyTheMirrorSeesThis || parsed.reasoning || "The scales of fate balance here."),
+    olympianOmen: cleanForbiddenWords(parsed.olympianOmen || parsed.omen || "Hermes flies with wings of chance."),
+    mortalWarning: cleanForbiddenWords(parsed.mortalWarning || "This prophecy is for entertainment only and is not betting advice."),
+    disclaimer: "Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes."
+  };
+
+  return result;
+}
+
+async function handleOracleOfOlympusPredict(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const origin = request.headers.get("Origin") || "";
+  const allowedOrigin = checkAllowedOrigin(origin, env);
+  
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": allowedOrigin || "https://oraclemirror.com",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
+  }
+
+  if (env.ORACLE_ALLOWED_ORIGIN && !allowedOrigin) {
+    return new Response(JSON.stringify({ error: "Forbidden: Origin not allowed" }), { status: 403, headers: corsHeaders });
+  }
+
+  const contentLengthStr = request.headers.get("content-length");
+  if (contentLengthStr) {
+    const contentLength = parseInt(contentLengthStr, 10);
+    if (contentLength > 5120) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders });
+    }
+  }
+
+  const clientIP = request.headers.get("cf-connecting-ip") || "unknown-ip";
+  const rateLimitError = checkRateLimit(clientIP);
+  if (rateLimitError) {
+    return new Response(JSON.stringify({ error: rateLimitError }), { status: 429, headers: corsHeaders });
+  }
+
+  let bodyText = "";
+  try {
+    const reader = request.body?.getReader();
+    if (reader) {
+      let result = await reader.read();
+      let bytesRead = 0;
+      const chunks = [];
+      const decoder = new TextDecoder();
+      while (!result.done) {
+        bytesRead += result.value.length;
+        if (bytesRead > 5120) {
+          return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders });
+        }
+        chunks.push(result.value);
+        result = await reader.read();
+      }
+      const combined = new Uint8Array(bytesRead);
+      let offset = 0;
+      for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+      }
+      bodyText = decoder.decode(combined);
+    } else {
+      bodyText = await request.text();
+    }
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Invalid request payload" }), { status: 400, headers: corsHeaders });
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(bodyText);
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: corsHeaders });
+  }
+
+  const required = [
+    "matchId", "teamA", "teamB", "competition", "stage", "date", "venue",
+    "predictedScore", "probabilities", "confidence", "historicalSummary"
+  ];
+  for (const field of required) {
+    if (data[field] === undefined) {
+      return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), { status: 400, headers: corsHeaders });
+    }
+  }
+
+  const allowedFields = new Set([...required, "deterministicPredictionData"]);
+  for (const key of Object.keys(data)) {
+    if (!allowedFields.has(key)) {
+      return new Response(JSON.stringify({ error: `Unexpected field: ${key}` }), { status: 400, headers: corsHeaders });
+    }
+  }
+
+  if (typeof data.teamA !== "string" || data.teamA.trim().length === 0 ||
+      typeof data.teamB !== "string" || data.teamB.trim().length === 0) {
+    return new Response(JSON.stringify({ error: "Team names cannot be empty" }), { status: 400, headers: corsHeaders });
+  }
+
+  const probs = data.probabilities;
+  if (!probs || typeof probs.teamAWin !== "number" || typeof probs.draw !== "number" || typeof probs.teamBWin !== "number") {
+    return new Response(JSON.stringify({ error: "Invalid probabilities schema" }), { status: 400, headers: corsHeaders });
+  }
+
+  const stringFields = ["matchId", "competition", "stage", "date", "venue", "predictedScore", "confidence", "historicalSummary"];
+  for (const field of stringFields) {
+    if (typeof data[field] !== "string" || data[field].length > 1000) {
+      return new Response(JSON.stringify({ error: `Invalid string field: ${field}` }), { status: 400, headers: corsHeaders });
+    }
+  }
+
+  const matchId = data.matchId;
+  const predictedScore = data.predictedScore;
+  const provider = env.AI_PROVIDER || "workers-ai";
+  const model = env.AI_MODEL || (provider === "workers-ai" ? "@cf/meta/llama-3.1-8b-instruct" : "gpt-4o-mini");
+
+  const cacheKeyUrl = `https://oraclemirror-cache.internal/api/oracle-of-olympus/predict?matchId=${matchId}&predictedScore=${encodeURIComponent(predictedScore)}&model=${encodeURIComponent(model)}`;
+  const cache = caches.default;
+  const cacheKeyRequest = new Request(cacheKeyUrl, { method: "GET" });
+  
+  const cachedResponse = await cache.match(cacheKeyRequest);
+  if (cachedResponse) {
+    const responseHeaders = new Headers(cachedResponse.headers);
+    responseHeaders.set("Access-Control-Allow-Origin", allowedOrigin || "https://oraclemirror.com");
+    return new Response(cachedResponse.body, {
+      status: cachedResponse.status,
+      headers: responseHeaders
+    });
+  }
+
+  const systemPrompt = `You are Pythia Nikephoros, the Oracle of Olympus. You create mystical sports predictions for Oracle Mirror. Your predictions are for entertainment only. Use the provided historical and statistical match data. Do not invent unavailable statistics. Do not mention betting odds. Do not give gambling advice. Do not claim certainty. Stay in character as an ancient Greek sports oracle, but always give a clear predicted score, likely outcome, confidence level, and short reasoning.`;
+
+  const userPrompt = `Create a mystical football prediction using this data:
+Competition: ${data.competition}
+Stage: ${data.stage}
+Match: ${data.teamA} vs ${data.teamB}
+Venue: ${data.venue}
+Date: ${data.date}
+Predicted score from deterministic model: ${data.predictedScore}
+Probabilities: Team A Win: ${probs.teamAWin}%, Draw: ${probs.draw}%, Team B Win: ${probs.teamBWin}%
+Confidence: ${data.confidence}
+Historical summary: ${data.historicalSummary}
+
+Return strict JSON with:
+divineVerdict,
+predictedScore,
+mostLikelyOutcome,
+confidence,
+whyTheMirrorSeesThis,
+olympianOmen,
+mortalWarning,
+disclaimer.`;
+
+  let responseJson: any = null;
+  try {
+    const rawResultText = await callAIGateway(env, provider, model, systemPrompt, userPrompt);
+    responseJson = parseAndCleanOracleResponse(rawResultText, data);
+  } catch (err) {
+    console.error("Oracle AI generation failed:", err);
+    return new Response(JSON.stringify({ error: "Oracle call failed", details: String(err) }), { status: 502, headers: corsHeaders });
+  }
+
+  let ttlSeconds = 12 * 3600;
+  if (env.ORACLE_CACHE_TTL_SECONDS) {
+    ttlSeconds = parseInt(env.ORACLE_CACHE_TTL_SECONDS, 10);
+  } else {
+    const registeredMatch = OLYMPUS_MATCHES[matchId];
+    if (registeredMatch) {
+      if (registeredMatch.status === "completed") {
+        ttlSeconds = 30 * 24 * 3600;
+      } else if (registeredMatch.status === "today") {
+        ttlSeconds = 2 * 3600;
+      } else {
+        ttlSeconds = 12 * 3600;
+      }
+    } else {
+      try {
+        const matchDate = new Date(data.date);
+        const todayDate = new Date("2026-06-11T12:00:51+02:00");
+        const diffTime = matchDate.getTime() - todayDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) {
+          ttlSeconds = 30 * 24 * 3600;
+        } else if (diffDays === 0) {
+          ttlSeconds = 2 * 3600;
+        } else {
+          ttlSeconds = 12 * 3600;
+        }
+      } catch (e) {}
+    }
+  }
+
+  const finalHeaders = new Headers(corsHeaders);
+  finalHeaders.set("Content-Type", "application/json");
+  finalHeaders.set("Cache-Control", `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}`);
+
+  const okResponse = new Response(JSON.stringify(responseJson), {
+    status: 200,
+    headers: finalHeaders
+  });
+
+  ctx.waitUntil(cache.put(cacheKeyRequest, okResponse.clone()));
+
+  return okResponse;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -830,6 +1316,10 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/health") {
         return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
+      }
+
+      if (url.pathname === "/api/oracle-of-olympus/predict") {
+        return await handleOracleOfOlympusPredict(request, env, ctx);
       }
 
       if (request.method !== "POST") {

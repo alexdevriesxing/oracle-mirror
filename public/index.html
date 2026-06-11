@@ -176,9 +176,11 @@
               <a href="/birth-chart" class="dropdown-item" data-nav="birthchart">&#127756; Birth Chart</a>
               <a href="/palm-reading" class="dropdown-item" data-nav="palmistry">&#9995; Palmistry</a>
               <a href="/iching-oracle" class="dropdown-item" data-nav="iching">&#128142; I Ching</a>
+              <a href="/oracle-of-olympus" class="dropdown-item" data-nav="olympus">&#9889; Oracle of Olympus</a>
             </div>
           </div>
           <a href="/love-match" class="nav-link" data-nav="love-match">&#128156; Love Match</a>
+          <a href="/oracle-of-olympus" class="nav-link" data-nav="olympus">&#9889; Olympus Oracle</a>
           <a href="/mystics" class="nav-link" data-nav="personas">Mystics</a>
           <a href="/archive" class="nav-link" data-nav="archive">Archive</a>
         </div>
@@ -287,6 +289,13 @@
               <div class="card-icon">&#128145;</div>
               <h3>The Temple of Love</h3>
               <p class="card-desc">Compatibility, Soulmate Vision & Love Oracle</p>
+            </div>
+          </a>
+          <a href="/oracle-of-olympus" class="card card-olympus" data-realm="olympus">
+            <div class="card-frame">
+              <div class="card-icon">⚡</div>
+              <h3>Oracle of Olympus</h3>
+              <p class="card-desc">Mystical football predictions & celestial omens</p>
             </div>
           </a>
           <a href="/birth-chart" class="card card-birthchart" data-realm="birthchart">
@@ -1727,6 +1736,89 @@
       </div>
     </section>
 
+    <!-- ===== ORACLE OF OLYMPUS (Mystical Sports Predictions) ===== -->
+    <section id="page-olympus" class="page realm-page realm-olympus">
+      <div class="realm-header">
+        <button class="btn-back" data-back>&#8592; Return to Realms</button>
+        <h2>Oracle of Olympus</h2>
+        <p class="realm-subtitle">Pythia Nikephoros reads the threads of fate above the stadium grounds...</p>
+      </div>
+
+      <!-- Landing view (list of matches) -->
+      <div id="olympus-landing-view" class="olympus-subview active" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <div class="matches-container" style="width: 100%; max-width: 800px; padding: 0 1rem;">
+          <p class="section-subtitle">Select a fixture to view its statistical mirror and summon the oracle's prophecy.</p>
+          <div class="match-list" id="olympus-match-list">
+            <!-- Dynamically populated match cards -->
+          </div>
+        </div>
+        
+        <aside
+          class="oracle-ad oracle-ad-realm"
+          data-ad-slot="oracle-realm-slot"
+          data-ad-realm="olympus"
+          aria-label="Advertisement"
+        ></aside>
+
+        <section class="mirror-lore" aria-labelledby="olympus-lore-title" style="width: 100%; max-width: 800px;">
+          <p class="overview-kicker">Mystical Sports Predictions</p>
+          <h3 id="olympus-lore-title">The Prophecy of Pythia Nikephoros</h3>
+          <p class="lore-intro">
+            The Oracle of Olympus combines raw historical records, team metrics, and statistical probabilities with ancient celestial foresight to reveal the fate of athletic contests.
+          </p>
+          <div class="lore-steps">
+            <div class="lore-step-item">
+              <span class="lore-num">⚡</span>
+              <strong>Statistical Foundation</strong>
+              <p>Every match has a baseline deterministic score computed from team form, home advantage, tournament weight, and historical performance.</p>
+            </div>
+            <div class="lore-step-item">
+              <span class="lore-num">⚡</span>
+              <strong>The Oracle's Prophecy</strong>
+              <p>By summoning the Oracle, you pierce the veil of numbers. Pythia Nikephoros translates the raw data into divine omens, verdicts, and warning warnings.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Detail view (single match prediction & summon button) -->
+      <div id="olympus-detail-view" class="olympus-subview" style="display:none; width: 100%; flex-direction: column; align-items: center;">
+        <div style="width: 100%; max-width: 800px; text-align: left; padding: 0 1rem;">
+          <button class="btn-ghost btn-small" id="btn-back-to-matches" style="margin-bottom: 1.5rem; background: none; border: 1px solid var(--glass-border); color: var(--gold); padding: 0.55rem 1rem; border-radius: 6px; cursor: pointer;">&larr; Back to Matches</button>
+        </div>
+        
+        <div class="match-detail-card-container" id="olympus-detail-card" style="width: 100%; max-width: 800px; padding: 0 1rem;">
+          <!-- Dynamically populated or filled from static match -->
+        </div>
+
+        <div class="summon-section" style="width: 100%; max-width: 800px; padding: 1.5rem 1rem; text-align: center;">
+          <button class="btn-gold btn-realm" id="btn-summon-oracle" style="margin-bottom: 1.5rem;">Summon the Oracle</button>
+          
+          <div class="oracle-loading-mists" id="olympus-loading" style="display:none; padding: 2rem 0;">
+            <div class="mist-spinner" style="margin: 0 auto 1rem;"></div>
+            <p style="font-family: var(--font-heading); color: var(--gold-light); font-style: italic;">The mists gather above Olympus...</p>
+          </div>
+
+          <div class="oracle-response-scroll" id="olympus-response-container" style="display:none;">
+            <div class="oracle-response" data-output="olympus"></div>
+          </div>
+        </div>
+
+        <aside
+          class="oracle-ad oracle-ad-realm"
+          data-ad-slot="oracle-realm-slot"
+          data-ad-realm="olympus"
+          aria-label="Advertisement"
+        ></aside>
+      </div>
+
+      <div class="entertainment-disclaimer-bar" style="width: 100%; max-width: 800px; margin: 1.5rem auto; padding: 1rem; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 8px; background: rgba(5, 3, 13, 0.4); text-align: center;">
+        <p class="disclaimer-text" style="font-size: 0.88rem; color: var(--text-muted); font-style: italic; line-height: 1.5;">
+          <strong>Entertainment Notice:</strong> Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.
+        </p>
+      </div>
+    </section>
+
     <aside
       class="oracle-ad oracle-ad-footer"
       data-ad-slot="oracle-footer-banner"
@@ -1748,6 +1840,7 @@
         <a href="/birth-chart" data-nav="birthchart">Birth Chart</a>
         <a href="/palm-reading" data-nav="palmistry">Palm Reading</a>
         <a href="/iching-oracle" data-nav="iching">I Ching Oracle</a>
+        <a href="/oracle-of-olympus" data-nav="olympus">Oracle of Olympus</a>
         <a href="/mystics" data-nav="personas">Meet the Mystics</a>
       </nav>
       <div class="footer-badges">
