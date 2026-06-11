@@ -1854,6 +1854,24 @@ function getLocalMysticalProphecy(match) {
   };
 }
 
+function getTeamFlagCode(teamName) {
+  const codes = {
+    "Netherlands": "nl",
+    "Japan": "jp",
+    "Argentina": "ar",
+    "France": "fr",
+    "Germany": "de",
+    "Spain": "es"
+  };
+  return codes[teamName] || "un";
+}
+
+function getTeamFlagHtml(teamName, sizeClass = "small") {
+  const code = getTeamFlagCode(teamName);
+  const size = sizeClass === "large" ? 80 : 40;
+  return `<img src="https://flagcdn.com/w${size}/${code}.png" class="flag-img flag-${sizeClass}" alt="${teamName} flag" onerror="this.src='https://flagcdn.com/w${size}/un.png'" />`;
+}
+
 function showMatchList() {
   const landing = document.getElementById("olympus-landing-view");
   const detail = document.getElementById("olympus-detail-view");
@@ -1865,29 +1883,37 @@ function showMatchList() {
   
   container.innerHTML = Object.values(OLYMPUS_MATCHES_JS).map(match => {
     const statusLabel = match.status === "completed" 
-      ? '<span class="match-status status-completed" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Completed</span>'
-      : (match.status === "today" ? '<span class="match-status status-today" style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Today</span>' : '<span class="match-status status-upcoming" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase;">Upcoming</span>');
+      ? '<span class="match-status status-completed">Completed</span>'
+      : (match.status === "today" ? '<span class="match-status status-today">Today</span>' : '<span class="match-status status-upcoming">Upcoming</span>');
       
     return `
-      <div class="match-card" data-match-id="${match.matchId}" style="border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-card); padding: 1.25rem; margin-bottom: 1rem; cursor: pointer; transition: all var(--transition);">
-        <div class="match-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(212, 175, 55, 0.1); padding-bottom: 0.5rem;">
-          <span class="match-comp" style="font-family: var(--font-heading); font-size: 0.82rem; color: var(--gold);">${match.competition} — ${match.stage}</span>
+      <div class="match-card" data-match-id="${match.matchId}">
+        <div class="match-card-header">
+          <span class="match-comp">${match.competition} — ${match.stage}</span>
           ${statusLabel}
         </div>
-        <div class="match-teams" style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1rem 0;">
-          <span class="match-team" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-cream);">${match.teamA}</span>
-          <span class="match-vs" style="font-family: var(--font-body); font-style: italic; color: var(--text-muted); font-size: 0.95rem;">vs</span>
-          <span class="match-team" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--text-cream);">${match.teamB}</span>
+        <div class="match-teams-layout">
+          <div class="match-team-box team-a-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match.teamA)}.png')">
+            <span class="match-team-name">${match.teamA}</span>
+            ${getTeamFlagHtml(match.teamA, "small")}
+          </div>
+          <div class="match-vs-coin">
+            <span>VS</span>
+          </div>
+          <div class="match-team-box team-b-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match.teamB)}.png')">
+            ${getTeamFlagHtml(match.teamB, "small")}
+            <span class="match-team-name">${match.teamB}</span>
+          </div>
         </div>
-        <div class="match-meta-info" style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        <div class="match-meta-info">
           <span>📅 ${match.date}</span>
           <span>📍 ${match.venue}</span>
         </div>
-        <div class="match-prediction-preview" style="display: flex; justify-content: space-between; align-items: center; background: rgba(5, 3, 13, 0.4); padding: 0.75rem; border-radius: 6px;">
-          <div class="predicted-score-preview" style="font-size: 0.95rem;">Score: <strong>${match.predictedScore}</strong></div>
-          <div class="outcome-confidence" style="font-size: 0.9rem;">Confidence: <span class="conf-badge conf-${match.confidence.toLowerCase()}" style="padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;">${match.confidence}</span></div>
+        <div class="match-prediction-preview">
+          <div class="predicted-score-preview">Score: <strong>${match.predictedScore}</strong></div>
+          <div class="outcome-confidence">Confidence: <span class="conf-badge conf-${match.confidence.toLowerCase()}">${match.confidence}</span></div>
         </div>
-        <p class="entertainment-disclaimer mini-disclaimer" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-top: 0.75rem; opacity: 0.8; line-height: 1.3;">
+        <p class="entertainment-disclaimer mini-disclaimer">
           Oracle Mirror sports predictions are mystical entertainment. They are not betting advice or guaranteed outcomes.
         </p>
       </div>
@@ -1922,52 +1948,66 @@ function showMatchDetail(matchId) {
   const teamBWinPct = Math.round((match.probabilities.teamBWin / totalProb) * 100);
   
   detailCard.innerHTML = `
-    <div class="match-detail-main" style="border: 1px solid var(--glass-border); border-radius: 12px; background: var(--bg-card); padding: 2rem 1.5rem; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45); text-align: left;">
-      <div class="match-detail-header" style="display: flex; flex-direction: column; gap: 0.25rem; border-bottom: 1px solid rgba(212, 175, 55, 0.15); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
-        <span class="match-comp" style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; font-weight: 700;">${match.competition} — ${match.stage}</span>
-        <span class="match-venue-date" style="font-size: 0.88rem; color: var(--text-muted);">📅 ${match.date} | 📍 ${match.venue}</span>
+    <div class="match-detail-main">
+      <div class="match-detail-header">
+        <span class="match-comp">${match.competition} — ${match.stage}</span>
+        <span class="match-venue-date">📅 ${match.date} | 📍 ${match.venue}</span>
       </div>
-      <div class="match-teams-large" style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin: 1.5rem 0;">
-        <div class="match-team-lg" style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--text-gold);">${match.teamA}</div>
-        <div class="match-vs-lg" style="font-family: var(--font-body); font-style: italic; color: var(--text-muted); font-size: 1.15rem;">vs</div>
-        <div class="match-team-lg" style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--text-gold);">${match.teamB}</div>
+      <div class="match-teams-large-layout">
+        <div class="match-team-box-lg team-a-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match.teamA)}.png')">
+          <div class="flag-wrapper-lg">
+            ${getTeamFlagHtml(match.teamA, "large")}
+          </div>
+          <span class="match-team-name-lg">${match.teamA}</span>
+        </div>
+        
+        <div class="match-vs-coin-lg">
+          <span>VS</span>
+        </div>
+        
+        <div class="match-team-box-lg team-b-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match.teamB)}.png')">
+          <div class="flag-wrapper-lg">
+            ${getTeamFlagHtml(match.teamB, "large")}
+          </div>
+          <span class="match-team-name-lg">${match.teamB}</span>
+        </div>
       </div>
       
-      <div class="deterministic-prediction-block" style="background: rgba(5, 3, 13, 0.5); padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.05);">
-        <h3 style="font-family: var(--font-heading); color: var(--gold-light); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.2); padding-bottom: 0.5rem; text-align: center;">Statistical Prediction</h3>
-        <div class="predicted-score-large" style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 900; color: var(--gold-light); text-align: center; margin-bottom: 1.25rem; text-shadow: 0 0 12px var(--shadow-gold);">${match.predictedScore}</div>
+      <div class="deterministic-prediction-block">
+        <h3>Statistical Prediction</h3>
+        <div class="predicted-score-large">${match.predictedScore}</div>
         
-        <div class="probabilities-gauge" style="margin: 1.5rem 0;">
-          <div class="gauge-bar" style="height: 16px; width: 100%; display: flex; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
-            <div class="gauge-fill fill-team-a" style="width: ${teamAWinPct}%; background: linear-gradient(90deg, #60a5fa, #3b82f6);" title="${match.teamA} Win: ${teamAWinPct}%"></div>
-            <div class="gauge-fill fill-draw" style="width: ${drawPct}%; background: linear-gradient(90deg, #94a3b8, #64748b);" title="Draw: ${drawPct}%"></div>
-            <div class="gauge-fill fill-team-b" style="width: ${teamBWinPct}%; background: linear-gradient(90deg, #f87171, #ef4444);" title="${match.teamB} Win: ${teamBWinPct}%"></div>
+        <div class="probabilities-gauge">
+          <div class="gauge-bar">
+            <div class="gauge-fill fill-team-a" style="width: ${teamAWinPct}%;" title="${match.teamA} Win: ${teamAWinPct}%"></div>
+            <div class="gauge-fill fill-draw" style="width: ${drawPct}%;" title="Draw: ${drawPct}%"></div>
+            <div class="gauge-fill fill-team-b" style="width: ${teamBWinPct}%;" title="${match.teamB} Win: ${teamBWinPct}%"></div>
           </div>
-          <div class="gauge-labels" style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.88rem; color: var(--text-cream); font-family: var(--font-heading);">
-            <span>${match.teamA}: ${teamAWinPct}%</span>
-            <span>Draw: ${drawPct}%</span>
-            <span>${match.teamB}: ${teamBWinPct}%</span>
-          </div>
-        </div>
-
-        <div class="match-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 0.75rem 0;">
-          <div class="meta-item" style="display: flex; flex-direction: column; gap: 0.25rem;">
-            <strong style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Confidence</strong>
-            <span class="conf-badge conf-${match.confidence.toLowerCase()}" style="align-self: flex-start; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;">${match.confidence}</span>
-          </div>
-          <div class="meta-item" style="display: flex; flex-direction: column; gap: 0.25rem;">
-            <strong style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Most Likely Outcome</strong>
-            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-cream);">${teamAWinPct > teamBWinPct ? match.teamA + ' Win' : match.teamB + ' Win'}</span>
+          <div class="gauge-labels">
+            <span class="gauge-lbl-team-a">${match.teamA}: ${teamAWinPct}%</span>
+            <span class="gauge-lbl-draw">Draw: ${drawPct}%</span>
+            <span class="gauge-lbl-team-b">${match.teamB}: ${teamBWinPct}%</span>
           </div>
         </div>
 
-        <div class="reasoning-text" style="margin-top: 1rem; font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">
-          <strong style="color: var(--text-gold); display: block; margin-bottom: 0.25rem;">Statistical Reasoning:</strong>
+        <div class="match-meta-grid">
+          <div class="meta-item">
+            <strong>Confidence</strong>
+            <span class="conf-badge conf-${match.confidence.toLowerCase()}">${match.confidence}</span>
+          </div>
+          <div class="meta-item">
+            <strong>Most Likely Outcome</strong>
+            <span>${teamAWinPct > teamBWinPct ? match.teamA + ' Win' : match.teamB + ' Win'}</span>
+          </div>
+        </div>
+
+        <div class="reasoning-text">
+          <strong>Statistical Reasoning:</strong>
           <p>${match.dataReasoning}</p>
         </div>
 
-        <div class="history-summary-text" style="margin-top: 1rem; font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">
-          <strong style="color: var(--text-gold); display: block; margin-bottom: 0.25rem;">Historical Summary:</strong>
+        <div class="history-summary-text">
+          <strong>Historical Summary:</strong>
           <p>${match.historicalSummary}</p>
         </div>
       </div>
@@ -2014,41 +2054,41 @@ async function summonOracle() {
 
   if (output) {
     output.innerHTML = `
-      <div class="oracle-scroll-wrapper" style="border: 2px solid var(--gold); border-radius: 12px; background: linear-gradient(180deg, rgba(20, 10, 45, 0.9) 0%, rgba(5, 3, 13, 0.95) 100%); padding: 2.25rem 1.5rem; margin-top: 2rem; box-shadow: inset 0 0 40px rgba(139, 92, 246, 0.15), 0 0 30px rgba(212, 175, 55, 0.1); position: relative; text-align: left;">
-        <div class="oracle-scroll-title" style="font-family: var(--font-display); color: var(--gold-light); font-size: 1.4rem; text-align: center; margin-bottom: 1.5rem; text-shadow: 0 0 10px var(--shadow-gold);">Pythia Nikephoros Speaks</div>
+      <div class="oracle-scroll-wrapper">
+        <div class="oracle-scroll-title">Pythia Nikephoros Speaks</div>
         
-        <div class="prophecy-section divine-verdict-section" style="margin-bottom: 1.5rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.15); padding-bottom: 1rem;">
-          <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 1.05rem; margin-bottom: 0.5rem; text-transform: uppercase;">⚡ Divine Verdict</h4>
-          <p class="prophecy-text" style="font-family: var(--font-body); font-size: 1.15rem; line-height: 1.6; color: var(--text-cream); font-style: italic;">"${prophecyData.divineVerdict}"</p>
+        <div class="prophecy-section divine-verdict-section">
+          <h4>⚡ Divine Verdict</h4>
+          <p class="prophecy-text">"${prophecyData.divineVerdict}"</p>
         </div>
 
-        <div class="prophecy-two-column" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px dashed rgba(212, 175, 55, 0.15); padding-bottom: 1rem;">
+        <div class="prophecy-two-column">
           <div class="prophecy-section">
-            <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; margin-bottom: 0.35rem; text-transform: uppercase;">🕊️ Olympian Omen</h4>
-            <p class="prophecy-text" style="font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">${prophecyData.olympianOmen}</p>
+            <h4>🕊️ Olympian Omen</h4>
+            <p class="prophecy-text">${prophecyData.olympianOmen}</p>
           </div>
           <div class="prophecy-section">
-            <h4 style="font-family: var(--font-heading); color: var(--gold); font-size: 0.95rem; margin-bottom: 0.35rem; text-transform: uppercase;">🌟 Why the Mirror Sees This</h4>
-            <p class="prophecy-text" style="font-size: 0.98rem; line-height: 1.5; color: var(--text-muted);">${prophecyData.whyTheMirrorSeesThis}</p>
+            <h4>🌟 Why the Mirror Sees This</h4>
+            <p class="prophecy-text">${prophecyData.whyTheMirrorSeesThis}</p>
           </div>
         </div>
 
-        <div class="prophecy-meta-row" style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; font-family: var(--font-heading); font-size: 0.92rem; color: var(--gold-light); background: rgba(212, 175, 55, 0.05); padding: 0.75rem; border-radius: 6px; justify-content: space-around;">
+        <div class="prophecy-meta-row">
           <div><strong>Outcome:</strong> ${prophecyData.mostLikelyOutcome}</div>
           <div><strong>Predicted Score:</strong> ${prophecyData.predictedScore}</div>
           <div><strong>Confidence:</strong> ${prophecyData.confidence}</div>
         </div>
 
-        <div class="prophecy-warning-block" style="background: rgba(239, 68, 68, 0.05); border-left: 3px solid #ef4444; padding: 0.75rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
-          <p style="font-size: 0.92rem; line-height: 1.4; color: var(--text-muted);">⚠️ <strong>Mortal Warning:</strong> ${prophecyData.mortalWarning}</p>
+        <div class="prophecy-warning-block">
+          <p>⚠️ <strong>Mortal Warning:</strong> ${prophecyData.mortalWarning}</p>
         </div>
 
-        <p class="entertainment-disclaimer prophecy-disclaimer" style="font-size: 0.78rem; color: var(--text-muted); font-style: italic; opacity: 0.8; line-height: 1.4; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 0.75rem;">
+        <p class="entertainment-disclaimer prophecy-disclaimer">
           ${prophecyData.disclaimer}
         </p>
       </div>
       
-      <div class="prophecy-actions" style="margin-top: 1.5rem; text-align: center;">
+      <div class="prophecy-actions">
         <button class="btn-gold btn-small" id="btn-save-olympus-archive">Save Prophecy to Archive</button>
       </div>
     `;

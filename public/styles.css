@@ -4227,3 +4227,633 @@ body {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* --- Refactored Oracle of Olympus Predefined Styles --- */
+
+.match-card {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(20, 10, 45, 0.45) 0%, rgba(5, 3, 13, 0.6) 100%);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.match-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(139, 92, 246, 0.15)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.match-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+  padding-bottom: 0.75rem;
+}
+
+.match-comp {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Match list layout styling */
+.match-teams-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.match-team-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  flex: 1;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.match-team-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: var(--flag-url);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.05;
+  filter: blur(2px) grayscale(30%);
+  pointer-events: none;
+  z-index: 0;
+  transition: all 0.4s ease;
+}
+
+.match-team-box:hover {
+  border-color: rgba(212, 175, 55, 0.25);
+  background: rgba(212, 175, 55, 0.03);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.05);
+}
+
+.match-team-box:hover::before {
+  opacity: 0.12;
+  filter: blur(1px) grayscale(0%);
+}
+
+.match-team-name {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-cream);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Flag badges */
+.flag-img {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  display: inline-block;
+  object-fit: cover;
+}
+
+.flag-small {
+  width: 24px;
+  height: 24px;
+}
+
+.flag-large {
+  width: 72px;
+  height: 72px;
+}
+
+/* VS Coin Medallion */
+.match-vs-coin {
+  position: relative;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-light), #9a781b);
+  border: 1.5px solid rgba(5, 3, 13, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.5);
+  transition: all 0.5s ease;
+}
+
+.match-vs-coin span {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #05030d;
+  text-shadow: 0 0.5px 0 rgba(255, 255, 255, 0.4);
+}
+
+.match-card:hover .match-vs-coin {
+  transform: rotate(360deg) scale(1.1);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.55);
+}
+
+.match-meta-info {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+
+.match-prediction-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(5, 3, 13, 0.55);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.predicted-score-preview {
+  font-size: 0.9rem;
+  color: var(--text-cream);
+}
+
+.outcome-confidence {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.mini-disclaimer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.85rem;
+  opacity: 0.75;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Match Detail View - Large Matchup layout */
+.match-detail-main {
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(20, 10, 45, 0.5) 0%, rgba(5, 3, 13, 0.7) 100%);
+  padding: 2.5rem 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  text-align: left;
+}
+
+.match-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.match-detail-header .match-comp {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.match-venue-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.match-teams-large-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.match-team-box-lg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  background: rgba(5, 3, 13, 0.45);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  overflow: hidden;
+  flex: 1;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.05);
+  transition: all 0.3s ease;
+}
+
+.match-team-box-lg::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: var(--flag-url);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.06;
+  filter: blur(4px) grayscale(10%);
+  pointer-events: none;
+  z-index: 0;
+  transition: all 0.4s ease;
+}
+
+.match-team-box-lg:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.1), inset 0 0 25px rgba(139, 92, 246, 0.08);
+}
+
+.match-team-box-lg:hover::before {
+  opacity: 0.14;
+  filter: blur(2px) grayscale(0%);
+}
+
+.flag-wrapper-lg {
+  position: relative;
+  z-index: 1;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--gold), #9a781b);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flag-wrapper-lg .flag-img {
+  width: 100%;
+  height: 100%;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.match-team-name-lg {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.45rem;
+  color: var(--text-gold);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+.match-vs-coin-lg {
+  position: relative;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-light), #9a781b);
+  border: 2.5px solid rgba(5, 3, 13, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  transition: all 0.5s ease;
+}
+
+.match-vs-coin-lg span {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #05030d;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.match-vs-coin-lg:hover {
+  transform: rotate(-360deg) scale(1.15);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.65);
+}
+
+/* Deterministic predictions & stats details */
+.deterministic-prediction-block {
+  background: rgba(5, 3, 13, 0.6);
+  padding: 1.75rem;
+  border-radius: 12px;
+  margin-top: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+}
+
+.deterministic-prediction-block h3 {
+  font-family: var(--font-heading);
+  color: var(--gold-light);
+  font-size: 1.15rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px dashed rgba(212, 175, 55, 0.15);
+  padding-bottom: 0.65rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.predicted-score-large {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--gold-light);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
+  letter-spacing: 0.5px;
+}
+
+/* Probability Gauge */
+.probabilities-gauge {
+  margin: 1.75rem 0;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.gauge-bar {
+  height: 16px;
+  width: 100%;
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.05);
+}
+
+.gauge-fill {
+  height: 100%;
+  transition: width 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.fill-team-a {
+  background: linear-gradient(90deg, #60a5fa, #2563eb);
+}
+
+.fill-draw {
+  background: linear-gradient(90deg, #94a3b8, #475569);
+}
+
+.fill-team-b {
+  background: linear-gradient(90deg, #f87171, #dc2626);
+}
+
+.gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+  font-size: 0.88rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding: 0 0.25rem;
+}
+
+.gauge-lbl-team-a {
+  color: #93c5fd;
+  text-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
+}
+
+.gauge-lbl-draw {
+  color: #cbd5e1;
+  text-shadow: 0 0 8px rgba(148, 163, 184, 0.3);
+}
+
+.gauge-lbl-team-b {
+  color: #fca5a5;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+}
+
+.match-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem 0;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.meta-item strong {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meta-item span {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-cream);
+}
+
+.reasoning-text, .history-summary-text {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.reasoning-text strong, .history-summary-text strong {
+  color: var(--text-gold);
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Custom pulsing summon button style */
+#btn-summon-oracle {
+  font-size: 1.1rem;
+  padding: 0.85rem 2.25rem;
+  border-radius: 50px;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.35), 0 0 0 0 rgba(212, 175, 55, 0.4);
+  animation: summonPulse 2.5s infinite ease-in-out;
+  transition: all 0.3s ease;
+}
+
+#btn-summon-oracle::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: linear-gradient(35deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transform: rotate(45deg);
+  transition: all 0.5s ease;
+  opacity: 0;
+}
+
+#btn-summon-oracle:hover::after {
+  left: 120%;
+  opacity: 1;
+}
+
+@keyframes summonPulse {
+  0% {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.35), 0 0 0 0 rgba(212, 175, 55, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.5), 0 0 0 15px rgba(212, 175, 55, 0);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.35), 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
+/* Spinner mists polishing */
+.mist-spinner {
+  width: 56px;
+  height: 56px;
+  border-width: 4px;
+  border-top-color: var(--gold-light);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+}
+
+/* Dynamic Scroll parchment styling */
+.oracle-scroll-wrapper {
+  background: linear-gradient(180deg, rgba(16, 8, 38, 0.96) 0%, rgba(5, 3, 13, 0.98) 100%);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  margin-top: 2rem;
+  box-shadow: inset 0 0 50px rgba(139, 92, 246, 0.2), 0 0 35px rgba(212, 175, 55, 0.15);
+  position: relative;
+}
+
+.oracle-scroll-wrapper::before, .oracle-scroll-wrapper::after {
+  content: "⚡";
+  position: absolute;
+  font-size: 1.1rem;
+  color: var(--gold-light);
+  opacity: 0.25;
+}
+.oracle-scroll-wrapper::before { top: 15px; left: 15px; }
+.oracle-scroll-wrapper::after { bottom: 15px; right: 15px; }
+
+.oracle-scroll-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 0.85rem;
+  margin-bottom: 2rem;
+  color: var(--gold-light);
+}
+
+.prophecy-text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  line-height: 1.75;
+  color: #f5eed3; /* Cream illuminated manuscript style */
+  font-style: italic;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.divine-verdict-section {
+  border-left: 3.5px solid var(--gold);
+  padding-left: 1.25rem;
+}
+
+.prophecy-section {
+  margin-bottom: 2rem;
+}
+
+.prophecy-section h4 {
+  font-family: var(--font-heading);
+  color: var(--gold-light);
+  font-size: 1rem;
+  margin-bottom: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.prophecy-two-column {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+@media(min-width: 600px) {
+  .prophecy-two-column {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.prophecy-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  color: var(--gold-light);
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  justify-content: space-around;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+.prophecy-warning-block {
+  background: rgba(239, 68, 68, 0.04);
+  border-left: 3px solid #ef4444;
+  padding: 0.85rem 1.25rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 2rem;
+}
+
+.prophecy-warning-block p {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
