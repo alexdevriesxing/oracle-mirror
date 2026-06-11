@@ -32,6 +32,8 @@ export interface Probabilities {
   teamBWin: number;
 }
 
+export type MatchStatus = "upcoming" | "completed" | "today";
+
 export interface MatchData {
   matchId: string;
   teamA: string;
@@ -40,7 +42,6 @@ export interface MatchData {
   stage: string;
   date: string;
   venue: string;
-  status: "upcoming" | "completed" | "today";
   predictedScore: string;
   probabilities: Probabilities;
   confidence: "Low" | "Medium" | "High";
@@ -57,7 +58,6 @@ export const OLYMPUS_MATCHES: Record<string, MatchData> = {
     stage: "Group Stage",
     date: "2026-06-18",
     venue: "MetLife Stadium",
-    status: "upcoming",
     predictedScore: "Netherlands 2–1 Japan",
     probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
     confidence: "Medium",
@@ -72,7 +72,6 @@ export const OLYMPUS_MATCHES: Record<string, MatchData> = {
     stage: "Quarter-Finals",
     date: "2026-06-10",
     venue: "Azteca Stadium",
-    status: "completed",
     predictedScore: "Argentina 1–2 France",
     probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
     confidence: "High",
@@ -87,7 +86,6 @@ export const OLYMPUS_MATCHES: Record<string, MatchData> = {
     stage: "Group Stage",
     date: "2026-06-11",
     venue: "SoFi Stadium",
-    status: "today",
     predictedScore: "Germany 2–2 Spain",
     probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
     confidence: "Medium",
@@ -95,6 +93,14 @@ export const OLYMPUS_MATCHES: Record<string, MatchData> = {
     dataReasoning: "A highly balanced matchup. Possession metrics favor Spain, while physical dominance and home-continent proximity favor Germany, pointing strongly to a draw."
   }
 };
+
+// Status is derived from the match date (UTC) so listings never go stale;
+// match dates are calendar days, so a string compare against today is enough.
+export function deriveMatchStatus(dateStr: string): MatchStatus {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dateStr === today) return "today";
+  return dateStr < today ? "completed" : "upcoming";
+}
 
 type AppRouteMeta = {
   title: string;
@@ -1249,29 +1255,12 @@ disclaimer.`;
   if (Number.isFinite(envTtl) && envTtl > 0) {
     ttlSeconds = envTtl;
   } else {
-    const registeredMatch = OLYMPUS_MATCHES[matchId];
-    if (registeredMatch) {
-      if (registeredMatch.status === "completed") {
-        ttlSeconds = 30 * 24 * 3600;
-      } else if (registeredMatch.status === "today") {
-        ttlSeconds = 2 * 3600;
-      } else {
-        ttlSeconds = 12 * 3600;
-      }
-    } else {
-      try {
-        const matchDate = new Date(data.date);
-        const todayDate = new Date();
-        const diffTime = matchDate.getTime() - todayDate.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays < 0) {
-          ttlSeconds = 30 * 24 * 3600;
-        } else if (diffDays === 0) {
-          ttlSeconds = 2 * 3600;
-        } else {
-          ttlSeconds = 12 * 3600;
-        }
-      } catch (e) {}
+    const matchDate = OLYMPUS_MATCHES[matchId]?.date ?? data.date;
+    const status = deriveMatchStatus(matchDate);
+    if (status === "completed") {
+      ttlSeconds = 30 * 24 * 3600;
+    } else if (status === "today") {
+      ttlSeconds = 2 * 3600;
     }
   }
 

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { cleanForbiddenWords } from "../src/index.ts";
+import { cleanForbiddenWords, deriveMatchStatus } from "../src/index.ts";
 
 describe("Oracle of Olympus Safety and Fallback Tests", () => {
   
@@ -92,5 +92,18 @@ describe("Oracle of Olympus Safety and Fallback Tests", () => {
     }
     
     assert.ok(finalOmen.includes("Spain")); // Spain is loser here because teamAWin (35) > teamBWin (32)
+  });
+
+  it("should derive match status from the match date relative to today", () => {
+    const todayUtc = new Date().toISOString().slice(0, 10);
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    assert.strictEqual(deriveMatchStatus(todayUtc), "today");
+    assert.strictEqual(deriveMatchStatus(yesterday), "completed");
+    assert.strictEqual(deriveMatchStatus(tomorrow), "upcoming");
+    assert.strictEqual(deriveMatchStatus("2000-01-01"), "completed");
+    assert.strictEqual(deriveMatchStatus("2099-12-31"), "upcoming");
   });
 });

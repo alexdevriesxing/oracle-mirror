@@ -1757,7 +1757,6 @@ const OLYMPUS_MATCHES_JS = {
     stage: "Group Stage",
     date: "2026-06-18",
     venue: "MetLife Stadium",
-    status: "upcoming",
     predictedScore: "Netherlands 2–1 Japan",
     probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
     confidence: "Medium",
@@ -1772,7 +1771,6 @@ const OLYMPUS_MATCHES_JS = {
     stage: "Quarter-Finals",
     date: "2026-06-10",
     venue: "Azteca Stadium",
-    status: "completed",
     predictedScore: "Argentina 1–2 France",
     probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
     confidence: "High",
@@ -1787,7 +1785,6 @@ const OLYMPUS_MATCHES_JS = {
     stage: "Group Stage",
     date: "2026-06-11",
     venue: "SoFi Stadium",
-    status: "today",
     predictedScore: "Germany 2–2 Spain",
     probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
     confidence: "Medium",
@@ -1814,6 +1811,24 @@ const OLYMPUS_FALLBACK_TEMPLATES = {
 };
 
 let currentMatchId = null;
+
+// How many days a finished match stays on the landing list before it is hidden.
+const OLYMPUS_MATCH_RETENTION_DAYS = 7;
+
+// Status is derived from the match date in the visitor's local time, so the
+// list updates by itself — no manual edits needed when a match is played.
+function deriveMatchStatus(dateStr) {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (dateStr === today) return "today";
+  return dateStr < today ? "completed" : "upcoming";
+}
+
+function isMatchExpired(dateStr) {
+  const matchEnd = new Date(`${dateStr}T23:59:59`).getTime();
+  if (!Number.isFinite(matchEnd)) return false;
+  return Date.now() - matchEnd > OLYMPUS_MATCH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+}
 
 function getLocalMysticalProphecy(match) {
   const winner = match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB;
@@ -1881,11 +1896,22 @@ function showMatchList() {
   const container = document.getElementById("olympus-match-list");
   if (!container) return;
   
-  container.innerHTML = Object.values(OLYMPUS_MATCHES_JS).map(match => {
-    const statusLabel = match.status === "completed" 
+  const visibleMatches = Object.values(OLYMPUS_MATCHES_JS).filter(match => !isMatchExpired(match.date));
+
+  if (visibleMatches.length === 0) {
+    container.innerHTML = `
+      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
+        The arena lies silent — Pythia Nikephoros awaits the next contests. New prophecies will appear here soon.
+      </p>`;
+    return;
+  }
+
+  container.innerHTML = visibleMatches.map(match => {
+    const status = deriveMatchStatus(match.date);
+    const statusLabel = status === "completed"
       ? '<span class="match-status status-completed">Completed</span>'
-      : (match.status === "today" ? '<span class="match-status status-today">Today</span>' : '<span class="match-status status-upcoming">Upcoming</span>');
-      
+      : (status === "today" ? '<span class="match-status status-today">Today</span>' : '<span class="match-status status-upcoming">Upcoming</span>');
+
     return `
       <div class="match-card" data-match-id="${match.matchId}">
         <div class="match-card-header">
