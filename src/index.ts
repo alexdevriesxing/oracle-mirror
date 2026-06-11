@@ -926,11 +926,18 @@ function checkAllowedOrigin(origin: string, env: Env): string | null {
 }
 
 const ipLimits = new Map<string, { count: number; resetTime: number }>();
+const IP_LIMITS_MAX_ENTRIES = 10000;
 
 function checkRateLimit(ip: string): string | null {
   const now = Date.now();
   const limitWindow = 60 * 1000;
   const maxRequests = 10;
+
+  if (ipLimits.size > IP_LIMITS_MAX_ENTRIES) {
+    for (const [key, value] of ipLimits) {
+      if (now > value.resetTime) ipLimits.delete(key);
+    }
+  }
 
   const record = ipLimits.get(ip);
   if (!record || now > record.resetTime) {
@@ -1028,7 +1035,7 @@ async function callAIGateway(
   throw new Error(`Unsupported AI provider: ${provider}`);
 }
 
-function cleanForbiddenWords(text: string): string {
+export function cleanForbiddenWords(text: string): string {
   let cleaned = text;
   const replacements: Array<[RegExp, string]> = [
     [/\bguaranteed\s+win\b/gi, "strong alignment"],
@@ -1238,8 +1245,9 @@ disclaimer.`;
   }
 
   let ttlSeconds = 12 * 3600;
-  if (env.ORACLE_CACHE_TTL_SECONDS) {
-    ttlSeconds = parseInt(env.ORACLE_CACHE_TTL_SECONDS, 10);
+  const envTtl = env.ORACLE_CACHE_TTL_SECONDS ? parseInt(env.ORACLE_CACHE_TTL_SECONDS, 10) : NaN;
+  if (Number.isFinite(envTtl) && envTtl > 0) {
+    ttlSeconds = envTtl;
   } else {
     const registeredMatch = OLYMPUS_MATCHES[matchId];
     if (registeredMatch) {
@@ -1253,7 +1261,7 @@ disclaimer.`;
     } else {
       try {
         const matchDate = new Date(data.date);
-        const todayDate = new Date("2026-06-11T12:00:51+02:00");
+        const todayDate = new Date();
         const diffTime = matchDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         if (diffDays < 0) {
@@ -1357,7 +1365,7 @@ export default {
           case "/api/iching":
             return await handleIChing(request, env);
           case "/api/feedback": {
-            const feedback = await request.json();
+            await request.json();
             return jsonResponse({ ok: true });
           }
           default:

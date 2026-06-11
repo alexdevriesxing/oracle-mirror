@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
+import { cleanForbiddenWords } from "../src/index.ts";
 
 describe("Oracle of Olympus Safety and Fallback Tests", () => {
   
@@ -15,27 +16,9 @@ describe("Oracle of Olympus Safety and Fallback Tests", () => {
       "disclaimer": "Oracle Mirror sports predictions are mystical entertainment..."
     }`;
 
-    // Replicate cleaning functions from worker
-    const cleanFn = (text: string): string => {
-      let cleaned = text;
-      const replacements: Array<[RegExp, string]> = [
-        [/\bguaranteed\s+win\b/gi, "strong alignment"],
-        [/\bsure\s+bet\b/gi, "promising path"],
-        [/\block\b/gi, "solid outcome"],
-        [/\brisk-free\b/gi, "uncertain but favored"],
-        [/\bbet\s+now\b/gi, "watch closely"],
-        [/\bprofit\b/gi, "mystical reward"],
-        [/\binvestment\b/gi, "venture"]
-      ];
-      for (const [regex, replacement] of replacements) {
-        cleaned = cleaned.replace(regex, replacement);
-      }
-      return cleaned;
-    };
-
     const parsed = JSON.parse(rawProphecyText);
-    const cleanedVerdict = cleanFn(parsed.divineVerdict);
-    const cleanedReasoning = cleanFn(parsed.whyTheMirrorSeesThis);
+    const cleanedVerdict = cleanForbiddenWords(parsed.divineVerdict);
+    const cleanedReasoning = cleanForbiddenWords(parsed.whyTheMirrorSeesThis);
 
     // Verify substitutions are case-insensitive and match boundaries
     assert.ok(!cleanedVerdict.includes("guaranteed win"));

@@ -1,12 +1,14 @@
 {
   "name": "oracle-mirror",
   "version": "1.0.0",
-  "description": "A fantasy‑themed fortune telling app running on Cloudflare Workers and Workers AI.",
+  "description": "A fantasy-themed fortune telling app running on Cloudflare Workers and Workers AI.",
   "type": "module",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --format=esm --platform=neutral",
     "dev": "wrangler dev",
-    "publish": "wrangler publish"
+    "test": "node --test --experimental-strip-types \"tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240506.0",
