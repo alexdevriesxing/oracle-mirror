@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import { cleanForbiddenWords, deriveMatchStatus } from "../src/index.ts";
+import { buildSeedMatches, WC2026_GROUP_FIXTURES } from "../src/olympus-data.ts";
+import { applyApiResults, normalizeTeamName } from "../src/olympus-sync.ts";
 
 describe("Oracle of Olympus Safety and Fallback Tests", () => {
   
@@ -105,5 +107,75 @@ describe("Oracle of Olympus Safety and Fallback Tests", () => {
     assert.strictEqual(deriveMatchStatus(tomorrow), "upcoming");
     assert.strictEqual(deriveMatchStatus("2000-01-01"), "completed");
     assert.strictEqual(deriveMatchStatus("2099-12-31"), "upcoming");
+  });
+
+  it("should build a complete, consistent World Cup 2026 group stage seed", () => {
+    assert.strictEqual(WC2026_GROUP_FIXTURES.length, 72, "expected 72 group stage fixtures");
+
+    const groupCounts = new Map<string, number>();
+    for (const [group] of WC2026_GROUP_FIXTURES) {
+      groupCounts.set(group, (groupCounts.get(group) ?? 0) + 1);
+    }
+    assert.strictEqual(groupCounts.size, 12, "expected 12 groups");
+    for (const [group, count] of groupCounts) {
+      assert.strictEqual(count, 6, `group ${group} should have 6 matches`);
+    }
+
+    const matches = buildSeedMatches();
+    const ids = Object.keys(matches);
+    assert.strictEqual(ids.length, 72, "expected 72 unique match ids");
+
+    for (const match of Object.values(matches)) {
+      const { teamAWin, draw, teamBWin } = match.probabilities;
+      assert.strictEqual(teamAWin + draw + teamBWin, 100, `${match.matchId} probabilities must sum to 100`);
+      assert.ok(teamAWin > 0 && draw > 0 && teamBWin > 0, `${match.matchId} probabilities must be positive`);
+      assert.notStrictEqual(match.flagA, "un", `${match.matchId} missing flag for ${match.teamA}`);
+      assert.notStrictEqual(match.flagB, "un", `${match.matchId} missing flag for ${match.teamB}`);
+      assert.match(match.date, /^2026-06-\d{2}$/);
+      assert.ok(match.predictedScore.includes(match.teamA), `${match.matchId} predictedScore should name teamA`);
+      assert.ok(match.historicalSummary.length > 20, `${match.matchId} needs a historical summary`);
+      assert.ok(match.dataReasoning.length > 20, `${match.matchId} needs data reasoning`);
+    }
+  });
+
+  it("should normalize football-data.org team name variants", () => {
+    assert.strictEqual(normalizeTeamName("Korea Republic"), "South Korea");
+    assert.strictEqual(normalizeTeamName("Côte d'Ivoire"), "Ivory Coast");
+    assert.strictEqual(normalizeTeamName("Türkiye"), "Turkey");
+    assert.strictEqual(normalizeTeamName("USA"), "United States");
+    assert.strictEqual(normalizeTeamName("Cabo Verde"), "Cape Verde");
+    assert.strictEqual(normalizeTeamName("Curacao"), "Curaçao");
+    assert.strictEqual(normalizeTeamName("Brazil"), "Brazil");
+  });
+
+  it("should overlay finished API results onto the seed without mutating it", () => {
+    const seed = buildSeedMatches();
+    const apiMatches = [
+      {
+        status: "FINISHED",
+        homeTeam: { name: "Mexico" },
+        awayTeam: { name: "South Africa" },
+        score: { fullTime: { home: 2, away: 0 } },
+      },
+      {
+        status: "TIMED",
+        homeTeam: { name: "Korea Republic" },
+        awayTeam: { name: "Czechia" },
+        score: { fullTime: { home: null, away: null } },
+      },
+      {
+        status: "FINISHED",
+        homeTeam: { name: "Atlantis" },
+        awayTeam: { name: "Mu" },
+        score: { fullTime: { home: 9, away: 9 } },
+      },
+    ];
+
+    const { matches, applied } = applyApiResults(seed, apiMatches);
+
+    assert.strictEqual(applied, 1, "only the finished, recognizable match should apply");
+    assert.strictEqual(matches["wc2026-mexico-south-africa"].finalScore, "Mexico 2–0 South Africa");
+    assert.strictEqual(matches["wc2026-south-korea-czech-republic"].finalScore, undefined);
+    assert.strictEqual(seed["wc2026-mexico-south-africa"].finalScore, undefined, "seed must not be mutated");
   });
 });

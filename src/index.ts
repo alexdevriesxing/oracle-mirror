@@ -1,12 +1,21 @@
+import { WC2026_GROUP_FIXTURES, fixtureMatchId, deriveMatchStatus } from "./olympus-data.ts";
+import type { MatchData } from "./olympus-data.ts";
+import { getOlympusMatches, syncOlympusFixtures } from "./olympus-sync.ts";
+
+export { deriveMatchStatus } from "./olympus-data.ts";
+export type { MatchData, MatchStatus, Probabilities } from "./olympus-data.ts";
+
 export interface Env {
   AI: any;
   ASSETS: Fetcher;
+  ORACLE_KV?: KVNamespace;
   AD_CONSENT_REQUIRED?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_AI_GATEWAY_ID?: string;
   AI_PROVIDER?: string;
   AI_MODEL?: string;
   AI_API_KEY?: string;
+  FOOTBALL_DATA_API_KEY?: string;
   ORACLE_ALLOWED_ORIGIN?: string;
   ORACLE_CACHE_TTL_SECONDS?: string;
 }
@@ -25,82 +34,6 @@ const FALLBACK_FORTUNES = [
 const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const GATEWAY_CONFIG = { gateway: { id: "default" } };
 const CANONICAL_HOST = "https://oraclemirror.com";
-
-export interface Probabilities {
-  teamAWin: number;
-  draw: number;
-  teamBWin: number;
-}
-
-export type MatchStatus = "upcoming" | "completed" | "today";
-
-export interface MatchData {
-  matchId: string;
-  teamA: string;
-  teamB: string;
-  competition: string;
-  stage: string;
-  date: string;
-  venue: string;
-  predictedScore: string;
-  probabilities: Probabilities;
-  confidence: "Low" | "Medium" | "High";
-  historicalSummary: string;
-  dataReasoning: string;
-}
-
-export const OLYMPUS_MATCHES: Record<string, MatchData> = {
-  "wc2026-netherlands-japan": {
-    matchId: "wc2026-netherlands-japan",
-    teamA: "Netherlands",
-    teamB: "Japan",
-    competition: "FIFA World Cup 2026",
-    stage: "Group Stage",
-    date: "2026-06-18",
-    venue: "MetLife Stadium",
-    predictedScore: "Netherlands 2–1 Japan",
-    probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
-    confidence: "Medium",
-    historicalSummary: "Netherlands have a strong World Cup record and attacking tradition. Japan are disciplined, tactically organized, and dangerous in transition.",
-    dataReasoning: "Historical tournament depth and attacking form give the Netherlands a narrow statistical advantage, though Japan's tactical cohesion keeps the draw probability high."
-  },
-  "wc2026-argentina-france": {
-    matchId: "wc2026-argentina-france",
-    teamA: "Argentina",
-    teamB: "France",
-    competition: "FIFA World Cup 2026",
-    stage: "Quarter-Finals",
-    date: "2026-06-10",
-    venue: "Azteca Stadium",
-    predictedScore: "Argentina 1–2 France",
-    probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
-    confidence: "High",
-    historicalSummary: "A rematch of the legendary 2022 final. Argentina's aging core faces France's explosive young forward lines.",
-    dataReasoning: "France's superior speed in transition and recent squad depth give them a strong statistical edge over Argentina's transitional lineup."
-  },
-  "wc2026-germany-spain": {
-    matchId: "wc2026-germany-spain",
-    teamA: "Germany",
-    teamB: "Spain",
-    competition: "FIFA World Cup 2026",
-    stage: "Group Stage",
-    date: "2026-06-11",
-    venue: "SoFi Stadium",
-    predictedScore: "Germany 2–2 Spain",
-    probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
-    confidence: "Medium",
-    historicalSummary: "Two European giants with contrasting styles. Germany's direct counter-pressing versus Spain's high-possession tiki-taka control.",
-    dataReasoning: "A highly balanced matchup. Possession metrics favor Spain, while physical dominance and home-continent proximity favor Germany, pointing strongly to a draw."
-  }
-};
-
-// Status is derived from the match date (UTC) so listings never go stale;
-// match dates are calendar days, so a string compare against today is enough.
-export function deriveMatchStatus(dateStr: string): MatchStatus {
-  const today = new Date().toISOString().slice(0, 10);
-  if (dateStr === today) return "today";
-  return dateStr < today ? "completed" : "upcoming";
-}
 
 type AppRouteMeta = {
   title: string;
@@ -293,20 +226,14 @@ function routeMeta(pathname: string): AppRouteMeta | undefined {
   // keep them reachable but out of the index to avoid thin-content penalties.
   if (RESULT_ROUTES[path]) return { ...RESULT_ROUTES[path], noindex: true };
 
-  if (path.startsWith("/oracle-of-olympus")) {
-    if (path === "/oracle-of-olympus") {
-      return APP_ROUTES["/oracle-of-olympus"];
-    }
-    const matchId = path.substring("/oracle-of-olympus/".length);
-    const match = OLYMPUS_MATCHES[matchId];
-    if (match) {
-      return {
-        title: `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`,
-        description: `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`,
-      };
-    }
-  }
   return undefined;
+}
+
+function olympusMatchMeta(match: MatchData): AppRouteMeta {
+  return {
+    title: `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`,
+    description: `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`,
+  };
 }
 
 function escapeHtml(value: string): string {
@@ -374,7 +301,13 @@ function injectRuntimeConfig(html: string, env: Env): string {
   return html.includes("</head>") ? html.replace("</head>", `${script}\n  </head>`) : `${script}${html}`;
 }
 
-async function serveAppShell(request: Request, env: Env, pathname: string, meta: AppRouteMeta): Promise<Response> {
+async function serveAppShell(
+  request: Request,
+  env: Env,
+  pathname: string,
+  meta: AppRouteMeta,
+  olympusMatch?: MatchData
+): Promise<Response> {
   const url = new URL(request.url);
   const indexRequest = new Request(`${url.origin}/`, {
     method: "GET",
@@ -383,22 +316,23 @@ async function serveAppShell(request: Request, env: Env, pathname: string, meta:
   const response = await env.ASSETS.fetch(indexRequest);
   let html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
 
-  if (pathname.startsWith("/oracle-of-olympus/")) {
-    const matchId = pathname.substring("/oracle-of-olympus/".length);
-    const match = OLYMPUS_MATCHES[matchId];
-    if (match) {
-      const seoHtml = `
+  if (olympusMatch) {
+    const match = olympusMatch;
+    const resultLine = match.finalScore
+      ? `\n    <p><strong>Final Result:</strong> ${match.finalScore}</p>`
+      : "";
+    const seoHtml = `
   <div id="seo-match-content" class="seo-only" style="display:none;" aria-hidden="true">
-    <h2>${match.teamA} vs ${match.teamB} - ${match.competition} Prediction</h2>
+    <h2>${match.teamA} vs ${match.teamB} - ${match.competition} ${match.stage} Prediction</h2>
+    <p><strong>Date:</strong> ${match.date} | <strong>Venue:</strong> ${match.venue}</p>
     <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
     <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
-    <p><strong>Confidence:</strong> ${match.confidence}</p>
+    <p><strong>Confidence:</strong> ${match.confidence}</p>${resultLine}
     <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
     <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
   </div>
 `;
-      html = html.replace("</body>", `${seoHtml}\n</body>`);
-    }
+    html = html.replace("</body>", `${seoHtml}\n</body>`);
   }
 
   const headers = new Headers(response.headers);
@@ -421,6 +355,16 @@ function sitemapResponse(): Response {
     <changefreq>${route === "/" || route === "/daily-fortune" ? "daily" : "weekly"}</changefreq>
     <priority>${route === "/" ? "1.0" : "0.8"}</priority>
   </url>`
+    )
+    .concat(
+      WC2026_GROUP_FIXTURES.map(
+        ([, , teamA, teamB]) => `  <url>
+    <loc>${canonicalUrl(`/oracle-of-olympus/${fixtureMatchId(teamA, teamB)}`)}</loc>
+    <lastmod>${SITEMAP_LASTMOD}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>`
+      )
     )
     .join("\n");
 
@@ -1175,7 +1119,15 @@ async function handleOracleOfOlympusPredict(request: Request, env: Env, ctx: Exe
     }
   }
 
-  const allowedFields = new Set([...required, "deterministicPredictionData"]);
+  const allowedFields = new Set([
+    ...required,
+    "deterministicPredictionData",
+    "dataReasoning",
+    "group",
+    "flagA",
+    "flagB",
+    "finalScore",
+  ]);
   for (const key of Object.keys(data)) {
     if (!allowedFields.has(key)) {
       return new Response(JSON.stringify({ error: `Unexpected field: ${key}` }), { status: 400, headers: corsHeaders });
@@ -1255,7 +1207,8 @@ disclaimer.`;
   if (Number.isFinite(envTtl) && envTtl > 0) {
     ttlSeconds = envTtl;
   } else {
-    const matchDate = OLYMPUS_MATCHES[matchId]?.date ?? data.date;
+    const stored = await getOlympusMatches(env);
+    const matchDate = stored.matches[matchId]?.date ?? data.date;
     const status = deriveMatchStatus(matchDate);
     if (status === "completed") {
       ttlSeconds = 30 * 24 * 3600;
@@ -1315,6 +1268,29 @@ export default {
         return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
       }
 
+      if (url.pathname === "/api/oracle-of-olympus/matches") {
+        if (request.method !== "GET") {
+          return errorResponse("Method not allowed", 405);
+        }
+        const stored = await getOlympusMatches(env);
+        // Warm KV in the background the first time the seed is served.
+        if (stored.source === "seed" && env.ORACLE_KV) {
+          ctx.waitUntil(syncOlympusFixtures(env));
+        }
+        const matches = Object.values(stored.matches).sort(
+          (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
+        );
+        return new Response(
+          JSON.stringify({ updatedAt: stored.updatedAt, source: stored.source, matches }),
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "public, max-age=900",
+            },
+          }
+        );
+      }
+
       if (url.pathname === "/api/oracle-of-olympus/predict") {
         return await handleOracleOfOlympusPredict(request, env, ctx);
       }
@@ -1366,11 +1342,27 @@ export default {
       }
     }
 
+    const normalizedPath = url.pathname.length > 1 && url.pathname.endsWith("/")
+      ? url.pathname.slice(0, -1)
+      : url.pathname;
+    if (normalizedPath.startsWith("/oracle-of-olympus/")) {
+      const matchId = normalizedPath.substring("/oracle-of-olympus/".length);
+      const stored = await getOlympusMatches(env);
+      const match = stored.matches[matchId];
+      if (match) {
+        return serveAppShell(request, env, url.pathname, olympusMatchMeta(match), match);
+      }
+    }
+
     const meta = routeMeta(url.pathname);
     if (meta) {
       return serveAppShell(request, env, url.pathname, meta);
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(syncOlympusFixtures(env));
   },
 } satisfies ExportedHandler<Env>;

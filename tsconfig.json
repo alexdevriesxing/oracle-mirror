@@ -5,6 +5,8 @@
     "target": "ES2021",
     "moduleResolution": "node",
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowJs": false,

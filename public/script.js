@@ -1748,50 +1748,33 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
 // ORACLE OF OLYMPUS (Mystical Sports Predictions)
 // =========================================================
 
-const OLYMPUS_MATCHES_JS = {
-  "wc2026-netherlands-japan": {
-    matchId: "wc2026-netherlands-japan",
-    teamA: "Netherlands",
-    teamB: "Japan",
-    competition: "FIFA World Cup 2026",
-    stage: "Group Stage",
-    date: "2026-06-18",
-    venue: "MetLife Stadium",
-    predictedScore: "Netherlands 2–1 Japan",
-    probabilities: { teamAWin: 48, draw: 27, teamBWin: 25 },
-    confidence: "Medium",
-    historicalSummary: "Netherlands have a strong World Cup record and attacking tradition. Japan are disciplined, tactically organized, and dangerous in transition.",
-    dataReasoning: "Historical tournament depth and attacking form give the Netherlands a narrow statistical advantage, though Japan's tactical cohesion keeps the draw probability high."
-  },
-  "wc2026-argentina-france": {
-    matchId: "wc2026-argentina-france",
-    teamA: "Argentina",
-    teamB: "France",
-    competition: "FIFA World Cup 2026",
-    stage: "Quarter-Finals",
-    date: "2026-06-10",
-    venue: "Azteca Stadium",
-    predictedScore: "Argentina 1–2 France",
-    probabilities: { teamAWin: 32, draw: 28, teamBWin: 40 },
-    confidence: "High",
-    historicalSummary: "A rematch of the legendary 2022 final. Argentina's aging core faces France's explosive young forward lines.",
-    dataReasoning: "France's superior speed in transition and recent squad depth give them a strong statistical edge over Argentina's transitional lineup."
-  },
-  "wc2026-germany-spain": {
-    matchId: "wc2026-germany-spain",
-    teamA: "Germany",
-    teamB: "Spain",
-    competition: "FIFA World Cup 2026",
-    stage: "Group Stage",
-    date: "2026-06-11",
-    venue: "SoFi Stadium",
-    predictedScore: "Germany 2–2 Spain",
-    probabilities: { teamAWin: 35, draw: 33, teamBWin: 32 },
-    confidence: "Medium",
-    historicalSummary: "Two European giants with contrasting styles. Germany's direct counter-pressing versus Spain's high-possession tiki-taka control.",
-    dataReasoning: "A highly balanced matchup. Possession metrics favor Spain, while physical dominance and home-continent proximity favor Germany, pointing strongly to a draw."
+// Fixtures come from the Worker (/api/oracle-of-olympus/matches), which serves
+// the full World Cup 2026 schedule from KV — kept fresh by a cron sync.
+let OLYMPUS_MATCHES_JS = {};
+let olympusMatchesPromise = null;
+
+function loadOlympusMatches() {
+  if (!olympusMatchesPromise) {
+    olympusMatchesPromise = fetch("/api/oracle-of-olympus/matches")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Fixture request failed: HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const map = {};
+        for (const match of data.matches || []) {
+          map[match.matchId] = match;
+        }
+        OLYMPUS_MATCHES_JS = map;
+        return map;
+      })
+      .catch((err) => {
+        olympusMatchesPromise = null; // allow a retry on the next visit
+        throw err;
+      });
   }
-};
+  return olympusMatchesPromise;
+}
 
 const OLYMPUS_FALLBACK_TEMPLATES = {
   divineVerdict: [
@@ -1869,34 +1852,47 @@ function getLocalMysticalProphecy(match) {
   };
 }
 
-function getTeamFlagCode(teamName) {
-  const codes = {
-    "Netherlands": "nl",
-    "Japan": "jp",
-    "Argentina": "ar",
-    "France": "fr",
-    "Germany": "de",
-    "Spain": "es"
-  };
-  return codes[teamName] || "un";
+// Flag codes ship with each match from the API (flagA/flagB).
+function getTeamFlagCode(match, side) {
+  return (side === "a" ? match.flagA : match.flagB) || "un";
 }
 
-function getTeamFlagHtml(teamName, sizeClass = "small") {
-  const code = getTeamFlagCode(teamName);
+function getTeamFlagHtml(match, side, sizeClass = "small") {
+  const code = getTeamFlagCode(match, side);
+  const teamName = side === "a" ? match.teamA : match.teamB;
   const size = sizeClass === "large" ? 80 : 40;
   return `<img src="https://flagcdn.com/w${size}/${code}.png" class="flag-img flag-${sizeClass}" alt="${teamName} flag" onerror="this.src='https://flagcdn.com/w${size}/un.png'" />`;
 }
 
-function showMatchList() {
+async function showMatchList() {
   const landing = document.getElementById("olympus-landing-view");
   const detail = document.getElementById("olympus-detail-view");
   if (landing) landing.style.display = "flex";
   if (detail) detail.style.display = "none";
-  
+
   const container = document.getElementById("olympus-match-list");
   if (!container) return;
-  
-  const visibleMatches = Object.values(OLYMPUS_MATCHES_JS).filter(match => !isMatchExpired(match.date));
+
+  container.innerHTML = `
+    <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
+      The mists gather above the arena — summoning the fixtures...
+    </p>`;
+
+  let matches;
+  try {
+    matches = await loadOlympusMatches();
+  } catch (err) {
+    console.warn("Failed to load Olympus fixtures:", err);
+    container.innerHTML = `
+      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
+        The mists are too thick to read the fixtures right now. Return in a moment, seeker.
+      </p>`;
+    return;
+  }
+
+  const visibleMatches = Object.values(matches)
+    .filter(match => !isMatchExpired(match.date))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.group || "").localeCompare(b.group || ""));
 
   if (visibleMatches.length === 0) {
     container.innerHTML = `
@@ -1906,28 +1902,39 @@ function showMatchList() {
     return;
   }
 
-  container.innerHTML = visibleMatches.map(match => {
+  let lastDate = "";
+  const cardsHtml = visibleMatches.map(match => {
     const status = deriveMatchStatus(match.date);
     const statusLabel = status === "completed"
       ? '<span class="match-status status-completed">Completed</span>'
       : (status === "today" ? '<span class="match-status status-today">Today</span>' : '<span class="match-status status-upcoming">Upcoming</span>');
 
+    const dateHeader = match.date !== lastDate
+      ? `<h3 class="match-date-header" style="width:100%; text-align:center; font-family: var(--font-heading); color: var(--gold-light, #d4af37); margin: 1.2rem 0 0.4rem;">${formatMatchDate(match.date)}</h3>`
+      : "";
+    lastDate = match.date;
+
+    const scoreLine = match.finalScore
+      ? `<div class="predicted-score-preview">Final Result: <strong>${match.finalScore}</strong></div>`
+      : `<div class="predicted-score-preview">Score: <strong>${match.predictedScore}</strong></div>`;
+
     return `
+      ${dateHeader}
       <div class="match-card" data-match-id="${match.matchId}">
         <div class="match-card-header">
           <span class="match-comp">${match.competition} — ${match.stage}</span>
           ${statusLabel}
         </div>
         <div class="match-teams-layout">
-          <div class="match-team-box team-a-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match.teamA)}.png')">
+          <div class="match-team-box team-a-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match, "a")}.png')">
             <span class="match-team-name">${match.teamA}</span>
-            ${getTeamFlagHtml(match.teamA, "small")}
+            ${getTeamFlagHtml(match, "a", "small")}
           </div>
           <div class="match-vs-coin">
             <span>VS</span>
           </div>
-          <div class="match-team-box team-b-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match.teamB)}.png')">
-            ${getTeamFlagHtml(match.teamB, "small")}
+          <div class="match-team-box team-b-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match, "b")}.png')">
+            ${getTeamFlagHtml(match, "b", "small")}
             <span class="match-team-name">${match.teamB}</span>
           </div>
         </div>
@@ -1936,7 +1943,7 @@ function showMatchList() {
           <span>📍 ${match.venue}</span>
         </div>
         <div class="match-prediction-preview">
-          <div class="predicted-score-preview">Score: <strong>${match.predictedScore}</strong></div>
+          ${scoreLine}
           <div class="outcome-confidence">Confidence: <span class="conf-badge conf-${match.confidence.toLowerCase()}">${match.confidence}</span></div>
         </div>
         <p class="entertainment-disclaimer mini-disclaimer">
@@ -1945,7 +1952,9 @@ function showMatchList() {
       </div>
     `;
   }).join("");
-  
+
+  container.innerHTML = cardsHtml;
+
   container.querySelectorAll(".match-card").forEach(card => {
     card.addEventListener("click", () => {
       const matchId = card.dataset.matchId;
@@ -1955,18 +1964,49 @@ function showMatchList() {
   });
 }
 
-function showMatchDetail(matchId) {
+function formatMatchDate(dateStr) {
+  const parsed = new Date(`${dateStr}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return dateStr;
+  return parsed.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+async function showMatchDetail(matchId) {
   currentMatchId = matchId;
-  const match = OLYMPUS_MATCHES_JS[matchId];
-  if (!match) return;
-  
+
   const landing = document.getElementById("olympus-landing-view");
   const detail = document.getElementById("olympus-detail-view");
   if (landing) landing.style.display = "none";
   if (detail) detail.style.display = "flex";
-  
+
   const detailCard = document.getElementById("olympus-detail-card");
   if (!detailCard) return;
+
+  detailCard.innerHTML = `
+    <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
+      The mists gather above the arena...
+    </p>`;
+
+  let match = null;
+  try {
+    const matches = await loadOlympusMatches();
+    match = matches[matchId];
+  } catch (err) {
+    console.warn("Failed to load Olympus fixture detail:", err);
+  }
+
+  if (!match) {
+    detailCard.innerHTML = `
+      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
+        The oracle finds no such contest in the scrolls of fate. Return to the arena and choose another.
+      </p>`;
+    return;
+  }
+
+  document.title = `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`;
+  document.querySelector('meta[name="description"]')?.setAttribute(
+    "content",
+    `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`
+  );
 
   const totalProb = match.probabilities.teamAWin + match.probabilities.draw + match.probabilities.teamBWin;
   const teamAWinPct = Math.round((match.probabilities.teamAWin / totalProb) * 100);
@@ -1980,25 +2020,29 @@ function showMatchDetail(matchId) {
         <span class="match-venue-date">📅 ${match.date} | 📍 ${match.venue}</span>
       </div>
       <div class="match-teams-large-layout">
-        <div class="match-team-box-lg team-a-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match.teamA)}.png')">
+        <div class="match-team-box-lg team-a-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match, "a")}.png')">
           <div class="flag-wrapper-lg">
-            ${getTeamFlagHtml(match.teamA, "large")}
+            ${getTeamFlagHtml(match, "a", "large")}
           </div>
           <span class="match-team-name-lg">${match.teamA}</span>
         </div>
-        
+
         <div class="match-vs-coin-lg">
           <span>VS</span>
         </div>
-        
-        <div class="match-team-box-lg team-b-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match.teamB)}.png')">
+
+        <div class="match-team-box-lg team-b-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match, "b")}.png')">
           <div class="flag-wrapper-lg">
-            ${getTeamFlagHtml(match.teamB, "large")}
+            ${getTeamFlagHtml(match, "b", "large")}
           </div>
           <span class="match-team-name-lg">${match.teamB}</span>
         </div>
       </div>
-      
+      ${match.finalScore ? `
+      <div class="deterministic-prediction-block final-result-block">
+        <h3>Final Result</h3>
+        <div class="predicted-score-large">${match.finalScore}</div>
+      </div>` : ""}
       <div class="deterministic-prediction-block">
         <h3>Statistical Prediction</h3>
         <div class="predicted-score-large">${match.predictedScore}</div>
@@ -2068,7 +2112,21 @@ async function summonOracle() {
   let prophecyData = null;
 
   try {
-    const data = await callAPI("/api/oracle-of-olympus/predict", match);
+    // Send exactly the fields the worker's strict validator allows.
+    const payload = {
+      matchId: match.matchId,
+      teamA: match.teamA,
+      teamB: match.teamB,
+      competition: match.competition,
+      stage: match.stage,
+      date: match.date,
+      venue: match.venue,
+      predictedScore: match.predictedScore,
+      probabilities: match.probabilities,
+      confidence: match.confidence,
+      historicalSummary: match.historicalSummary,
+    };
+    const data = await callAPI("/api/oracle-of-olympus/predict", payload);
     if (data.error) {
       throw new Error(data.error);
     }
