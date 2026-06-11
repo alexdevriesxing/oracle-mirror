@@ -8,10 +8,10 @@
     "dev": "wrangler dev",
     "publish": "wrangler publish"
   },
-  "dependencies": {},
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240506.0",
+    "@types/node": "^25.9.3",
     "esbuild": "^0.20.0",
-    "typescript": "^5.4.0",
-    "@cloudflare/workers-types": "^4.20240506.0"
+    "typescript": "^5.4.0"
   }
 }
