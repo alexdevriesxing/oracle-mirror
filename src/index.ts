@@ -56,13 +56,14 @@ const BREADCRUMB_NAMES: Record<string, string> = {
   "/birth-chart": "Birth Chart",
   "/palm-reading": "Palm Reading",
   "/iching-oracle": "I Ching Oracle",
+  "/oracle-of-olympus": "World Cup 2026 Predictions",
 };
 
 const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/": {
     title: "Free Tarot, Horoscopes & Fortune Telling Online | Oracle Mirror",
     description:
-      "Get free tarot card readings, daily horoscopes, numerology, crystal ball answers, love compatibility, and AI Soulmate Vision — all inside Oracle Mirror.",
+      "Get free tarot card readings, daily horoscopes, numerology, crystal ball answers, love compatibility, AI Soulmate Vision, and World Cup 2026 predictions — all inside Oracle Mirror.",
   },
   "/crystal-ball": {
     title: "Free Crystal Ball Reading Online — Ask Madame Fortuna | Oracle Mirror",
@@ -137,8 +138,9 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
       "Test your love compatibility free: zodiac match, numerology, tarot, quiz, and omens combine into a Cosmic Chemistry Score plus AI Soulmate Vision.",
   },
   "/oracle-of-olympus": {
-    title: "Oracle of Olympus — Mystical Football Predictions | Oracle Mirror",
-    description: "Consult Pythia Nikephoros, the sports oracle, for mystical football predictions, match probabilities, and statistical analysis.",
+    title: "World Cup 2026 Predictions — All 72 Group Stage Matches | Oracle Mirror",
+    description:
+      "Free FIFA World Cup 2026 predictions for every group stage match: predicted scores, win probabilities, and mystical AI analysis from the Oracle of Olympus. Updated throughout the tournament.",
   },
   "/birth-chart": {
     title: "Free Birth Chart Reading — Sun, Moon & Rising Signs | Oracle Mirror",
@@ -230,10 +232,81 @@ function routeMeta(pathname: string): AppRouteMeta | undefined {
 }
 
 function olympusMatchMeta(match: MatchData): AppRouteMeta {
+  const resultPrefix = match.finalScore ? `Final score: ${match.finalScore}. ` : "";
   return {
-    title: `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`,
-    description: `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`,
+    title: `${match.teamA} vs ${match.teamB} Prediction — ${match.stage}, World Cup 2026 | Oracle Mirror`,
+    description: `${resultPrefix}${match.teamA} vs ${match.teamB} FIFA World Cup 2026 ${match.stage} prediction: predicted score ${match.predictedScore}, win probabilities, and AI oracle analysis. ${match.date} at ${match.venue}.`,
   };
+}
+
+function sportsEventJsonLd(match: MatchData): string {
+  const [stadium, city] = match.venue.split(", ");
+  const event = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: `${match.teamA} vs ${match.teamB} — ${match.competition} ${match.stage}`,
+    description: `${match.competition} ${match.stage} match between ${match.teamA} and ${match.teamB}${match.finalScore ? `. Final score: ${match.finalScore}` : `. Oracle Mirror predicted score: ${match.predictedScore}`}.`,
+    startDate: match.date,
+    sport: "Soccer",
+    location: {
+      "@type": "StadiumOrArena",
+      name: stadium,
+      ...(city ? { address: { "@type": "PostalAddress", addressLocality: city } } : {}),
+    },
+    competitor: [
+      { "@type": "SportsTeam", name: match.teamA },
+      { "@type": "SportsTeam", name: match.teamB },
+    ],
+    organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com/" },
+    url: canonicalUrl(`/oracle-of-olympus/${match.matchId}`),
+  };
+  return `<script type="application/ld+json">${JSON.stringify(event)}</script>`;
+}
+
+function matchBreadcrumbJsonLd(match: MatchData): string {
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Oracle Mirror", item: `${CANONICAL_HOST}/` },
+      { "@type": "ListItem", position: 2, name: "World Cup 2026 Predictions", item: canonicalUrl("/oracle-of-olympus") },
+      { "@type": "ListItem", position: 3, name: `${match.teamA} vs ${match.teamB}`, item: canonicalUrl(`/oracle-of-olympus/${match.matchId}`) },
+    ],
+  };
+  return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
+}
+
+// Mirrors the visible FAQ rendered in the Olympus landing section of index.html.
+const OLYMPUS_FAQ: ReadonlyArray<[string, string]> = [
+  [
+    "Are Oracle of Olympus predictions betting advice?",
+    "No. Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.",
+  ],
+  [
+    "How does Oracle Mirror predict World Cup 2026 matches?",
+    "Every match starts from a deterministic statistical baseline built on team strength, historical tournament performance, and matchup context. Summoning the oracle adds an AI-narrated prophecy from Pythia Nikephoros on top of those numbers.",
+  ],
+  [
+    "Does Oracle Mirror cover every World Cup 2026 group stage match?",
+    "Yes. All 72 group stage fixtures across the 12 groups are listed with predicted scores, win probabilities, and confidence levels. Fixtures and statuses refresh automatically throughout the tournament.",
+  ],
+  [
+    "Is the Oracle of Olympus free to use?",
+    "Yes. Every prediction and oracle prophecy is free, with no account or sign-up required.",
+  ],
+];
+
+function olympusFaqJsonLd(): string {
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: OLYMPUS_FAQ.map(([question, answer]) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: { "@type": "Answer", text: answer },
+    })),
+  };
+  return `<script type="application/ld+json">${JSON.stringify(faq)}</script>`;
 }
 
 function escapeHtml(value: string): string {
@@ -306,7 +379,8 @@ async function serveAppShell(
   env: Env,
   pathname: string,
   meta: AppRouteMeta,
-  olympusMatch?: MatchData
+  olympusMatch?: MatchData,
+  allMatches?: Record<string, MatchData>
 ): Promise<Response> {
   const url = new URL(request.url);
   const indexRequest = new Request(`${url.origin}/`, {
@@ -316,19 +390,46 @@ async function serveAppShell(
   const response = await env.ASSETS.fetch(indexRequest);
   let html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
 
+  // The static shell carries the home-page FAQPage schema; Google allows only
+  // one FAQPage per URL, so swap it out on Olympus routes (landing gets the
+  // football FAQ, match pages get none — SportsEvent is the star there).
+  const staticFaqPageRe = /<script type="application\/ld\+json">(?:(?!<\/script>)[\s\S])*?"@type":\s*"FAQPage"(?:(?!<\/script>)[\s\S])*?<\/script>/;
+  const normalized = normalizePath(pathname);
+  if (normalized === "/oracle-of-olympus" || olympusMatch) {
+    html = html.replace(staticFaqPageRe, "");
+  }
+  if (normalized === "/oracle-of-olympus" && html.includes("</head>")) {
+    html = html.replace("</head>", `${olympusFaqJsonLd()}\n  </head>`);
+  }
+
   if (olympusMatch) {
     const match = olympusMatch;
+    if (html.includes("</head>")) {
+      html = html.replace("</head>", `${sportsEventJsonLd(match)}\n${matchBreadcrumbJsonLd(match)}\n  </head>`);
+    }
+
     const resultLine = match.finalScore
       ? `\n    <p><strong>Final Result:</strong> ${match.finalScore}</p>`
+      : "";
+    const groupSiblings = Object.values(allMatches ?? {})
+      .filter((m) => m.group === match.group && m.matchId !== match.matchId)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const siblingLinks = groupSiblings.length
+      ? `\n    <p><strong>More ${match.stage} predictions:</strong> ${groupSiblings
+          .map((m) => `<a href="/oracle-of-olympus/${m.matchId}">${m.teamA} vs ${m.teamB} (${m.date})</a>`)
+          .join(" · ")}</p>`
       : "";
     const seoHtml = `
   <div id="seo-match-content" class="seo-only" style="display:none;" aria-hidden="true">
     <h2>${match.teamA} vs ${match.teamB} - ${match.competition} ${match.stage} Prediction</h2>
     <p><strong>Date:</strong> ${match.date} | <strong>Venue:</strong> ${match.venue}</p>
     <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
+    <p><strong>Win Probabilities:</strong> ${match.teamA} ${match.probabilities.teamAWin}%, Draw ${match.probabilities.draw}%, ${match.teamB} ${match.probabilities.teamBWin}%</p>
     <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
     <p><strong>Confidence:</strong> ${match.confidence}</p>${resultLine}
     <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
+    <p><strong>Background:</strong> ${match.historicalSummary}</p>${siblingLinks}
+    <p><a href="/oracle-of-olympus">All World Cup 2026 predictions</a></p>
     <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
   </div>
 `;
@@ -358,9 +459,11 @@ function sitemapResponse(): Response {
     )
     .concat(
       WC2026_GROUP_FIXTURES.map(
+        // Match pages refresh continuously during the tournament (statuses,
+        // results), so lastmod is the serve date rather than a fixed constant.
         ([, , teamA, teamB]) => `  <url>
     <loc>${canonicalUrl(`/oracle-of-olympus/${fixtureMatchId(teamA, teamB)}`)}</loc>
-    <lastmod>${SITEMAP_LASTMOD}</lastmod>
+    <lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>`
@@ -420,10 +523,30 @@ Sitemap: ${CANONICAL_HOST}/sitemap.xml
   });
 }
 
-function llmsTxtResponse(): Response {
+function llmsTxtResponse(matches: Record<string, MatchData>): Response {
+  const byGroup = new Map<string, MatchData[]>();
+  for (const match of Object.values(matches)) {
+    const list = byGroup.get(match.group) ?? [];
+    list.push(match);
+    byGroup.set(match.group, list);
+  }
+  const groupSections = Array.from(byGroup.keys())
+    .sort()
+    .map((group) => {
+      const lines = (byGroup.get(group) ?? [])
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map((m) => {
+          const score = m.finalScore ? `final score ${m.finalScore}` : `predicted ${m.predictedScore}`;
+          return `- [${m.teamA} vs ${m.teamB}](${canonicalUrl(`/oracle-of-olympus/${m.matchId}`)}): ${m.date}, ${m.venue} — ${score} (confidence: ${m.confidence}).`;
+        })
+        .join("\n");
+      return `### Group ${group}\n\n${lines}`;
+    })
+    .join("\n\n");
+
   return new Response(`# Oracle Mirror
 
-> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors get personalized tarot card readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball answers, palm readings, I Ching hexagram consultations, birth chart interpretations, love compatibility scores, and an AI-generated Soulmate Vision portrait. Every reading is generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
+> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors get personalized tarot card readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball answers, palm readings, I Ching hexagram consultations, birth chart interpretations, love compatibility scores, an AI-generated Soulmate Vision portrait, and FIFA World Cup 2026 match predictions from the Oracle of Olympus. Every reading is generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
 
 ## Readings
 
@@ -438,6 +561,13 @@ function llmsTxtResponse(): Response {
 - [Birth Chart](https://oraclemirror.com/birth-chart): Maps Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
 - [Palm Reading](https://oraclemirror.com/palm-reading): Palmistry reading of the heart, head, life, and fate lines.
 - [I Ching](https://oraclemirror.com/iching-oracle): Cast three coins six times to build a hexagram and consult the Book of Changes.
+- [World Cup 2026 Predictions](https://oraclemirror.com/oracle-of-olympus): Predicted scores, win probabilities, and AI oracle prophecies for all 72 FIFA World Cup 2026 group stage matches, refreshed automatically during the tournament.
+
+## World Cup 2026 Predictions (Oracle of Olympus)
+
+Every group stage match has its own prediction page with a predicted score, win/draw probabilities, confidence level, statistical reasoning, and an optional AI prophecy. Predictions are entertainment, not betting advice. Completed matches show the real final score.
+
+${groupSections}
 
 ## Key Facts
 
@@ -1252,7 +1382,8 @@ export default {
     }
 
     if (url.pathname === "/llms.txt") {
-      return llmsTxtResponse();
+      const stored = await getOlympusMatches(env);
+      return llmsTxtResponse(stored.matches);
     }
 
     // Google Search Console ownership verification; must serve 200 at the exact
@@ -1350,7 +1481,7 @@ export default {
       const stored = await getOlympusMatches(env);
       const match = stored.matches[matchId];
       if (match) {
-        return serveAppShell(request, env, url.pathname, olympusMatchMeta(match), match);
+        return serveAppShell(request, env, url.pathname, olympusMatchMeta(match), match, stored.matches);
       }
     }
 
