@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A fantasy-themed fortune telling app running on Cloudflare Workers and Workers AI.",
   "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "scripts": {
     "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --format=esm --platform=neutral",
     "dev": "wrangler dev",

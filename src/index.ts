@@ -444,7 +444,7 @@ async function serveAppShell(
   });
 }
 
-const SITEMAP_LASTMOD = "2026-06-10";
+const SITEMAP_LASTMOD = "2026-06-11";
 
 function sitemapResponse(): Response {
   const routes = Object.entries(APP_ROUTES).filter(([route, meta]) => !meta.noindex && route !== "/ad-debug");
