@@ -247,12 +247,15 @@ function sportsEventJsonLd(match: MatchData): string {
     name: `${match.teamA} vs ${match.teamB} — ${match.competition} ${match.stage}`,
     description: `${match.competition} ${match.stage} match between ${match.teamA} and ${match.teamB}${match.finalScore ? `. Final score: ${match.finalScore}` : `. Oracle Mirror predicted score: ${match.predictedScore}`}.`,
     startDate: match.date,
+    eventStatus: "https://schema.org/EventScheduled",
     sport: "Soccer",
     location: {
       "@type": "StadiumOrArena",
       name: stadium,
       ...(city ? { address: { "@type": "PostalAddress", addressLocality: city } } : {}),
     },
+    homeTeam: { "@type": "SportsTeam", name: match.teamA },
+    awayTeam: { "@type": "SportsTeam", name: match.teamB },
     competitor: [
       { "@type": "SportsTeam", name: match.teamA },
       { "@type": "SportsTeam", name: match.teamB },
@@ -261,6 +264,87 @@ function sportsEventJsonLd(match: MatchData): string {
     url: canonicalUrl(`/oracle-of-olympus/${match.matchId}`),
   };
   return `<script type="application/ld+json">${JSON.stringify(event)}</script>`;
+}
+
+function olympusItemListJsonLd(matches: Record<string, MatchData>): string {
+  const sorted = Object.values(matches).sort(
+    (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
+  );
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "FIFA World Cup 2026 Group Stage Predictions",
+    description: "Predicted scores, win probabilities, and oracle prophecies for all 72 World Cup 2026 group stage matches.",
+    numberOfItems: sorted.length,
+    itemListElement: sorted.map((m, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: canonicalUrl(`/oracle-of-olympus/${m.matchId}`),
+      name: `${m.teamA} vs ${m.teamB} prediction (${m.stage}, ${m.date})`,
+    })),
+  };
+  return `<script type="application/ld+json">${JSON.stringify(itemList)}</script>`;
+}
+
+function ssrMatchLine(match: MatchData): string {
+  const result = match.finalScore
+    ? `Final score: ${match.finalScore}`
+    : `Predicted: ${match.predictedScore}`;
+  return `<li><a href="/oracle-of-olympus/${match.matchId}">${match.teamA} vs ${match.teamB} prediction</a> — ${match.stage} · ${match.venue} · ${result} · Confidence: ${match.confidence}</li>`;
+}
+
+// Crawlable fallback list rendered into the match container; the client
+// replaces it with interactive cards as soon as script.js hydrates.
+function ssrMatchListHtml(matches: Record<string, MatchData>): string {
+  const sorted = Object.values(matches).sort(
+    (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
+  );
+  const sections: string[] = [];
+  let currentDate = "";
+  let openList = false;
+  for (const match of sorted) {
+    if (match.date !== currentDate) {
+      if (openList) sections.push("</ul>");
+      currentDate = match.date;
+      sections.push(`<h3 class="match-date-header">${match.date}</h3><ul>`);
+      openList = true;
+    }
+    sections.push(ssrMatchLine(match));
+  }
+  if (openList) sections.push("</ul>");
+  return `<div class="match-list-ssr">
+  <p>Free FIFA World Cup 2026 predictions for all ${sorted.length} group stage matches: predicted scores, win probabilities, confidence levels, and AI oracle prophecies. Completed matches show real final scores.</p>
+  ${sections.join("\n  ")}
+</div>`;
+}
+
+// Crawlable match detail rendered into the detail container pre-hydration.
+function ssrMatchDetailHtml(match: MatchData, allMatches: Record<string, MatchData>): string {
+  const resultLine = match.finalScore
+    ? `<p><strong>Final Result:</strong> ${match.finalScore}</p>`
+    : "";
+  const siblings = Object.values(allMatches)
+    .filter((m) => m.group === match.group && m.matchId !== match.matchId)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const siblingLinks = siblings.length
+    ? `<p><strong>More ${match.stage} predictions:</strong> ${siblings
+        .map((m) => `<a href="/oracle-of-olympus/${m.matchId}">${m.teamA} vs ${m.teamB} (${m.date})</a>`)
+        .join(" · ")}</p>`
+    : "";
+  return `<div class="match-detail-ssr">
+  <h2>${match.teamA} vs ${match.teamB} — ${match.competition} ${match.stage} Prediction</h2>
+  <p><strong>Date:</strong> ${match.date} | <strong>Venue:</strong> ${match.venue}</p>
+  ${resultLine}
+  <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
+  <p><strong>Win Probabilities:</strong> ${match.teamA} ${match.probabilities.teamAWin}%, Draw ${match.probabilities.draw}%, ${match.teamB} ${match.probabilities.teamBWin}%</p>
+  <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
+  <p><strong>Confidence:</strong> ${match.confidence}</p>
+  <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
+  <p><strong>Background:</strong> ${match.historicalSummary}</p>
+  ${siblingLinks}
+  <p><a href="/oracle-of-olympus">All World Cup 2026 predictions</a></p>
+  <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
+</div>`;
 }
 
 function matchBreadcrumbJsonLd(match: MatchData): string {
@@ -395,11 +479,31 @@ async function serveAppShell(
   // football FAQ, match pages get none — SportsEvent is the star there).
   const staticFaqPageRe = /<script type="application\/ld\+json">(?:(?!<\/script>)[\s\S])*?"@type":\s*"FAQPage"(?:(?!<\/script>)[\s\S])*?<\/script>/;
   const normalized = normalizePath(pathname);
-  if (normalized === "/oracle-of-olympus" || olympusMatch) {
+  const isOlympusLanding = normalized === "/oracle-of-olympus";
+
+  if (isOlympusLanding || olympusMatch) {
     html = html.replace(staticFaqPageRe, "");
+    // Pre-activate the Olympus section so crawlers without JS see the World Cup
+    // content as the visible page instead of the home realm grid. The client
+    // router re-applies the same state on hydration.
+    html = html
+      .replace('<main id="page-home" class="page active">', '<main id="page-home" class="page">')
+      .replace(
+        '<section id="page-olympus" class="page realm-page realm-olympus">',
+        '<section id="page-olympus" class="page realm-page realm-olympus active">'
+      );
   }
-  if (normalized === "/oracle-of-olympus" && html.includes("</head>")) {
+
+  if (isOlympusLanding && html.includes("</head>")) {
     html = html.replace("</head>", `${olympusFaqJsonLd()}\n  </head>`);
+    if (allMatches) {
+      html = html
+        .replace("</head>", `${olympusItemListJsonLd(allMatches)}\n  </head>`)
+        .replace(
+          '<div class="match-list" id="olympus-match-list">',
+          `<div class="match-list" id="olympus-match-list">${ssrMatchListHtml(allMatches)}`
+        );
+    }
   }
 
   if (olympusMatch) {
@@ -407,33 +511,20 @@ async function serveAppShell(
     if (html.includes("</head>")) {
       html = html.replace("</head>", `${sportsEventJsonLd(match)}\n${matchBreadcrumbJsonLd(match)}\n  </head>`);
     }
-
-    const resultLine = match.finalScore
-      ? `\n    <p><strong>Final Result:</strong> ${match.finalScore}</p>`
-      : "";
-    const groupSiblings = Object.values(allMatches ?? {})
-      .filter((m) => m.group === match.group && m.matchId !== match.matchId)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    const siblingLinks = groupSiblings.length
-      ? `\n    <p><strong>More ${match.stage} predictions:</strong> ${groupSiblings
-          .map((m) => `<a href="/oracle-of-olympus/${m.matchId}">${m.teamA} vs ${m.teamB} (${m.date})</a>`)
-          .join(" · ")}</p>`
-      : "";
-    const seoHtml = `
-  <div id="seo-match-content" class="seo-only" style="display:none;" aria-hidden="true">
-    <h2>${match.teamA} vs ${match.teamB} - ${match.competition} ${match.stage} Prediction</h2>
-    <p><strong>Date:</strong> ${match.date} | <strong>Venue:</strong> ${match.venue}</p>
-    <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
-    <p><strong>Win Probabilities:</strong> ${match.teamA} ${match.probabilities.teamAWin}%, Draw ${match.probabilities.draw}%, ${match.teamB} ${match.probabilities.teamBWin}%</p>
-    <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
-    <p><strong>Confidence:</strong> ${match.confidence}</p>${resultLine}
-    <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
-    <p><strong>Background:</strong> ${match.historicalSummary}</p>${siblingLinks}
-    <p><a href="/oracle-of-olympus">All World Cup 2026 predictions</a></p>
-    <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
-  </div>
-`;
-    html = html.replace("</body>", `${seoHtml}\n</body>`);
+    // Show the detail subview server-side and render the prediction into it.
+    html = html
+      .replace(
+        'id="olympus-landing-view" class="olympus-subview active" style="width: 100%; display: flex;',
+        'id="olympus-landing-view" class="olympus-subview" style="width: 100%; display: none;'
+      )
+      .replace(
+        'id="olympus-detail-view" class="olympus-subview" style="display:none;',
+        'id="olympus-detail-view" class="olympus-subview" style="display:flex;'
+      )
+      .replace(
+        '<div class="match-detail-card-container" id="olympus-detail-card" style="width: 100%; max-width: 800px; padding: 0 1rem;">',
+        `<div class="match-detail-card-container" id="olympus-detail-card" style="width: 100%; max-width: 800px; padding: 0 1rem;">${ssrMatchDetailHtml(match, allMatches ?? {})}`
+      );
   }
 
   const headers = new Headers(response.headers);
@@ -1476,6 +1567,11 @@ export default {
     const normalizedPath = url.pathname.length > 1 && url.pathname.endsWith("/")
       ? url.pathname.slice(0, -1)
       : url.pathname;
+    if (normalizedPath === "/oracle-of-olympus") {
+      const stored = await getOlympusMatches(env);
+      return serveAppShell(request, env, url.pathname, APP_ROUTES["/oracle-of-olympus"], undefined, stored.matches);
+    }
+
     if (normalizedPath.startsWith("/oracle-of-olympus/")) {
       const matchId = normalizedPath.substring("/oracle-of-olympus/".length);
       const stored = await getOlympusMatches(env);

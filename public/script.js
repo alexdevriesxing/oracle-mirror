@@ -1861,7 +1861,10 @@ function getTeamFlagHtml(match, side, sizeClass = "small") {
   const code = getTeamFlagCode(match, side);
   const teamName = side === "a" ? match.teamA : match.teamB;
   const size = sizeClass === "large" ? 80 : 40;
-  return `<img src="https://flagcdn.com/w${size}/${code}.png" class="flag-img flag-${sizeClass}" alt="${teamName} flag" onerror="this.src='https://flagcdn.com/w${size}/un.png'" />`;
+  // Small flags appear 144x in the match list — lazy-load them; large detail
+  // flags are above the fold and load eagerly. Width hints reduce CLS.
+  const loadingAttrs = sizeClass === "large" ? 'decoding="async"' : 'loading="lazy" decoding="async"';
+  return `<img src="https://flagcdn.com/w${size}/${code}.png" class="flag-img flag-${sizeClass}" alt="${teamName} flag" width="${size}" ${loadingAttrs} onerror="this.src='https://flagcdn.com/w${size}/un.png'" />`;
 }
 
 async function showMatchList() {
