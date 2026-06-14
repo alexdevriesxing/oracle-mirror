@@ -37,7 +37,8 @@ const FALLBACK_FORTUNES = [
   "Ancient energies stir around you — remain open to signs from the universe.",
 ];
 
-const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+// NOTE: @cf/meta/llama-3.1-8b-instruct was deprecated by Workers AI on 2026-05-30.
+const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const GATEWAY_CONFIG = { gateway: { id: "default" } };
 const CANONICAL_HOST = "https://oraclemirror.com";
 
@@ -856,14 +857,29 @@ function errorResponse(message: string, status = 400): Response {
   return jsonResponse({ error: message }, status);
 }
 
+async function invokeAI(env: Env, input: Record<string, unknown>): Promise<string> {
+  try {
+    const result = await env.AI.run(AI_MODEL, input, GATEWAY_CONFIG);
+    return (result.response ?? result.message ?? JSON.stringify(result)).trim();
+  } catch (err: unknown) {
+    // The AI Gateway ("default") may not exist on the account, which makes the
+    // gateway-routed call throw for every realm. Retry the model directly so
+    // readings still work, and surface the real error for diagnosis.
+    console.error(
+      "AI gateway call failed, retrying without gateway:",
+      err instanceof Error ? err.message : String(err)
+    );
+    const result = await env.AI.run(AI_MODEL, input);
+    return (result.response ?? result.message ?? JSON.stringify(result)).trim();
+  }
+}
+
 async function runAI(env: Env, prompt: string): Promise<string> {
-  const result = await env.AI.run(AI_MODEL, { prompt }, GATEWAY_CONFIG);
-  return (result.response ?? result.message ?? JSON.stringify(result)).trim();
+  return invokeAI(env, { prompt });
 }
 
 async function runAIChat(env: Env, messages: Array<{ role: string; content: string }>): Promise<string> {
-  const result = await env.AI.run(AI_MODEL, { messages }, GATEWAY_CONFIG);
-  return (result.response ?? result.message ?? JSON.stringify(result)).trim();
+  return invokeAI(env, { messages });
 }
 
 const WESTERN_ZODIAC_SIGNS = [
@@ -1589,7 +1605,7 @@ async function handleOracleOfOlympusPredict(request: Request, env: Env, ctx: Exe
   const matchId = data.matchId;
   const predictedScore = data.predictedScore;
   const provider = env.AI_PROVIDER || "workers-ai";
-  const model = env.AI_MODEL || (provider === "workers-ai" ? "@cf/meta/llama-3.1-8b-instruct" : "gpt-4o-mini");
+  const model = env.AI_MODEL || (provider === "workers-ai" ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast" : "gpt-4o-mini");
 
   const cacheKeyUrl = `https://oraclemirror-cache.internal/api/oracle-of-olympus/predict?matchId=${matchId}&predictedScore=${encodeURIComponent(predictedScore)}&model=${encodeURIComponent(model)}`;
   const cache = caches.default;
