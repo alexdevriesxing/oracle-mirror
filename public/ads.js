@@ -1148,7 +1148,31 @@ function attemptRefreshes() {
   }
 }
 
+function adsDisabledForSession() {
+  // QA-only: restricted to local preview so it can never be used to opt out of
+  // ads on the live site.
+  const host = window.location.hostname;
+  if (host !== "localhost" && host !== "127.0.0.1") return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ads") === "off") {
+      localStorage.setItem("oracle-ads-off", "1");
+    } else if (params.get("ads") === "on") {
+      localStorage.removeItem("oracle-ads-off");
+    }
+    return localStorage.getItem("oracle-ads-off") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function initAdSystem() {
+  // QA kill-switch: visit ?ads=off (sticky) or ?ads=on to clear. Lets us audit
+  // layout/visuals without ad scripts hijacking the page.
+  if (adsDisabledForSession()) {
+    console.info("[Oracle Mirror Ads] Disabled for this session (ads=off).");
+    return;
+  }
   window.dataLayer = window.dataLayer || [];
   exposeAdDebugApi();
   window.addEventListener("pointerup", recordUserInteraction, { passive: true });
