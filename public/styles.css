@@ -114,18 +114,18 @@ header {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.15rem;
 }
 
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.68rem 1rem;
+  gap: 0.3rem;
+  padding: 0.62rem 0.62rem;
   text-decoration: none;
   color: var(--text-cream);
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0;
   border-radius: 8px;
@@ -137,6 +137,18 @@ header {
   color: var(--gold-light);
   background: rgba(212, 175, 55, 0.14);
   box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.18);
+}
+
+/* Featured realms (Dream Interpreter, World Cup Oracle) — subtly highlighted in the bar */
+.nav-link-feature {
+  color: var(--gold-light);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.10), rgba(212, 175, 55, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.28);
+}
+
+.nav-link-feature:hover, .nav-link-feature.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(212, 175, 55, 0.10));
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.45), 0 0 18px rgba(212, 175, 55, 0.22);
 }
 
 .dropdown-arrow {
@@ -2672,6 +2684,68 @@ footer {
   }
 }
 
+/* Collapse the nav to the hamburger menu before the full row of realms
+   (now including the Dream Interpreter and World Cup feature links) would
+   overflow the bar on small laptops and tablets. */
+@media (max-width: 1240px) {
+  header { padding: 0; }
+
+  .nav-links {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* header has backdrop-filter, so it is the containing block for this fixed
+       overlay — use an explicit viewport height instead of bottom:0 (which would
+       resolve against the header box and clip the menu). */
+    bottom: auto;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(5, 3, 13, 0.98);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    z-index: 150;
+    backdrop-filter: blur(20px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4.5rem 1rem 2.5rem;
+  }
+
+  .nav-links.open { display: flex; }
+
+  .nav-link {
+    font-size: 1.25rem;
+    padding: 0.9rem 1.6rem;
+  }
+
+  .nav-link-feature {
+    width: min(360px, 80vw);
+    justify-content: center;
+  }
+
+  .nav-dropdown-menu {
+    position: static;
+    transform: none;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    display: block;
+  }
+
+  .nav-dropdown-trigger .dropdown-arrow { display: none; }
+
+  .dropdown-item {
+    font-size: 1.05rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .nav-hamburger { display: flex; }
+}
+
 @media (max-width: 768px) {
   .love-match-names {
     flex-direction: column;
@@ -2696,50 +2770,6 @@ footer {
   .love-match-result-card {
     padding: 1.8rem 1.2rem;
   }
-
-  header { padding: 0; }
-
-  .nav-links {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(5, 3, 13, 0.98);
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    z-index: 150;
-    backdrop-filter: blur(20px);
-  }
-
-  .nav-links.open { display: flex; }
-
-  .nav-link {
-    font-size: 1.25rem;
-    padding: 0.9rem 1.6rem;
-  }
-
-  .nav-dropdown-menu {
-    position: static;
-    transform: none;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    display: block;
-  }
-
-  .nav-dropdown-trigger .dropdown-arrow { display: none; }
-
-  .dropdown-item {
-    font-size: 1.05rem;
-    padding: 0.75rem 1.5rem;
-  }
-
-  .nav-hamburger { display: flex; }
 
   #hero { min-height: 470px; padding: 2rem 1rem; }
 
