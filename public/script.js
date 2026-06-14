@@ -3,6 +3,7 @@ import {
   activateSlotsForScreen,
   createArchiveFeedAdSlot,
   createDreamInterstitialAdSlot,
+  createDreamResultAdSlot,
   createResultAdSlot,
   initAdSystem,
   registerAdSlots,
@@ -694,11 +695,15 @@ function markResultRendered(realm, answer) {
 
   if (realm === "dream-interpreter" && dreamMessages) {
     clearResultAftercare(realm);
-    const adSlot = createResultAdSlot(realm);
+    const adSlot = createDreamResultAdSlot();
     adSlot.classList.add("oracle-ad-chat-result");
     dreamMessages.appendChild(adSlot);
     registerAdSlots(adSlot);
+    // Activate page-level result slots (rails, footer, mobile anchor), then
+    // lazy-fire the dedicated dream banner so it loads when scrolled into view
+    // and collapses cleanly if it returns no creative.
     activateSlotsForScreen("result", realm);
+    activateAdSlot("oracle-dream-result-slot", { realm });
     scrollDreamToBottom();
     return;
   }

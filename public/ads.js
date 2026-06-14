@@ -460,6 +460,12 @@ function scheduleFillCheck(host, config, instanceId, format) {
       screen: activeScreen,
       realm: activeRealm,
     });
+
+    // Slots that opt in (e.g. the in-conversation dream reading banner) collapse
+    // when no creative arrives, so a reserved empty frame never lingers in the UI.
+    if (config.collapseIfUnfilled) {
+      markSlotCollapsed(host, config, instanceId, "unfilled");
+    }
   }, 3500);
 }
 
@@ -733,6 +739,16 @@ export function createDreamInterstitialAdSlot() {
   host.dataset.adSlot = "oracle-dream-interstitial";
   host.dataset.adRealm = "dream-interpreter";
   host.dataset.adLazy = "false";
+  registerSlot(host);
+  return host;
+}
+
+export function createDreamResultAdSlot() {
+  const host = document.createElement("aside");
+  host.className = "oracle-ad oracle-ad-result oracle-ad-dream-result";
+  host.dataset.adSlot = "oracle-dream-result-slot";
+  host.dataset.adRealm = "dream-interpreter";
+  host.dataset.adLazy = "true";
   registerSlot(host);
   return host;
 }
