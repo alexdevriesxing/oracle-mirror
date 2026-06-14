@@ -4857,3 +4857,249 @@ body {
   color: var(--text-muted);
 }
 
+/* =========================================================
+   DREAM INTERPRETER (Morpheus, the Dream-Walker)
+   A distinct indigo / midnight identity, set apart from the
+   gold-and-violet of the other realms.
+   ========================================================= */
+.card-dream:hover { border-color: #818cf8; box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(129, 140, 248, 0.28); }
+.card-dream .card-icon { filter: drop-shadow(0 0 10px rgba(129, 140, 248, 0.55)); }
+
+.portrait-morpheus { background: radial-gradient(circle at 35% 30%, #c7d2fe 0%, #6366f1 38%, #1e1b4b 100%); }
+
+/* Soft midnight wash behind the whole dream realm */
+.realm-dream .realm-header h2 {
+  background: linear-gradient(120deg, #e0e7ff, #a5b4fc 55%, #818cf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 26px rgba(129, 140, 248, 0.35);
+}
+
+/* ---- The night scene: starfield + crescent moon ---- */
+.dream-scene {
+  position: relative;
+  width: 280px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dream-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  box-shadow: 0 0 6px 1px rgba(199, 210, 254, 0.9);
+  opacity: 0.8;
+  animation: dream-twinkle var(--tw, 3s) ease-in-out infinite;
+}
+
+@keyframes dream-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.dream-moon {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dream-drift 7s ease-in-out infinite;
+}
+
+.dream-moon-glow {
+  position: absolute;
+  inset: -28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.30) 0%, rgba(129, 140, 248, 0) 68%);
+  animation: dream-pulse 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Crescent built from a lit disc + an offset shadow disc */
+.dream-moon-disc {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fdfbf3 0%, #e6e9ff 45%, #c3c9f5 100%);
+  box-shadow:
+    0 0 28px rgba(199, 210, 254, 0.55),
+    inset -26px -8px 0 -2px #120c2e,
+    inset -34px -6px 18px -6px rgba(80, 70, 160, 0.6);
+}
+
+.dream-crater {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(120, 110, 170, 0.28);
+  box-shadow: inset 0 1px 2px rgba(60, 50, 110, 0.5);
+}
+.dream-crater-1 { width: 16px; height: 16px; top: 26px; left: 24px; }
+.dream-crater-2 { width: 10px; height: 10px; top: 54px; left: 38px; }
+.dream-crater-3 { width: 7px; height: 7px; top: 34px; left: 46px; }
+
+.dream-status-text {
+  position: absolute;
+  bottom: -0.5rem;
+  width: 240px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: rgba(199, 210, 254, 0.85);
+  line-height: 1.45;
+}
+
+@keyframes dream-drift {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-9px) rotate(5deg); }
+}
+
+@keyframes dream-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ---- Dream chat: indigo night palette (overrides Fortuna's purple) ---- */
+.realm-dream .lore-num { box-shadow: 0 0 6px rgba(129, 140, 248, 0.6); }
+
+.realm-dream .chat-msg.fortuna .chat-avatar {
+  background: radial-gradient(circle at 35% 30%, #c7d2fe 0%, #4338ca 60%, #1e1b4b 100%);
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.45);
+}
+
+.realm-dream .chat-msg.fortuna .chat-bubble {
+  background: linear-gradient(160deg, rgba(67, 56, 202, 0.26), rgba(30, 27, 75, 0.30));
+  border: 1px solid rgba(129, 140, 248, 0.3);
+}
+
+.realm-dream .chat-input-area:focus-within {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.18);
+}
+
+.realm-dream .typing-dot { background: #a5b4fc; }
+
+/* ---- Visible FAQ (h3-based, unlike the summary-based variant) ---- */
+.realm-faq {
+  max-width: 700px;
+  margin: 2.5rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.realm-faq > h2 {
+  font-family: var(--font-heading);
+  color: var(--text-gold);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.realm-faq .faq-item h3 {
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+  font-size: 1.02rem;
+  margin: 0;
+}
+
+.realm-faq .faq-item p {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  padding-top: 0.55rem;
+  margin: 0;
+}
+
+/* ---- Server-rendered dream-symbol dictionary (SEO/GAIO content) ---- */
+.dream-symbol-reference {
+  max-width: 760px;
+  margin: 2.75rem auto 0;
+}
+
+.sr-only-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dream-symbol-dictionary h2 {
+  font-family: var(--font-heading);
+  color: var(--text-gold);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.dream-symbol-intro {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 560px;
+  margin: 0 auto 1.5rem;
+}
+
+.dream-symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.dream-symbol-entry {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 10px;
+  background:
+    linear-gradient(150deg, rgba(67, 56, 202, 0.08), transparent 60%),
+    rgba(5, 3, 13, 0.55);
+  padding: 0.9rem 1rem;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dream-symbol-entry:hover {
+  border-color: rgba(129, 140, 248, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 18px rgba(129, 140, 248, 0.12);
+}
+
+.dream-symbol-icon {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(129, 140, 248, 0.4));
+}
+
+.dream-symbol-entry h3 {
+  color: var(--text-gold);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  margin: 0 0 0.3rem;
+}
+
+.dream-symbol-entry p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dream-moon,
+  .dream-moon-glow,
+  .dream-star { animation: none; }
+}
+

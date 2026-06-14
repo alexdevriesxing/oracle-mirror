@@ -727,6 +727,16 @@ export function createArchiveFeedAdSlot() {
   return host;
 }
 
+export function createDreamInterstitialAdSlot() {
+  const host = document.createElement("aside");
+  host.className = "oracle-ad oracle-ad-dream-interstitial";
+  host.dataset.adSlot = "oracle-dream-interstitial";
+  host.dataset.adRealm = "dream-interpreter";
+  host.dataset.adLazy = "false";
+  registerSlot(host);
+  return host;
+}
+
 function syncMobileAnchorHeight() {
   const anchor = document.getElementById("oracle-mobile-anchor");
   const visible = anchor && !anchor.hidden && !document.body.classList.contains("mobile-anchor-suppressed");
