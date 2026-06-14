@@ -2,6 +2,7 @@ import {
   activateAdSlot,
   activateSlotsForScreen,
   createArchiveFeedAdSlot,
+  createDreamInterstitialAdSlot,
   createResultAdSlot,
   initAdSystem,
   registerAdSlots,
@@ -201,6 +202,7 @@ const hamburger = document.getElementById("nav-hamburger");
 const ROUTE_BY_PAGE = {
   home: "/",
   "crystal-ball": "/crystal-ball",
+  "dream-interpreter": "/dream-interpreter",
   "western-zodiac": "/western-zodiac",
   "chinese-zodiac": "/chinese-zodiac",
   tarot: "/tarot",
@@ -223,6 +225,7 @@ const ROUTE_BY_PAGE = {
 
 const RESULT_ROUTE_BY_REALM = {
   "crystal-ball": "/result/crystal-ball",
+  "dream-interpreter": "/result/dream-interpreter",
   "western-zodiac": "/result/western-zodiac",
   "chinese-zodiac": "/result/chinese-zodiac",
   tarot: "/result/tarot",
@@ -240,6 +243,7 @@ const PAGE_BY_ROUTE = new Map(Object.entries(ROUTE_BY_PAGE).map(([page, path]) =
 const PAGE_BY_RESULT_ROUTE = new Map(Object.entries(RESULT_ROUTE_BY_REALM).map(([page, path]) => [path, page]));
 const REALM_PAGES = new Set([
   "crystal-ball",
+  "dream-interpreter",
   "western-zodiac",
   "chinese-zodiac",
   "tarot",
@@ -262,6 +266,10 @@ const SCREEN_META = {
   "crystal-ball": {
     title: "Crystal Ball Reading | Oracle Mirror",
     description: "Ask Madame Fortuna's crystal ball for a mystical fortune reading and save the answer to your Oracle Mirror archive.",
+  },
+  "dream-interpreter": {
+    title: "Dream Interpreter | Oracle Mirror",
+    description: "Describe your dream to Morpheus the Dream-Walker and receive a free interpretation grounded in classic dream symbolism.",
   },
   "western-zodiac": {
     title: "Western Zodiac Horoscope | Oracle Mirror",
@@ -505,6 +513,7 @@ document.addEventListener("click", (e) => {
 // --- Helpers ---
 const LOADING_MESSAGES = {
   "crystal-ball": "The mists swirl within the crystal ball...",
+  "dream-interpreter": "Morpheus drifts through the dream...",
   "western-zodiac": "Consulting the celestial charts...",
   "chinese-zodiac": "Aligning the celestial animals...",
   tarot: "The cards are being drawn...",
@@ -597,6 +606,11 @@ function clearResultAftercare(realm) {
     return;
   }
 
+  if (realm === "dream-interpreter") {
+    dreamMessages?.querySelectorAll(".oracle-ad-chat-result").forEach((el) => el.remove());
+    return;
+  }
+
   const output = document.querySelector(`[data-output="${realm}"]`);
   let next = output?.nextElementSibling;
   while (next?.classList.contains("result-aftercare")) {
@@ -613,6 +627,7 @@ function focusRealmInput(realm) {
   }
   const focusSelectors = {
     "crystal-ball": "#chat-input",
+    "dream-interpreter": "#dream-input",
     "western-zodiac": ".zodiac-btn",
     "chinese-zodiac": "#birth-year",
     tarot: '[data-input="tarot"]',
@@ -674,6 +689,17 @@ function markResultRendered(realm, answer) {
     registerAdSlots(adSlot);
     activateSlotsForScreen("result", realm);
     scrollChatToBottom();
+    return;
+  }
+
+  if (realm === "dream-interpreter" && dreamMessages) {
+    clearResultAftercare(realm);
+    const adSlot = createResultAdSlot(realm);
+    adSlot.classList.add("oracle-ad-chat-result");
+    dreamMessages.appendChild(adSlot);
+    registerAdSlots(adSlot);
+    activateSlotsForScreen("result", realm);
+    scrollDreamToBottom();
     return;
   }
 
@@ -741,6 +767,8 @@ function renderArchive() {
     iching: "I Ching",
     reading: "Crystal Ball",
     chat: "Crystal Ball Chat",
+    "dream-interpreter": "Dream Interpretation",
+    dream: "Dream Interpretation",
   };
   list.innerHTML = archive
     .map((entry) => {
@@ -1167,6 +1195,174 @@ if (crystalPage) {
     attributes: true,
     attributeFilter: ["class"],
   });
+}
+
+// =========================================================
+// DREAM INTERPRETER CHAT (Morpheus Vey, the Dream-Walker)
+// =========================================================
+const dreamMessages = document.getElementById("dream-messages");
+const dreamInput = document.getElementById("dream-input");
+const dreamSend = document.getElementById("dream-send");
+const dreamStatus = document.getElementById("dream-status");
+
+let dreamHistory = [];
+let dreamBusy = false;
+let dreamInterstitialShown = false;
+
+const DREAM_GREETING =
+  "Mmm... welcome, sleeper, to the Hall of Whispering Dreams. I am Morpheus Vey, the Dream-Walker. Close your eyes, and tell me what you saw beyond the veil of sleep...";
+
+function scrollDreamToBottom() {
+  if (dreamMessages) dreamMessages.scrollTop = dreamMessages.scrollHeight;
+}
+
+function createDreamMessageEl(role, text) {
+  const msg = document.createElement("div");
+  msg.className = `chat-msg ${role === "user" ? "user" : "fortuna"}`;
+  const avatar = document.createElement("div");
+  avatar.className = "chat-avatar";
+  avatar.textContent = role === "user" ? "\u{1F9D1}" : "\u{1F319}";
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble";
+  bubble.textContent = text;
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  return msg;
+}
+
+function createDreamTypingEl() {
+  const msg = document.createElement("div");
+  msg.className = "chat-msg fortuna";
+  msg.id = "dream-typing-indicator";
+  const avatar = document.createElement("div");
+  avatar.className = "chat-avatar";
+  avatar.textContent = "\u{1F319}";
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble typing-indicator";
+  bubble.innerHTML =
+    '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  return msg;
+}
+
+async function sendDreamMessage() {
+  if (dreamBusy || !dreamInput || !dreamMessages) return;
+  const text = dreamInput.value.trim();
+  if (!text) return;
+
+  const userTurnsSoFar = dreamHistory.filter((m) => m.role === "user").length;
+
+  // Cheap in-character gate for trivially short first descriptions — no API call.
+  if (userTurnsSoFar === 0 && text.length < 8) {
+    dreamMessages.appendChild(createDreamMessageEl("user", text));
+    dreamMessages.appendChild(
+      createDreamMessageEl(
+        "assistant",
+        "The veil shows nothing yet, sleeper... describe your dream in a little more detail, and I shall walk it with you."
+      )
+    );
+    dreamInput.value = "";
+    scrollDreamToBottom();
+    return;
+  }
+
+  dreamBusy = true;
+  dreamInput.value = "";
+  dreamSend.disabled = true;
+  setReadingState(true);
+  clearResultAftercare("dream-interpreter");
+  trackEvent("question_submitted", { realm: "dream-interpreter", question_length: text.length });
+  if (userTurnsSoFar === 0) trackEvent("reading_started", { realm: "dream-interpreter" });
+
+  dreamHistory.push({ role: "user", content: text });
+  dreamMessages.appendChild(createDreamMessageEl("user", text));
+  scrollDreamToBottom();
+
+  if (dreamStatus) dreamStatus.textContent = "Morpheus drifts through the dream...";
+  const typingEl = createDreamTypingEl();
+  dreamMessages.appendChild(typingEl);
+  scrollDreamToBottom();
+
+  try {
+    const data = await callAPI("/api/dream", { messages: dreamHistory });
+    typingEl.remove();
+    const response = extractResponse(data);
+    const phase = data.phase || "clarify";
+    dreamHistory.push({ role: "assistant", content: response });
+    dreamMessages.appendChild(createDreamMessageEl("assistant", response));
+    scrollDreamToBottom();
+
+    if (phase === "interpret") {
+      if (dreamStatus) dreamStatus.textContent = "The dream has been read. Share another?";
+      const firstUserDream = dreamHistory.find((m) => m.role === "user");
+      saveToArchive("dream", firstUserDream ? firstUserDream.content : text, response);
+      markResultRendered("dream-interpreter", response);
+      // Reset the wire history so the next dream begins the ritual afresh
+      // (the on-screen conversation stays for continuity). The server counts
+      // user turns, so a clean slate restores the describe -> clarify cadence.
+      dreamHistory = [];
+    } else {
+      if (dreamStatus) dreamStatus.textContent = "Tell me more, sleeper...";
+      // A single native interstitial after the first clarifying exchange.
+      if (!dreamInterstitialShown) {
+        dreamInterstitialShown = true;
+        const adSlot = createDreamInterstitialAdSlot();
+        dreamMessages.appendChild(adSlot);
+        registerAdSlots(adSlot);
+        activateAdSlot("oracle-dream-interstitial", { realm: "dream-interpreter", force: true });
+        scrollDreamToBottom();
+      }
+    }
+  } catch {
+    typingEl.remove();
+    dreamMessages.appendChild(
+      createDreamMessageEl(
+        "assistant",
+        "The dream slips beyond my reach for now, sleeper... let us try again in a moment."
+      )
+    );
+    scrollDreamToBottom();
+    if (dreamStatus) dreamStatus.textContent = "The dream has faded...";
+  }
+
+  setReadingState(false);
+  dreamBusy = false;
+  if (dreamSend) dreamSend.disabled = false;
+  dreamInput.focus();
+}
+
+dreamSend?.addEventListener("click", sendDreamMessage);
+dreamInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendDreamMessage();
+  }
+});
+
+function initDreamGreeting() {
+  if (dreamMessages && dreamHistory.length === 0) {
+    dreamMessages.appendChild(createDreamMessageEl("assistant", DREAM_GREETING));
+    dreamHistory.push({ role: "assistant", content: DREAM_GREETING });
+  }
+}
+
+const dreamObserver = new MutationObserver(() => {
+  const page = document.getElementById("page-dream-interpreter");
+  if (page?.classList.contains("active")) {
+    initDreamGreeting();
+    dreamInput?.focus();
+  }
+});
+
+const dreamPageEl = document.getElementById("page-dream-interpreter");
+if (dreamPageEl) {
+  dreamObserver.observe(dreamPageEl, { attributes: true, attributeFilter: ["class"] });
+  // Direct loads of /dream-interpreter are server-pre-activated, so seed the
+  // greeting immediately (the observer only fires on later class changes).
+  if (dreamPageEl.classList.contains("active")) {
+    initDreamGreeting();
+  }
 }
 
 // =========================================================

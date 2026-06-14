@@ -320,6 +320,13 @@
               <p class="card-desc">Toss brass coins to reveal changes</p>
             </div>
           </a>
+          <a href="/dream-interpreter" class="card card-dream" data-realm="dream-interpreter">
+            <div class="card-frame">
+              <div class="card-icon">&#127769;</div>
+              <h3>Dream<br/>Interpreter</h3>
+              <p class="card-desc">Tell Morpheus your dream and learn its meaning</p>
+            </div>
+          </a>
         </div>
       </section>
 
@@ -815,6 +822,112 @@
           <input type="text" id="chat-input" class="chat-text-input" placeholder="Whisper your question to Madame Fortuna..." autocomplete="off" />
           <button id="chat-send" class="btn-gold btn-chat-send" disabled>Reveal My Fortune</button>
         </div>
+
+      </div>
+    </section>
+
+    <!-- ===== DREAM INTERPRETER ===== -->
+    <section id="page-dream-interpreter" class="page realm-page realm-dream">
+      <div class="chat-layout">
+        <div class="realm-header">
+          <button class="btn-back" data-back>&#8592; Return to Realms</button>
+          <h2>The Dream-Walker's Hall of Whispering Dreams</h2>
+          <p class="realm-subtitle">Describe your dream to Morpheus Vey. He will ask a few quiet questions, then reveal what the dreaming mind was trying to say.</p>
+        </div>
+
+        <!-- Dream Visual -->
+        <div class="chat-orb-container">
+          <div class="dream-scene">
+            <span class="dream-star" style="top:12%;left:18%;--tw:3.2s"></span>
+            <span class="dream-star" style="top:24%;left:78%;--tw:2.4s"></span>
+            <span class="dream-star" style="top:62%;left:10%;--tw:2.9s"></span>
+            <span class="dream-star" style="top:74%;left:84%;--tw:3.6s"></span>
+            <span class="dream-star" style="top:8%;left:54%;--tw:2.1s"></span>
+            <span class="dream-star" style="top:84%;left:42%;--tw:3.0s"></span>
+            <div class="dream-moon" aria-hidden="true">
+              <div class="dream-moon-glow"></div>
+              <div class="dream-moon-disc">
+                <span class="dream-crater dream-crater-1"></span>
+                <span class="dream-crater dream-crater-2"></span>
+                <span class="dream-crater dream-crater-3"></span>
+              </div>
+            </div>
+            <div class="dream-status-text" id="dream-status">Close your eyes, and tell me your dream...</div>
+          </div>
+        </div>
+
+        <section class="mirror-lore" aria-labelledby="dream-lore-title">
+          <p class="overview-kicker">The dream rite</p>
+          <h3 id="dream-lore-title">How the Dream-Walker Reads Your Dream</h3>
+          <p class="lore-intro">
+            Morpheus Vey walks the corridors between waking and sleep. He does not rush to a verdict &ndash; he listens first, then draws on the time-worn language of dream symbolism to find the meaning hidden in your dream.
+          </p>
+          <div class="lore-steps">
+            <div class="lore-step-item">
+              <span class="lore-num">&#10022;</span>
+              <strong>1. Describe Your Dream</strong>
+              <p>Type what you saw beyond the veil of sleep &ndash; the places, people, feelings, and strange turns. The more you remember, the clearer the reading.</p>
+            </div>
+            <div class="lore-step-item">
+              <span class="lore-num">&#10022;</span>
+              <strong>2. Answer His Whispers</strong>
+              <p>The Dream-Walker asks two short questions to draw out the dream's true shape &ndash; its emotion, whether it returns, or how it ended.</p>
+            </div>
+            <div class="lore-step-item">
+              <span class="lore-num">&#10022;</span>
+              <strong>3. Receive the Meaning</strong>
+              <p>Morpheus reveals the dream's symbols and message, and inscribes the reading in your local Archive.</p>
+            </div>
+          </div>
+        </section>
+
+        <aside
+          class="oracle-ad oracle-ad-realm"
+          data-ad-slot="oracle-realm-slot"
+          data-ad-realm="dream-interpreter"
+          aria-label="Advertisement"
+        ></aside>
+
+        <!-- Dream Chat -->
+        <div class="chat-container">
+          <div class="chat-messages" id="dream-messages">
+            <!-- Messages will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Dream Input -->
+        <div class="chat-input-area">
+          <input type="text" id="dream-input" class="chat-text-input" placeholder="Describe your dream to Morpheus..." autocomplete="off" />
+          <button id="dream-send" class="btn-gold btn-chat-send">Share My Dream</button>
+        </div>
+
+        <!-- Crawlable dream-symbol dictionary (server-rendered for SEO/GAIO) -->
+        <section class="dream-symbol-reference" aria-labelledby="dream-symbols-title">
+          <h2 id="dream-symbols-title" class="sr-only-heading">Dream Symbol Reference</h2>
+          <div class="dream-symbol-dictionary" id="dream-symbol-dictionary"></div>
+        </section>
+
+        <!-- Visible FAQ (mirrors FAQPage JSON-LD injected by the worker) -->
+        <section class="realm-faq" aria-labelledby="dream-faq-title">
+          <p class="overview-kicker">Questions of the night</p>
+          <h2 id="dream-faq-title">Dream Interpretation FAQ</h2>
+          <div class="faq-item">
+            <h3>Is online dream interpretation accurate?</h3>
+            <p>Dream interpretation is not an exact science. Oracle Mirror's Dream-Walker draws on established frameworks &ndash; Jungian archetypes, Freudian theory, emotional psychology, and cross-cultural symbolism &ndash; to offer reflective, entertainment-focused meanings. The most important interpreter of a dream is always the dreamer.</p>
+          </div>
+          <div class="faq-item">
+            <h3>What do falling dreams mean?</h3>
+            <p>Falling dreams most often reflect a loss of control or a feeling of insecurity in waking life &ndash; a sense that something solid is slipping away. Whether you wake before landing can colour the meaning toward anxiety or recovery.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Why do I keep having recurring dreams?</h3>
+            <p>Recurring dreams usually point to an unresolved emotion or situation the mind keeps returning to. They tend to fade once the underlying feeling is acknowledged or the waking-life issue is addressed.</p>
+          </div>
+          <div class="faq-item">
+            <h3>How does the Oracle Mirror dream interpreter work?</h3>
+            <p>You describe your dream, Morpheus the Dream-Walker asks two short clarifying questions to draw out its true shape, and then reveals an interpretation grounded in classic dream symbolism. It is free, and no account is required.</p>
+          </div>
+        </section>
 
       </div>
     </section>
@@ -1405,6 +1518,12 @@
           <h3>Sage Lao-Tan</h3>
           <p class="persona-domain">I Ching</p>
           <p class="persona-desc">An ancient philosophical guardian of the Book of Changes who interprets the harmony of Yin and Yang.</p>
+        </div>
+        <div class="persona-card">
+          <div class="persona-portrait portrait-morpheus"></div>
+          <h3>Morpheus Vey</h3>
+          <p class="persona-domain">Dream Interpretation</p>
+          <p class="persona-desc">The Dream-Walker who drifts the corridors between waking and sleep, reading the symbols the dreaming mind leaves behind.</p>
         </div>
       </div>
     </section>
