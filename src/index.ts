@@ -15,7 +15,6 @@ export interface Env {
   AI: any;
   ASSETS: Fetcher;
   ORACLE_KV?: KVNamespace;
-  AD_CONSENT_REQUIRED?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_AI_GATEWAY_ID?: string;
   AI_PROVIDER?: string;
@@ -535,14 +534,10 @@ function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): st
   return output;
 }
 
-function envFlag(value: string | undefined, defaultValue = false): boolean {
-  if (value === undefined) return defaultValue;
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-}
-
-function injectRuntimeConfig(html: string, env: Env): string {
+function injectRuntimeConfig(html: string, _env: Env): string {
+  // Ads are always on for every visitor — consent is never required.
   const runtimeConfig = {
-    consentRequired: envFlag(env.AD_CONSENT_REQUIRED, false),
+    consentRequired: false,
   };
   const script = `<script>window.ORACLE_AD_RUNTIME_CONFIG=${JSON.stringify(runtimeConfig)};</script>`;
   return html.includes("</head>") ? html.replace("</head>", `${script}\n  </head>`) : `${script}${html}`;

@@ -1,11 +1,8 @@
-const runtimeConfig = globalThis.ORACLE_AD_RUNTIME_CONFIG || {};
-const runtimeConsentRequired =
-  typeof runtimeConfig.consentRequired === "boolean" ? runtimeConfig.consentRequired : false;
-
 export const ORACLE_AD_CONFIG = {
   siteName: "Oracle Mirror",
   canonicalHost: "https://oraclemirror.com",
-  consentRequired: runtimeConsentRequired,
+  // Ads are always on for every visitor — no consent gate, no opt-out.
+  consentRequired: false,
   contextualAdsWithoutConsent: true,
   refreshPolicy: {
     enabled: true,
