@@ -6,7 +6,6 @@ const AMBIENT_POPUNDER_KEY = "oracle-ambient-popunder-loaded";
 const slotConfigs = new Map(ORACLE_AD_CONFIG.slots.map((slot) => [slot.slotId, slot]));
 const registeredSlots = new WeakSet();
 const loadedInstances = new Set();
-const pendingConsentSlots = new Set();
 const sessionRefreshCounts = new Map();
 const lastRefreshAt = new Map();
 const mobileAnchorDecisionKeys = new Set();
@@ -195,40 +194,19 @@ function setStoredConsent(consent) {
 }
 
 export function getConsentState() {
-  const stored = getStoredConsent();
-  if (stored && typeof stored === "object") {
-    return {
-      state: stored.state || (stored.ads ? "accepted" : "rejected"),
-      ads: stored.ads === true,
-      analytics: stored.analytics !== false,
-      source: "stored",
-      consentRequired: ORACLE_AD_CONFIG.consentRequired,
-    };
-  }
-
-  if (ORACLE_AD_CONFIG.consentRequired) {
-    return {
-      state: "pending",
-      ads: false,
-      analytics: true,
-      source: "required_pending",
-      consentRequired: true,
-    };
-  }
-
+  // Consent is always granted: the site is ad-supported and ads load for every
+  // visitor. There is no opt-out path, so any historical stored state is ignored.
   return {
-    state: "not_required",
+    state: "accepted",
     ads: true,
     analytics: true,
-    source: "contextual_default",
+    source: "always_on",
     consentRequired: false,
   };
 }
 
 function hasAdConsent() {
-  const consent = getConsentState();
-  if (consent.ads === false) return false;
-  return !ORACLE_AD_CONFIG.consentRequired || consent.ads === true;
+  return true;
 }
 
 function currentDevice() {
@@ -250,8 +228,9 @@ function hasConfiguredGlobalScript(config) {
   return Boolean(config?.scriptUrl) && !String(config.zoneId || "").startsWith("TODO_ADSTERRA");
 }
 
-function globalScriptRequiresConsent(config) {
-  return ORACLE_AD_CONFIG.consentRequired || config?.consentRequired === true;
+function globalScriptRequiresConsent() {
+  // Global scripts (popunder, social bar) never wait for consent.
+  return false;
 }
 
 function recordUserInteraction() {
@@ -401,21 +380,6 @@ function markSlotCollapsed(host, config, instanceId, reason) {
   });
 }
 
-function markConsentPending(host, config, instanceId) {
-  pendingConsentSlots.add(host);
-  host.classList.add("oracle-ad-awaiting-consent");
-  const pending = host.querySelector(".oracle-ad-pending");
-  if (pending) pending.textContent = "Ads load after cookie consent.";
-  trackEvent("ad_slot_collapsed", {
-    slot_id: config.slotId,
-    ad_instance_id: instanceId,
-    placement: config.placement,
-    reason: "consent_pending",
-    screen: activeScreen,
-    realm: activeRealm,
-  });
-}
-
 function setSlotMessage(host, message) {
   const pending = host.querySelector(".oracle-ad-pending");
   if (pending) pending.textContent = message;
@@ -461,12 +425,16 @@ function scheduleFillCheck(host, config, instanceId, format) {
       realm: activeRealm,
     });
 
-    // Slots that opt in (e.g. the in-conversation dream reading banner) collapse
-    // when no creative arrives, so a reserved empty frame never lingers in the UI.
-    if (config.collapseIfUnfilled) {
+    // Display slots collapse when no creative arrives so a reserved empty frame
+    // never lingers in the layout (Adsterra fill rates are < 100%). Native slots
+    // manage their own container, and a slot can opt out with
+    // collapseIfUnfilled: false.
+    const shouldCollapse =
+      config.collapseIfUnfilled === true || (config.collapseIfUnfilled !== false && format === "display");
+    if (shouldCollapse) {
       markSlotCollapsed(host, config, instanceId, "unfilled");
     }
-  }, 3500);
+  }, 4500);
 }
 
 function loadDisplayAd(host, config, instanceId) {
@@ -603,13 +571,6 @@ function requestSlot(host, config) {
     markSlotCollapsed(host, config, instanceId, "device_rule");
     return;
   }
-
-  if (!hasAdConsent()) {
-    markConsentPending(host, config, instanceId);
-    return;
-  }
-
-  pendingConsentSlots.delete(host);
 
   if (!hasConfiguredAdsterraZone(config)) {
     setSlotMessage(host, `${config.adsterra.placeholderZoneId} is not configured.`);
@@ -837,88 +798,25 @@ function initMobileAnchor() {
   window.addEventListener("resize", syncMobileAnchorHeight);
 }
 
-function consentBanner() {
-  return document.getElementById("oracle-consent-banner");
-}
-
-function showConsentBanner() {
-  const banner = consentBanner();
-  if (banner) banner.hidden = false;
-}
-
-function hideConsentBanner() {
-  const banner = consentBanner();
-  if (banner) banner.hidden = true;
-}
-
-function applyConsent(consent) {
-  setStoredConsent(consent);
-  hideConsentBanner();
-  trackEvent("consent_state", {
-    state: consent.state,
-    ads: consent.ads,
-    analytics: consent.analytics,
-    source: "user_choice",
-    consent_required: ORACLE_AD_CONFIG.consentRequired,
-  });
-
-  if (consent.ads) {
-    const pending = [...pendingConsentSlots];
-    pendingConsentSlots.clear();
-    for (const host of pending) {
-      const config = slotConfigs.get(host.dataset.adSlot);
-      if (config && slotMatchesActiveContext(host, config, host.dataset.adRealm || activeRealm)) {
-        requestSlot(host, config);
-      } else {
-        pendingConsentSlots.add(host);
-      }
-    }
-    if (["realm", "result"].includes(activeScreen)) showMobileAnchor();
-    if (ambientValueDelivered) scheduleAmbientPopunder("consent_after_value");
-    scheduleSocialBar("consent_accepted");
-  } else {
-    for (const host of document.querySelectorAll("[data-ad-slot]")) {
-      const config = slotConfigs.get(host.dataset.adSlot);
-      if (config) markSlotCollapsed(host, config, slotInstanceId(host, config), "consent_rejected");
-    }
-    hideMobileAnchor();
-  }
-}
-
 function initConsent() {
-  const consent = getConsentState();
-  trackEvent("consent_state", {
-    state: consent.state,
-    ads: consent.ads,
-    analytics: consent.analytics,
-    source: consent.source,
-    consent_required: ORACLE_AD_CONFIG.consentRequired,
-  });
-
-  if (consent.state === "pending") {
-    showConsentBanner();
+  // Ads are always on. Overwrite any historical "rejected" state left in this
+  // browser from an earlier opt-out so returning visitors are monetized again.
+  const stored = getStoredConsent();
+  if (!stored || stored.state !== "accepted" || stored.ads !== true) {
+    setStoredConsent({ state: "accepted", ads: true, analytics: true });
   }
 
-  document.getElementById("consent-accept")?.addEventListener("click", () => {
-    applyConsent({ state: "accepted", ads: true, analytics: true });
-  });
-
-  document.getElementById("consent-reject")?.addEventListener("click", () => {
-    applyConsent({ state: "rejected", ads: false, analytics: true });
-  });
-
-  document.getElementById("consent-preferences")?.addEventListener("click", () => {
-    showConsentBanner();
-  });
-
-  document.getElementById("footer-cookie-preferences")?.addEventListener("click", (event) => {
-    event.preventDefault();
-    showConsentBanner();
+  trackEvent("consent_state", {
+    state: "accepted",
+    ads: true,
+    analytics: true,
+    source: "always_on",
+    consent_required: false,
   });
 }
 
 export function openCookiePreferences() {
-  showConsentBanner();
+  // No-op: there is no opt-out UI. Kept for backwards-compatible imports.
 }
 
 function runAdBlockCheck() {
