@@ -824,8 +824,10 @@
           <input type="text" id="chat-input" class="chat-text-input" placeholder="Whisper your question to Madame Fortuna..." autocomplete="off" />
           <button id="chat-send" class="btn-gold btn-chat-send" disabled>Reveal My Fortune</button>
         </div>
+        <p class="input-microcopy">Readings are reflective entertainment &mdash; please avoid sharing sensitive personal information, and don’t rely on them for medical, legal, financial, or emergency decisions.</p>
 
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-crystal-ball"></div>
     </section>
 
     <!-- ===== DREAM INTERPRETER ===== -->
@@ -902,6 +904,7 @@
           <input type="text" id="dream-input" class="chat-text-input" placeholder="Describe your dream to Morpheus..." autocomplete="off" />
           <button id="dream-send" class="btn-gold btn-chat-send">Share My Dream</button>
         </div>
+        <p class="input-microcopy">Readings are reflective entertainment &mdash; please avoid sharing sensitive personal information, and don’t rely on them for medical, legal, financial, or emergency decisions.</p>
 
         <!-- Crawlable dream-symbol dictionary (server-rendered for SEO/GAIO) -->
         <section class="dream-symbol-reference" aria-labelledby="dream-symbols-title">
@@ -968,6 +971,7 @@
         </div>
         <div class="oracle-response" data-output="western-zodiac"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-western-zodiac"></div>
     </section>
 
     <!-- ===== CHINESE ZODIAC ===== -->
@@ -995,6 +999,7 @@
         <button class="btn-gold btn-realm" id="btn-chinese">Consult Master Longwei</button>
         <div class="oracle-response" data-output="chinese-zodiac"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-chinese-zodiac"></div>
     </section>
 
     <!-- ===== TAROT ===== -->
@@ -1103,6 +1108,7 @@
           <p class="mists-seal-text">Seraphina awaits. Draw three cards above to part the mists...</p>
         </div>
         <textarea class="realm-input" id="tarot-question-input" placeholder="Formulate your question for the cards..." disabled></textarea>
+        <p class="input-microcopy">Reflective entertainment &mdash; avoid sharing sensitive personal information.</p>
         <!-- hidden inputs to hold card values -->
         <input type="hidden" id="tarot-card-input-1" value="" />
         <input type="hidden" id="tarot-card-input-2" value="" />
@@ -1110,6 +1116,7 @@
         <button class="btn-gold btn-realm" id="btn-tarot-submit" disabled>Consult Seraphina</button>
         <div class="oracle-response" data-output="tarot"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-tarot"></div>
     </section>
 
     <!-- ===== LOVE MATCH ===== -->
@@ -1339,11 +1346,13 @@
         <div class="love-option-panel" data-love-panel="oracle">
           <p class="love-tarot-subtitle">Speak freely of your heart's desires or confusions, and let Rosalind divine the answers...</p>
           <textarea class="realm-input" id="love-oracle-question" placeholder="Ask about matters of the heart..." style="margin-top: 1rem;"></textarea>
+          <p class="input-microcopy">Reflective entertainment &mdash; avoid sharing sensitive personal information.</p>
         </div>
 
         <button class="btn-gold btn-realm" id="btn-love-match">Reveal Love Compatibility</button>
         <div class="oracle-response" data-output="love-match"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-love-match"></div>
     </section>
 
     <!-- ===== MAGIC 8 BALL ===== -->
@@ -1366,9 +1375,11 @@
       ></aside>
       <div class="realm-form">
         <textarea class="realm-input" data-input="magic8" placeholder="Ask a yes or no question, then shake the ball..."></textarea>
+        <p class="input-microcopy">Just for fun &mdash; never rely on the 8 Ball for serious decisions.</p>
         <button class="btn-gold btn-realm btn-neon" data-endpoint="/api/magic8" data-body-key="question" data-source="magic8">Shake the 8-Ball</button>
         <div class="oracle-response" data-output="magic8"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-magic8"></div>
     </section>
 
     <!-- ===== NUMEROLOGY ===== -->
@@ -1419,6 +1430,7 @@
         <button class="btn-gold btn-realm" id="btn-numerology">Calculate Life Path</button>
         <div class="oracle-response" data-output="numerology"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-numerology"></div>
     </section>
 
     <!-- ===== DAILY FORTUNE ===== -->
@@ -1451,6 +1463,7 @@
         <button class="btn-gold btn-realm" id="btn-daily">Reveal Today's Fortune</button>
         <div class="oracle-response" data-output="daily-fortune"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-daily-fortune"></div>
     </section>
 
     <!-- ===== PERSONAS ===== -->
@@ -1528,6 +1541,7 @@
           <p class="persona-desc">The Dream-Walker who drifts the corridors between waking and sleep, reading the symbols the dreaming mind leaves behind.</p>
         </div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-personas"></div>
     </section>
 
     <!-- ===== ARCHIVE ===== -->
@@ -1549,6 +1563,7 @@
         data-ad-realm="archive"
         aria-label="Advertisement"
       ></aside>
+      <div class="realm-seo-slot" data-seo-slot="page-archive"></div>
     </section>
 
     <aside
@@ -1570,14 +1585,37 @@
       <div class="legal-panel">
         <button class="btn-back" data-back>&#8592; Return to Realms</button>
         <h2>Privacy Policy</h2>
+        <h3>What stays on your device</h3>
         <p>
-          Oracle Mirror stores saved readings in your browser only. The site is free and ad-supported, so it uses
-          analytics events and advertising partners to measure page views, realm activity, ad requests, and ad
-          viewability.
+          Oracle Mirror stores saved readings in your browser only. Your reading Archive lives in local storage on
+          your device &mdash; it is never uploaded to a server, never tied to an account, and you can clear it at any
+          time from the Archive page or by clearing this site's browsing data.
         </p>
+        <h3>What is sent to our servers</h3>
         <p>
-          Reading requests are sent to Oracle Mirror API endpoints so the selected oracle can generate a response.
-          Avoid submitting sensitive personal information in questions.
+          When you request a reading, the text and selections you enter (your question, birth date, dream
+          description, or names for a love reading) are sent to Oracle Mirror API endpoints so the selected oracle
+          can generate a response. Requests are processed to produce your reading and are not used to build a
+          profile of you.
+        </p>
+        <h3>What not to submit</h3>
+        <p>
+          Avoid submitting sensitive personal information in questions &mdash; addresses, financial details, health
+          information, or anything you would not want processed by an automated service. First names and general
+          situations are all the oracles need.
+        </p>
+        <h3>Analytics and advertising</h3>
+        <p>
+          The site is free and ad-supported, so it uses analytics events and advertising partners to measure page
+          views, realm activity, ad requests, and ad viewability. Advertising partners may use cookies or similar
+          technologies to serve and measure ads &mdash; see the <a href="/cookie-policy" data-nav="cookie-policy">Cookie
+          Policy</a> for details.
+        </p>
+        <h3>Entertainment only</h3>
+        <p>
+          All readings are generated for entertainment, reflection, and personal insight. They are not medical,
+          legal, financial, psychological, or professional advice. Questions about privacy can be sent via the
+          <a href="/contact" data-nav="contact">Contact</a> page.
         </p>
       </div>
     </section>
@@ -1586,10 +1624,27 @@
       <div class="legal-panel">
         <button class="btn-back" data-back>&#8592; Return to Realms</button>
         <h2>Cookie Policy</h2>
+        <h3>Essential storage</h3>
         <p>
-          Essential browser storage keeps local reading history and session preferences. Oracle Mirror is a free,
-          ad-supported service: advertising cookies and third-party ad scripts load automatically so the readings can
-          stay free for everyone.
+          Essential browser storage keeps local reading history and session preferences. This storage stays on your
+          device and can be cleared at any time through your browser settings.
+        </p>
+        <h3>Analytics</h3>
+        <p>
+          Analytics events measure page views, realm activity, and feature usage so the site can be improved. They
+          are used in aggregate, not to identify you personally.
+        </p>
+        <h3>Advertising</h3>
+        <p>
+          Oracle Mirror is a free, ad-supported service: advertising cookies and third-party ad scripts load
+          automatically so the readings can stay free for everyone. Ad partners may set cookies to serve, cap, and
+          measure advertisements.
+        </p>
+        <h3>Your choices</h3>
+        <p>
+          You can block or delete cookies through your browser settings at any time; most browsers also offer
+          private browsing modes that discard cookies after each session. Clearing site data will also remove your
+          locally saved reading Archive.
         </p>
       </div>
     </section>
@@ -1599,8 +1654,17 @@
         <button class="btn-back" data-back>&#8592; Return to Realms</button>
         <h2>Contact</h2>
         <p>
-          Questions about Oracle Mirror, privacy, cookies, or advertising can be sent to the site owner through the
-          contact channel configured for oraclemirror.com.
+          Questions about Oracle Mirror can be sent to the site owner through the contact channel configured for
+          oraclemirror.com. We welcome messages about:
+        </p>
+        <ul class="legal-list">
+          <li><strong>Privacy</strong> &mdash; how your data is handled, or questions about local storage.</li>
+          <li><strong>Advertising</strong> &mdash; questions about ad partners or reporting a problematic advertisement.</li>
+          <li><strong>Content &amp; corrections</strong> &mdash; errors, broken readings, or suggestions for the realms.</li>
+          <li><strong>Abuse &amp; safety</strong> &mdash; reporting misuse of the site or content that concerns you.</li>
+        </ul>
+        <p>
+          Oracle Mirror is an entertainment experience; its readings are not professional advice of any kind.
         </p>
       </div>
     </section>
@@ -1690,6 +1754,7 @@
         <button class="btn-gold btn-realm" id="btn-birthchart">Generate Birth Chart prophecy</button>
         <div class="oracle-response" data-output="birthchart"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-birthchart"></div>
     </section>
 
     <!-- ===== PALMISTRY ===== -->
@@ -1780,6 +1845,7 @@
         <button class="btn-gold btn-realm" id="btn-palmistry">Consult Cassandra</button>
         <div class="oracle-response" data-output="palmistry"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-palmistry"></div>
     </section>
 
     <!-- ===== I CHING ===== -->
@@ -1850,12 +1916,14 @@
           <p class="mists-seal-text">Coins must be cast. Toss coins 6 times above to unlock...</p>
         </div>
         <textarea class="realm-input" id="iching-question-input" placeholder="What dilemma does your spirit seek guidance on?" disabled></textarea>
+        <p class="input-microcopy">Reflective entertainment &mdash; avoid sharing sensitive personal information.</p>
         <!-- hidden hexagram title and lines -->
         <input type="hidden" id="iching-hexagram-title" value="" />
         <input type="hidden" id="iching-hexagram-lines" value="" />
         <button class="btn-gold btn-realm" id="btn-iching-submit" disabled>Consult Sage Lao-Tan</button>
         <div class="oracle-response" data-output="iching"></div>
       </div>
+      <div class="realm-seo-slot" data-seo-slot="page-iching"></div>
     </section>
 
     <!-- ===== ORACLE OF OLYMPUS (Mystical Sports Predictions) ===== -->
@@ -1984,6 +2052,8 @@
         <a href="/birth-chart" data-nav="birthchart">Birth Chart</a>
         <a href="/palm-reading" data-nav="palmistry">Palm Reading</a>
         <a href="/iching-oracle" data-nav="iching">I Ching Oracle</a>
+        <a href="/dream-interpreter" data-nav="dream-interpreter">Dream Interpretation</a>
+        <a href="/dreams">Dream Symbols &amp; Meanings</a>
         <a href="/oracle-of-olympus" data-nav="olympus">World Cup 2026 Predictions</a>
         <a href="/mystics" data-nav="personas">Meet the Mystics</a>
       </nav>
@@ -1999,6 +2069,12 @@
         <a href="/cookie-policy" data-nav="cookie-policy">Cookie Policy</a>
         <a href="/contact" data-nav="contact">Contact</a>
       </div>
+      <p class="footer-disclaimer">
+        Oracle Mirror offers readings for entertainment, reflection, and personal insight only. Readings are not
+        medical, legal, financial, psychological, or professional advice, and no reading predicts real events.
+        Please avoid submitting sensitive personal information. For serious personal, health, safety, legal, or
+        financial concerns, consult a qualified professional.
+      </p>
       <p class="footer-copy">&copy; 2026 Oracle Mirror. This site is for entertainment purposes only.</p>
     </footer>
 

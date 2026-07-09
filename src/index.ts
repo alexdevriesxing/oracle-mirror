@@ -7,6 +7,8 @@ import {
   buildDreamGrounding,
   dreamQuestionHints,
 } from "./dream-data.ts";
+import { REALM_SEO_CONTENT, realmFaqJsonLd, realmSeoHtml } from "./realm-content.ts";
+import { renderDreamHubPage, renderDreamSymbolPage, dreamSymbolSlugs, dreamGuidePath } from "./dream-pages.ts";
 
 export { deriveMatchStatus } from "./olympus-data.ts";
 export type { MatchData, MatchStatus, Probabilities } from "./olympus-data.ts";
@@ -543,16 +545,17 @@ function ssrDreamSymbolsHtml(): string {
     (s) => `<div class="dream-symbol-entry">
         <span class="dream-symbol-icon" aria-hidden="true">${DREAM_SYMBOL_ICONS[s.symbol] ?? "\u{1F319}"}</span>
         <div class="dream-symbol-text">
-          <h3>${escapeHtml(s.title)}</h3>
+          <h3><a href="${dreamGuidePath(s.symbol)}" class="dream-symbol-link">${escapeHtml(s.title)}</a></h3>
           <p>${escapeHtml(s.meaning)}</p>
         </div>
       </div>`
   ).join("\n      ");
   return `<h2>Common Dream Symbols and Their Meanings</h2>
-      <p class="dream-symbol-intro">The Dream-Walker reads from the time-worn language of dream symbolism. Here are some of the most common dream symbols and what they often mean.</p>
+      <p class="dream-symbol-intro">The Dream-Walker reads from the time-worn language of dream symbolism. Here are some of the most common dream symbols and what they often mean. Each symbol links to a full guide with Jungian, Freudian, emotional, and folklore meanings.</p>
       <div class="dream-symbol-grid">
       ${items}
-      </div>`;
+      </div>
+      <p class="dream-symbol-hub-link"><a href="/dreams">Browse the full dream symbol dictionary &rarr;</a></p>`;
 }
 
 function escapeHtml(value: string): string {
@@ -583,12 +586,54 @@ function breadcrumbJsonLd(pathname: string): string {
   return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
 }
 
+// Mirrors the visible "Choose Your Realm" cards on the homepage so answer
+// engines can enumerate every reading Oracle Mirror offers. Keep in sync with
+// the card grid in index.html.
+const HOME_REALM_CARDS: ReadonlyArray<[route: string, name: string]> = [
+  ["/crystal-ball", "Madame Fortuna's Crystal Ball"],
+  ["/western-zodiac", "Western Zodiac Daily Horoscope"],
+  ["/chinese-zodiac", "Chinese Zodiac Reading"],
+  ["/tarot", "Tarot Reading"],
+  ["/magic-8-ball", "Magic 8 Ball"],
+  ["/numerology", "Numerology Life Path Calculator"],
+  ["/daily-fortune", "Daily Fortune"],
+  ["/mystics", "Meet the Mystics"],
+  ["/archive", "Reading Archive"],
+  ["/love-match", "Love Compatibility — The Temple of Love"],
+  ["/oracle-of-olympus", "World Cup 2026 Predictions"],
+  ["/birth-chart", "Birth Chart Reading"],
+  ["/palm-reading", "Palm Reading"],
+  ["/iching-oracle", "I Ching Oracle"],
+  ["/dream-interpreter", "Dream Interpreter"],
+];
+
+function homeRealmsItemListJsonLd(): string {
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Oracle Mirror Reading Realms",
+    itemListElement: HOME_REALM_CARDS.map(([route, name], index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name,
+      url: canonicalUrl(route),
+    })),
+  };
+  return `<script type="application/ld+json">${JSON.stringify(itemList)}</script>`;
+}
+
+// Routes whose WebPage node warrants a more specific schema.org type.
+const WEB_PAGE_TYPE_BY_ROUTE: Record<string, string> = {
+  "/contact": "ContactPage",
+  "/mystics": "AboutPage",
+};
+
 function webPageJsonLd(pathname: string, meta: AppRouteMeta): string {
   if (meta.noindex) return "";
   const path = normalizePath(pathname);
   const webPage = {
     "@context": "https://schema.org",
-    "@type": "WebPage",
+    "@type": WEB_PAGE_TYPE_BY_ROUTE[path] ?? "WebPage",
     "@id": `${canonicalUrl(path)}#webpage`,
     url: canonicalUrl(path),
     name: meta.title,
@@ -700,6 +745,27 @@ async function serveAppShell(
     html = activateLoveOraclePanel(html);
   }
 
+  // Route-specific realm content: swap the home FAQPage for the realm's own
+  // FAQ (one FAQPage per URL) and fill the realm's empty .realm-seo-slot with
+  // its visible FAQ, related-realm links, and entertainment disclaimer.
+  const realmSeo = REALM_SEO_CONTENT[normalized];
+  if (realmSeo) {
+    html = html.replace(staticFaqPageRe, "");
+    if (html.includes("</head>")) {
+      html = html.replace("</head>", `${realmFaqJsonLd(realmSeo)}\n  </head>`);
+    }
+    html = html.replace(
+      `<div class="realm-seo-slot" data-seo-slot="${realmSeo.pageSectionId}"></div>`,
+      `<div class="realm-seo-slot" data-seo-slot="${realmSeo.pageSectionId}">${realmSeoHtml(realmSeo)}</div>`
+    );
+  }
+
+  // The homepage is the all-realms landing page: give it an ItemList of the
+  // visible realm cards so answer engines can enumerate the site's readings.
+  if (normalized === "/" && html.includes("</head>")) {
+    html = html.replace("</head>", `${homeRealmsItemListJsonLd()}\n  </head>`);
+  }
+
   if (isDreamRealm) {
     // Swap the home FAQ for the dream FAQ (one FAQPage per URL), pre-activate the
     // dream section for no-JS crawlers, and inject the crawlable symbol dictionary.
@@ -773,10 +839,11 @@ async function serveAppShell(
   });
 }
 
-const SITEMAP_LASTMOD = "2026-06-30";
+const SITEMAP_LASTMOD = "2026-07-09";
 
 function sitemapResponse(): Response {
   const routes = Object.entries(APP_ROUTES).filter(([route, meta]) => !meta.noindex && route !== "/ad-debug");
+  const dreamGuideRoutes = ["/dreams", ...dreamSymbolSlugs().map((slug) => `/dreams/${slug}`)];
   const urls = routes
     .map(
       ([route]) => `  <url>
@@ -785,6 +852,16 @@ function sitemapResponse(): Response {
     <changefreq>${route === "/" || route === "/daily-fortune" ? "daily" : "weekly"}</changefreq>
     <priority>${route === "/" ? "1.0" : "0.8"}</priority>
   </url>`
+    )
+    .concat(
+      dreamGuideRoutes.map(
+        (route) => `  <url>
+    <loc>${canonicalUrl(route)}</loc>
+    <lastmod>${SITEMAP_LASTMOD}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`
+      )
     )
     .concat(
       WC2026_GROUP_FIXTURES.map(
@@ -852,6 +929,15 @@ Sitemap: ${CANONICAL_HOST}/sitemap.xml
   });
 }
 
+function guidePageResponse(html: string): Response {
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=UTF-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+
 function adsTxtResponse(env: Env): Response {
   const adsTxt = env.ADSTERRA_ADS_TXT?.trim();
   if (!adsTxt) {
@@ -901,6 +987,7 @@ function llmsTxtResponse(matches: Record<string, MatchData>): Response {
 
 - [Crystal Ball Reading](https://oraclemirror.com/crystal-ball): Ask Madame Fortuna any question and receive a poetic, personalized prophecy. A 7-step alignment ritual (life area, time horizon, mood, birth element, omen, moon phase, tarot sigil) shapes the reading.
 - [Dream Interpretation](https://oraclemirror.com/dream-interpreter): Describe a dream to Morpheus Vey, the Dream-Walker. He asks two short clarifying questions, then interprets the dream using Jungian, Freudian, emotional, and cross-cultural symbolism. Free, conversational, no sign-up.
+- [Dream Symbols & Meanings](https://oraclemirror.com/dreams): A free dream dictionary with a dedicated guide page per common symbol (falling, flying, teeth falling out, being chased, water, death, snakes, baby, house, exams, being lost, fire, birds, money, being naked) covering Jungian, Freudian, emotional, and folklore meanings plus reflection questions.
 - [Daily Horoscope](https://oraclemirror.com/western-zodiac): Pick one of the 12 zodiac signs for a horoscope covering love, career, health, and a lucky number.
 - [Chinese Zodiac](https://oraclemirror.com/chinese-zodiac): Enter a birth year to find the matching zodiac animal and receive a fortune on personality, destiny, and compatibility.
 - [Tarot Reading](https://oraclemirror.com/tarot): Draw a free 3-card Past-Present-Future spread from the 22 Major Arcana with an interpretation woven around your question.
@@ -1963,6 +2050,17 @@ export default {
       const match = stored.matches[matchId];
       if (match) {
         return serveAppShell(request, env, url.pathname, olympusMatchMeta(match), match, stored.matches);
+      }
+    }
+
+    // Server-rendered dream symbol guide pages (standalone HTML, not the shell).
+    if (normalizedPath === "/dreams") {
+      return guidePageResponse(renderDreamHubPage());
+    }
+    if (normalizedPath.startsWith("/dreams/")) {
+      const page = renderDreamSymbolPage(normalizedPath.substring("/dreams/".length));
+      if (page) {
+        return guidePageResponse(page);
       }
     }
 
