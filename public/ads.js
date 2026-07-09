@@ -20,6 +20,10 @@ let ambientValueDelivered = false;
 let ambientPopunderTimer = null;
 let socialBarLoaded = false;
 
+const CREATIVE_DETECTION_DELAY_MS = ORACLE_AD_CONFIG.creativeDetectionDelayMs || 10000;
+const SCRIPT_RETRY_MAX_ATTEMPTS = Math.max(1, ORACLE_AD_CONFIG.scriptRetry?.maxAttempts || 1);
+const SCRIPT_RETRY_DELAY_MS = ORACLE_AD_CONFIG.scriptRetry?.delayMs || 1500;
+
 const AD_DEBUG_COUNTERS = [
   "registered",
   "requested",
@@ -434,10 +438,10 @@ function scheduleFillCheck(host, config, instanceId, format) {
     if (shouldCollapse) {
       markSlotCollapsed(host, config, instanceId, "unfilled");
     }
-  }, 4500);
+  }, CREATIVE_DETECTION_DELAY_MS);
 }
 
-function loadDisplayAd(host, config, instanceId) {
+function loadDisplayAd(host, config, instanceId, attempt = 1) {
   const mount = host.querySelector("[data-ad-mount]");
   const display = config.adsterra.display;
   if (!mount || !display) return Promise.resolve();
@@ -445,7 +449,9 @@ function loadDisplayAd(host, config, instanceId) {
   return new Promise((resolve) => {
     mount.innerHTML = "";
     const script = document.createElement("script");
+    script.type = "text/javascript";
     script.async = true;
+    script.dataset.cfasync = "false";
     script.src = config.adsterra.scriptUrl;
     let settled = false;
     const watchdog = window.setTimeout(() => {
@@ -471,6 +477,21 @@ function loadDisplayAd(host, config, instanceId) {
       if (settled) return;
       settled = true;
       window.clearTimeout(watchdog);
+      if (attempt < SCRIPT_RETRY_MAX_ATTEMPTS) {
+        trackEvent("ad_script_retry", {
+          slot_id: config.slotId,
+          ad_instance_id: instanceId,
+          placement: config.placement,
+          zone_id: config.adsterra.zoneId,
+          error_reason: errorReason,
+          attempt,
+          next_attempt: attempt + 1,
+        });
+        window.setTimeout(() => {
+          loadDisplayAd(host, config, instanceId, attempt + 1).then(resolve);
+        }, SCRIPT_RETRY_DELAY_MS);
+        return;
+      }
       host.classList.remove("oracle-ad-loading");
       host.classList.add("oracle-ad-error");
       setSlotMessage(host, "Sponsor message unavailable.");
@@ -498,7 +519,7 @@ function loadDisplayAd(host, config, instanceId) {
   });
 }
 
-function loadNativeAd(host, config, instanceId) {
+function loadNativeAd(host, config, instanceId, attempt = 1) {
   const mount = host.querySelector("[data-ad-mount]");
   if (!mount) return;
 
@@ -513,6 +534,7 @@ function loadNativeAd(host, config, instanceId) {
   mount.appendChild(container);
 
   const script = document.createElement("script");
+  script.type = "text/javascript";
   script.async = true;
   script.dataset.cfasync = "false";
   script.src = config.adsterra.scriptUrl;
@@ -539,6 +561,21 @@ function loadNativeAd(host, config, instanceId) {
     if (settled) return;
     settled = true;
     window.clearTimeout(watchdog);
+    if (attempt < SCRIPT_RETRY_MAX_ATTEMPTS) {
+      trackEvent("ad_script_retry", {
+        slot_id: config.slotId,
+        ad_instance_id: instanceId,
+        placement: config.placement,
+        zone_id: config.adsterra.zoneId,
+        error_reason: errorReason,
+        attempt,
+        next_attempt: attempt + 1,
+      });
+      window.setTimeout(() => {
+        loadNativeAd(host, config, instanceId, attempt + 1);
+      }, SCRIPT_RETRY_DELAY_MS);
+      return;
+    }
     host.classList.remove("oracle-ad-loading");
     host.classList.add("oracle-ad-error");
     setSlotMessage(host, "Sponsor message unavailable.");

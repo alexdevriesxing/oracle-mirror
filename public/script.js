@@ -242,6 +242,13 @@ const RESULT_ROUTE_BY_REALM = {
 
 const PAGE_BY_ROUTE = new Map(Object.entries(ROUTE_BY_PAGE).map(([page, path]) => [path, page]));
 const PAGE_BY_RESULT_ROUTE = new Map(Object.entries(RESULT_ROUTE_BY_REALM).map(([page, path]) => [path, page]));
+const ROUTE_STATE_BY_PATH = {
+  "/love-oracle": { pageId: "love-match", lovePanel: "oracle" },
+};
+const RESULT_ROUTE_STATE_BY_PATH = {
+  "/result/love-oracle": { pageId: "love-match", lovePanel: "oracle", resultKind: "love-oracle" },
+  "/result/soulmate-vision": { pageId: "love-match", lovePanel: "vision", resultKind: "soulmate-vision" },
+};
 const REALM_PAGES = new Set([
   "crystal-ball",
   "dream-interpreter",
@@ -346,14 +353,35 @@ const SCREEN_META = {
   },
 };
 
+const ROUTE_META_BY_PATH = {
+  "/love-oracle": {
+    title: "Love Oracle - Free Relationship & Romance Reading | Oracle Mirror",
+    description: "Ask Rosalind the Love Oracle a free question about romance, soulmates, compatibility, or relationship timing inside Oracle Mirror.",
+  },
+  "/result/love-oracle": {
+    title: "Love Oracle Result | Oracle Mirror",
+    description: "Read your completed Oracle Mirror love oracle result from Rosalind.",
+  },
+  "/result/soulmate-vision": {
+    title: "Soulmate Vision Result | Oracle Mirror",
+    description: "View the AI-generated portrait and destined location of your cosmic soulmate.",
+  },
+};
+
 function canonicalUrl(path) {
   return `https://oraclemirror.com${path === "/" ? "/" : path}`;
 }
 
 function getRouteState(pathname = window.location.pathname) {
   const normalized = pathname.length > 1 ? pathname.replace(/\/$/, "") : "/";
+  if (RESULT_ROUTE_STATE_BY_PATH[normalized]) {
+    return { ...RESULT_ROUTE_STATE_BY_PATH[normalized], isResult: true, path: normalized };
+  }
   if (PAGE_BY_RESULT_ROUTE.has(normalized)) {
     return { pageId: PAGE_BY_RESULT_ROUTE.get(normalized), isResult: true, path: normalized };
+  }
+  if (ROUTE_STATE_BY_PATH[normalized]) {
+    return { ...ROUTE_STATE_BY_PATH[normalized], isResult: false, path: normalized };
   }
   if (normalized.startsWith("/oracle-of-olympus")) {
     const matchId = normalized.substring("/oracle-of-olympus".length + 1);
@@ -366,11 +394,17 @@ function getRouteState(pathname = window.location.pathname) {
   };
 }
 
-function updateDocumentMeta(pageId, isResult = false) {
-  const routePath = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
-  const baseMeta = SCREEN_META[pageId] || SCREEN_META.home;
-  const title = isResult ? `Your ${baseMeta.title.replace(" | Oracle Mirror", "")} Result | Oracle Mirror` : baseMeta.title;
-  const description = isResult
+function updateDocumentMeta(pageId, isResult = false, routePathOverride = null) {
+  const routePath = routePathOverride || (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/");
+  const baseMeta = ROUTE_META_BY_PATH[routePath] || SCREEN_META[pageId] || SCREEN_META.home;
+  const title = ROUTE_META_BY_PATH[routePath]
+    ? baseMeta.title
+    : isResult
+    ? `Your ${baseMeta.title.replace(" | Oracle Mirror", "")} Result | Oracle Mirror`
+    : baseMeta.title;
+  const description = ROUTE_META_BY_PATH[routePath]
+    ? baseMeta.description
+    : isResult
     ? `Read your completed Oracle Mirror result for this ${baseMeta.title.split("|")[0].trim().toLowerCase()} session.`
     : baseMeta.description;
   const url = canonicalUrl(routePath);
@@ -385,13 +419,13 @@ function updateDocumentMeta(pageId, isResult = false) {
   document.querySelector('meta[name="twitter:description"]')?.setAttribute("content", description);
 }
 
-function trackVirtualPage(pageId, isResult = false) {
-  const path = isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/";
+function trackVirtualPage(pageId, isResult = false, routePathOverride = null, resultKind = null) {
+  const path = routePathOverride || (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/");
   trackEvent("virtual_page_view", {
     page_path: path,
     page_title: document.title,
-    screen: isResult ? `result/${pageId}` : pageId,
-    realm: pageId,
+    screen: isResult ? `result/${resultKind || pageId}` : pageId,
+    realm: resultKind || pageId,
   });
 }
 
@@ -417,14 +451,15 @@ function showPage(pageId, options = {}) {
     if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const routePath = options.matchId 
-    ? `/oracle-of-olympus/${options.matchId}` 
-    : (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/");
+  const routePath = options.routePath
+    || (options.matchId
+      ? `/oracle-of-olympus/${options.matchId}`
+      : (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/"));
   if (push && routePath && window.location.pathname !== routePath) {
     history.pushState({ pageId, isResult, matchId: options.matchId }, "", routePath);
   }
 
-  updateDocumentMeta(pageId, isResult);
+  updateDocumentMeta(pageId, isResult, routePath);
 
   if (pageId === "olympus" && options.matchId) {
     const match = OLYMPUS_MATCHES_JS[options.matchId];
@@ -438,6 +473,10 @@ function showPage(pageId, options = {}) {
     showMatchList();
   }
 
+  if (pageId === "love-match" && options.lovePanel) {
+    setLoveMatchPanel(options.lovePanel, { emitTracking: false });
+  }
+
   for (const link of document.querySelectorAll(".nav-link[data-nav]")) {
     link.classList.toggle("active", link.dataset.nav === pageId || (pageId === "love" && link.dataset.nav === "love"));
   }
@@ -447,7 +486,7 @@ function showPage(pageId, options = {}) {
   activateSlotsForScreen(adScreenForPage(pageId, isResult), pageId);
 
   if (emitTracking) {
-    trackVirtualPage(pageId, isResult);
+    trackVirtualPage(pageId, isResult, routePath, options.resultKind);
     if (REALM_PAGES.has(pageId) && !isResult) {
       trackEvent("realm_open", { realm: pageId, page_path: routePath });
     }
@@ -489,7 +528,15 @@ hamburger?.addEventListener("click", () => {
 
 window.addEventListener("popstate", () => {
   const route = getRouteState();
-  showPage(route.pageId, { push: false, isResult: route.isResult, scroll: false, matchId: route.matchId });
+  showPage(route.pageId, {
+    push: false,
+    isResult: route.isResult,
+    scroll: false,
+    matchId: route.matchId,
+    routePath: route.path,
+    lovePanel: route.lovePanel,
+    resultKind: route.resultKind,
+  });
   if (route.pageId === "olympus") {
     if (route.matchId) {
       showMatchDetail(route.matchId);
@@ -706,6 +753,40 @@ function markResultRendered(realm, answer) {
     activateAdSlot("oracle-dream-result-slot", { realm });
     scrollDreamToBottom();
     return;
+  }
+
+  if (output) {
+    clearResultAftercare(realm);
+    const adSlot = createResultAdSlot(realm);
+    adSlot.classList.add("result-aftercare");
+    output.insertAdjacentElement("afterend", adSlot);
+    addResultActions(realm, adSlot);
+    registerAdSlots(adSlot);
+    activateSlotsForScreen("result", realm);
+  }
+}
+
+function displayResult(realm, html, resultPath, resultKind = realm) {
+  const output = document.querySelector(`[data-output="${realm}"]`);
+  setOutputHTML(realm, html);
+  const answerLength = typeof html === "string" ? html.replace(/<[^>]*>/g, " ").trim().length : 0;
+
+  trackEvent("result_rendered", {
+    realm: resultKind,
+    parent_realm: realm,
+    answer_length: answerLength,
+    page_path: resultPath,
+  });
+  scheduleAmbientPopunder("result_rendered");
+
+  if (resultPath) {
+    if (window.location.pathname !== resultPath) {
+      history.pushState({ pageId: realm, isResult: true, resultKind }, "", resultPath);
+    } else {
+      history.replaceState({ pageId: realm, isResult: true, resultKind }, "", resultPath);
+    }
+    updateDocumentMeta(realm, true, resultPath);
+    trackVirtualPage(realm, true, resultPath, resultKind);
   }
 
   if (output) {
@@ -1619,18 +1700,24 @@ let activeLoveMatchPanel = "zodiac";
 
 // --- Love Match Sub-Tab Navigation ---
 const loveMatchTypeSelector = document.getElementById("love-match-type-selector");
+function setLoveMatchPanel(panelName, { emitTracking = true } = {}) {
+  activeLoveMatchPanel = panelName;
+  if (loveMatchTypeSelector) {
+    loveMatchTypeSelector.value = panelName;
+  }
+
+  for (const panel of document.querySelectorAll(".love-option-panel")) {
+    panel.classList.toggle("active", panel.dataset.lovePanel === panelName);
+  }
+
+  if (emitTracking) {
+    trackEvent("love_match_tab_switch", { tab: activeLoveMatchPanel });
+  }
+}
+
 if (loveMatchTypeSelector) {
   loveMatchTypeSelector.addEventListener("change", (e) => {
-    activeLoveMatchPanel = e.target.value;
-
-    for (const panel of document.querySelectorAll(".love-option-panel")) {
-      panel.classList.remove("active");
-    }
-    const targetPanel = document.querySelector(`[data-love-panel="${activeLoveMatchPanel}"]`);
-    if (targetPanel) {
-      targetPanel.classList.add("active");
-    }
-    trackEvent("love_match_tab_switch", { tab: activeLoveMatchPanel });
+    setLoveMatchPanel(e.target.value);
   });
 }
 
@@ -1753,7 +1840,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
         </div>
       `;
       
-      displayResult("love-match", resultHtml, "/result/soulmate-vision");
+      displayResult("love-match", resultHtml, "/result/soulmate-vision", "soulmate-vision");
       btn.disabled = false;
       setReadingState(false);
       scheduleAmbientPopunder("vision_delivered");
@@ -1786,7 +1873,7 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
       if (name2) body.name2 = name2;
       const data = await callAPI("/api/love", body);
       const answer = extractResponse(data);
-      displayResult("love-match", formatResponse(answer), "/result/love-oracle");
+      displayResult("love-match", formatResponse(answer), "/result/love-oracle", "love-oracle");
       const label = name1 && name2 ? `${name1} & ${name2}: ${question}` : question;
       saveToArchive("love", label, answer);
       scheduleAmbientPopunder("oracle_delivered");
@@ -2426,6 +2513,9 @@ showPage(initialRoute.pageId, {
   scroll: false,
   emitTracking: false,
   matchId: initialRoute.matchId,
+  routePath: initialRoute.path,
+  lovePanel: initialRoute.lovePanel,
+  resultKind: initialRoute.resultKind,
 });
 
 if (initialRoute.pageId === "olympus") {
@@ -2440,14 +2530,14 @@ trackEvent("page_view", {
   page_path: window.location.pathname,
   page_title: document.title,
   screen: initialRoute.isResult ? `result/${initialRoute.pageId}` : initialRoute.pageId,
-  realm: initialRoute.pageId,
+  realm: initialRoute.resultKind || initialRoute.pageId,
 });
-trackVirtualPage(initialRoute.pageId, initialRoute.isResult);
+trackVirtualPage(initialRoute.pageId, initialRoute.isResult, initialRoute.path, initialRoute.resultKind);
 
 if (REALM_PAGES.has(initialRoute.pageId) && !initialRoute.isResult) {
   trackEvent("realm_open", {
     realm: initialRoute.pageId,
-    page_path: ROUTE_BY_PAGE[initialRoute.pageId],
+    page_path: initialRoute.path || ROUTE_BY_PAGE[initialRoute.pageId],
   });
 }
 

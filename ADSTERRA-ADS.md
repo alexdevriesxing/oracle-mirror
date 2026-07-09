@@ -8,10 +8,28 @@
 - Scripts are requested asynchronously after the slot becomes eligible.
 - Below-the-fold placements use IntersectionObserver lazy loading.
 - Result placements are created only after the reading/result is visible.
+- Transient third-party script failures retry once before the slot collapses.
+- Loaded display/native scripts get a longer creative-detection window before the slot is marked unfilled.
 - Site-level consent gating is configurable through `AD_CONSENT_REQUIRED`; the production default is contextual ad eligibility without a pending-consent block.
 - An explicit local "Reject Ads" preference still opts the browser out of third-party ad scripts.
 - Placeholder zones beginning with `TODO_ADSTERRA...` reserve space and log telemetry without throwing console errors.
 - `/ad-debug` and `window.oracleAdDebug.printSummary()` expose registered, requested, loaded, filled, blocked, consent, placeholder, script error, adblock, device, and lazy-loading counts.
+
+## ads.txt
+
+The Worker serves `/ads.txt` from the `ADSTERRA_ADS_TXT` environment variable. The live site should not use a placeholder here; paste the exact seller line(s) Adsterra provides in the publisher dashboard.
+
+Example deployment command:
+
+```bash
+wrangler secret put ADSTERRA_ADS_TXT
+```
+
+After deployment, verify:
+
+```bash
+curl https://oraclemirror.com/ads.txt
+```
 
 ## Active Slot Map
 

@@ -23,6 +23,7 @@ export interface Env {
   FOOTBALL_DATA_API_KEY?: string;
   ORACLE_ALLOWED_ORIGIN?: string;
   ORACLE_CACHE_TTL_SECONDS?: string;
+  ADSTERRA_ADS_TXT?: string;
 }
 
 const FALLBACK_FORTUNES = [
@@ -64,6 +65,53 @@ const BREADCRUMB_NAMES: Record<string, string> = {
   "/palm-reading": "Palm Reading",
   "/iching-oracle": "I Ching Oracle",
   "/oracle-of-olympus": "World Cup 2026 Predictions",
+};
+
+const PAGE_ID_BY_ROUTE: Record<string, string> = {
+  "/": "home",
+  "/crystal-ball": "crystal-ball",
+  "/dream-interpreter": "dream-interpreter",
+  "/western-zodiac": "western-zodiac",
+  "/chinese-zodiac": "chinese-zodiac",
+  "/tarot": "tarot",
+  "/love-oracle": "love-match",
+  "/magic-8-ball": "magic8",
+  "/numerology": "numerology",
+  "/daily-fortune": "daily-fortune",
+  "/mystics": "personas",
+  "/archive": "archive",
+  "/ad-debug": "ad-debug",
+  "/privacy-policy": "privacy-policy",
+  "/cookie-policy": "cookie-policy",
+  "/contact": "contact",
+  "/love-match": "love-match",
+  "/oracle-of-olympus": "olympus",
+  "/birth-chart": "birthchart",
+  "/palm-reading": "palmistry",
+  "/iching-oracle": "iching",
+};
+
+const PAGE_SECTION_ID_BY_PAGE: Record<string, string> = {
+  home: "page-home",
+  "crystal-ball": "page-crystal-ball",
+  "dream-interpreter": "page-dream-interpreter",
+  "western-zodiac": "page-western-zodiac",
+  "chinese-zodiac": "page-chinese-zodiac",
+  tarot: "page-tarot",
+  "love-match": "page-love-match",
+  magic8: "page-magic8",
+  numerology: "page-numerology",
+  "daily-fortune": "page-daily-fortune",
+  personas: "page-personas",
+  archive: "page-archive",
+  "ad-debug": "page-ad-debug",
+  "privacy-policy": "page-privacy-policy",
+  "cookie-policy": "page-cookie-policy",
+  contact: "page-contact",
+  birthchart: "page-birthchart",
+  palmistry: "page-palmistry",
+  iching: "page-iching",
+  olympus: "page-olympus",
 };
 
 const APP_ROUTES: Record<string, AppRouteMeta> = {
@@ -245,6 +293,31 @@ function routeMeta(pathname: string): AppRouteMeta | undefined {
   if (RESULT_ROUTES[path]) return { ...RESULT_ROUTES[path], noindex: true };
 
   return undefined;
+}
+
+function pageIdForPath(pathname: string): string | undefined {
+  const path = normalizePath(pathname);
+  if (PAGE_ID_BY_ROUTE[path]) return PAGE_ID_BY_ROUTE[path];
+  if (path === "/result/love-oracle" || path === "/result/soulmate-vision") return "love-match";
+
+  const resultRoute = Object.entries(RESULT_ROUTES).find(([route]) => route === path);
+  if (!resultRoute) return undefined;
+  const resultSlug = path.substring("/result/".length);
+  const resultPageIdBySlug: Record<string, string> = {
+    "crystal-ball": "crystal-ball",
+    "dream-interpreter": "dream-interpreter",
+    "western-zodiac": "western-zodiac",
+    "chinese-zodiac": "chinese-zodiac",
+    tarot: "tarot",
+    "magic-8-ball": "magic8",
+    numerology: "numerology",
+    "daily-fortune": "daily-fortune",
+    "love-match": "love-match",
+    "birth-chart": "birthchart",
+    "palm-reading": "palmistry",
+    "iching-oracle": "iching",
+  };
+  return resultPageIdBySlug[resultSlug];
 }
 
 function olympusMatchMeta(match: MatchData): AppRouteMeta {
@@ -510,6 +583,57 @@ function breadcrumbJsonLd(pathname: string): string {
   return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
 }
 
+function webPageJsonLd(pathname: string, meta: AppRouteMeta): string {
+  if (meta.noindex) return "";
+  const path = normalizePath(pathname);
+  const webPage = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${canonicalUrl(path)}#webpage`,
+    url: canonicalUrl(path),
+    name: meta.title,
+    description: meta.description,
+    inLanguage: "en",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "Oracle Mirror",
+      url: `${CANONICAL_HOST}/`,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Oracle Mirror",
+      url: `${CANONICAL_HOST}/`,
+    },
+  };
+  return `<script type="application/ld+json">${JSON.stringify(webPage)}</script>`;
+}
+
+function activateServerPage(html: string, pathname: string): string {
+  const pageId = pageIdForPath(pathname);
+  const sectionId = pageId ? PAGE_SECTION_ID_BY_PAGE[pageId] : undefined;
+  if (!sectionId || pageId === "home") return html;
+
+  return html
+    .replace('<main id="page-home" class="page active">', '<main id="page-home" class="page">')
+    .replace(`id="${sectionId}" class="page`, `id="${sectionId}" class="page active`);
+}
+
+function activateLoveOraclePanel(html: string): string {
+  return html
+    .replace(
+      '<div class="love-option-panel active" data-love-panel="zodiac">',
+      '<div class="love-option-panel" data-love-panel="zodiac">'
+    )
+    .replace(
+      '<option value="oracle">💌 Ask Rosalind (Love Oracle)</option>',
+      '<option value="oracle" selected>💌 Ask Rosalind (Love Oracle)</option>'
+    )
+    .replace(
+      '<div class="love-option-panel" data-love-panel="oracle">',
+      '<div class="love-option-panel active" data-love-panel="oracle">'
+    );
+}
+
 function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): string {
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
@@ -530,6 +654,10 @@ function injectRouteMeta(html: string, pathname: string, meta: AppRouteMeta): st
   const breadcrumb = breadcrumbJsonLd(pathname);
   if (breadcrumb && output.includes("</head>")) {
     output = output.replace("</head>", `${breadcrumb}\n  </head>`);
+  }
+  const webPage = webPageJsonLd(pathname, meta);
+  if (webPage && output.includes("</head>")) {
+    output = output.replace("</head>", `${webPage}\n  </head>`);
   }
   return output;
 }
@@ -558,6 +686,7 @@ async function serveAppShell(
   });
   const response = await env.ASSETS.fetch(indexRequest);
   let html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
+  html = activateServerPage(html, pathname);
 
   // The static shell carries the home-page FAQPage schema; Google allows only
   // one FAQPage per URL, so swap it out on Olympus routes (landing gets the
@@ -566,6 +695,10 @@ async function serveAppShell(
   const normalized = normalizePath(pathname);
   const isOlympusLanding = normalized === "/oracle-of-olympus";
   const isDreamRealm = normalized === "/dream-interpreter";
+
+  if (normalized === "/love-oracle") {
+    html = activateLoveOraclePanel(html);
+  }
 
   if (isDreamRealm) {
     // Swap the home FAQ for the dream FAQ (one FAQPage per URL), pre-activate the
@@ -640,7 +773,7 @@ async function serveAppShell(
   });
 }
 
-const SITEMAP_LASTMOD = "2026-06-14";
+const SITEMAP_LASTMOD = "2026-06-30";
 
 function sitemapResponse(): Response {
   const routes = Object.entries(APP_ROUTES).filter(([route, meta]) => !meta.noindex && route !== "/ad-debug");
@@ -719,6 +852,26 @@ Sitemap: ${CANONICAL_HOST}/sitemap.xml
   });
 }
 
+function adsTxtResponse(env: Env): Response {
+  const adsTxt = env.ADSTERRA_ADS_TXT?.trim();
+  if (!adsTxt) {
+    return new Response("ads.txt is not configured.\n", {
+      status: 404,
+      headers: {
+        "Content-Type": "text/plain; charset=UTF-8",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  return new Response(`${adsTxt}\n`, {
+    headers: {
+      "Content-Type": "text/plain; charset=UTF-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+}
+
 function llmsTxtResponse(matches: Record<string, MatchData>): Response {
   const byGroup = new Map<string, MatchData[]>();
   for (const match of Object.values(matches)) {
@@ -755,6 +908,7 @@ function llmsTxtResponse(matches: Record<string, MatchData>): Response {
 - [Numerology](https://oraclemirror.com/numerology): Calculates the life path number from a birth date (including master numbers 11, 22, 33) and explains its meaning.
 - [Daily Fortune](https://oraclemirror.com/daily-fortune): A fortune for today with a cosmic theme, advice, lucky number, color, element, and affirmation.
 - [Love Compatibility](https://oraclemirror.com/love-match): Combines zodiac, numerology, tarot, quiz, and omen frameworks into a Cosmic Chemistry Score (0-100%), plus the AI Soulmate Vision portrait generator.
+- [Love Oracle](https://oraclemirror.com/love-oracle): Ask Rosalind a direct free relationship question about romance, soulmates, compatibility, timing, or emotional uncertainty.
 - [Birth Chart](https://oraclemirror.com/birth-chart): Maps Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
 - [Palm Reading](https://oraclemirror.com/palm-reading): Palmistry reading of the heart, head, life, and fate lines.
 - [I Ching](https://oraclemirror.com/iching-oracle): Cast three coins six times to build a hexagram and consult the Book of Changes.
@@ -1695,6 +1849,10 @@ export default {
 
     if (url.pathname === "/robots.txt") {
       return robotsResponse();
+    }
+
+    if (url.pathname === "/ads.txt") {
+      return adsTxtResponse(env);
     }
 
     if (url.pathname === "/llms.txt") {

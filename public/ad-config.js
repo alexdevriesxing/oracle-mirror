@@ -4,6 +4,11 @@ export const ORACLE_AD_CONFIG = {
   // Ads are always on for every visitor — no consent gate, no opt-out.
   consentRequired: false,
   contextualAdsWithoutConsent: true,
+  creativeDetectionDelayMs: 10000,
+  scriptRetry: {
+    maxAttempts: 2,
+    delayMs: 1800,
+  },
   refreshPolicy: {
     enabled: true,
     minIntervalMs: 30000,
