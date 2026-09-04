@@ -12,7 +12,8 @@ const SAFE_KEYS = new Set([
   "reason", "error_reason", "trigger", "page_path", "answer_length", "eligible",
   "refresh_enabled", "consent_state", "ad_mode", "blocked", "device", "source",
   "state", "ads", "analytics", "consent_required", "refresh_eligible", "enabled",
-  "attempt", "next_attempt", "result_kind",
+  "attempt", "next_attempt", "result_kind", "engaged_seconds", "readings_completed",
+  "ads_filled", "ads_viewable_1s", "shares",
 ]);
 
 function getSessionId() {
@@ -37,6 +38,7 @@ const counters = {
   shares: 0,
 };
 let flushTimer = null;
+let sessionSummaryQueued = false;
 
 function primitive(value) {
   return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
@@ -120,15 +122,17 @@ window.dataLayer.push({
 });
 
 function queueSessionSummary() {
+  if (sessionSummaryQueued) return;
+  sessionSummaryQueued = true;
   queue.push({
     event: "session_summary",
     site_name: "Oracle Mirror",
     timestamp: new Date().toISOString(),
-    answer_length: Math.round((Date.now() - startedAt) / 1000),
-    attempt: counters.readings_completed,
-    next_attempt: counters.ads_filled,
-    eligible: counters.ads_viewable_1s,
-    blocked: counters.shares,
+    engaged_seconds: Math.round((Date.now() - startedAt) / 1000),
+    readings_completed: counters.readings_completed,
+    ads_filled: counters.ads_filled,
+    ads_viewable_1s: counters.ads_viewable_1s,
+    shares: counters.shares,
     result_kind: "mobile_ad_surface_v1",
     state: mobileAdSurfaceVariant,
   });
