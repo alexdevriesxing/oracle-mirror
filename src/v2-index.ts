@@ -14,6 +14,7 @@ import {
   rewriteLlmsFreshness,
   rewriteSitemapFreshness,
 } from "./seo-freshness.ts";
+import { withSecurityHeaders } from "./security-headers.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 
@@ -115,19 +116,16 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Oracle of Olympus / World Cup 2026 was a temporary event feature and is
-    // fully retired. Return 410 before the legacy handler can query KV, sync
-    // fixtures, render match pages, or expose prediction APIs.
     if (isRemovedWorldCupPath(url.pathname)) {
-      return removedWorldCupResponse(request);
+      return withSecurityHeaders(removedWorldCupResponse(request));
     }
 
     let response = await app.fetch(request, env, ctx);
     response = await applyFreshnessTransforms(response, request);
-    return transformHtmlResponse(response, request);
+    response = await transformHtmlResponse(response, request);
+    return withSecurityHeaders(response);
   },
 
-  // The old World Cup fixture cron has also been removed from wrangler.toml.
   async scheduled(_controller: ScheduledController, _env: Env, _ctx: ExecutionContext): Promise<void> {
     return;
   },

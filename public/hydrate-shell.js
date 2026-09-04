@@ -9,7 +9,6 @@ const ROUTE_BY_NAV = {
   tarot: "/tarot",
   love: "/love-oracle",
   "love-match": "/love-match",
-  olympus: "/oracle-of-olympus",
   magic8: "/magic-8-ball",
   numerology: "/numerology",
   "daily-fortune": "/daily-fortune",
@@ -88,9 +87,15 @@ async function hydrateShell() {
     }
 
     document.body.dataset.shellHydrated = "true";
+
+    // Apply the small V2 hardening layer before the legacy app initializes so
+    // reduced-effects users never start the particle engine and keyboard/ARIA
+    // semantics are present before dynamic realm controls begin rendering.
+    await import("/hardening.js");
+    await import("/script.js");
+
     appReady = true;
     document.removeEventListener("click", earlyNavigationFallback, true);
-    await import("/script.js");
   } catch (error) {
     console.error("[Oracle Mirror] Route shell hydration failed; loading full shell.", error);
     document.removeEventListener("click", earlyNavigationFallback, true);
