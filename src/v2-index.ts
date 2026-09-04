@@ -35,7 +35,10 @@ async function transformHtmlResponse(response: Response, request: Request): Prom
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
-  headers.set("Vary", "Accept-Encoding");
+  // The upstream asset ETag/content length describe the unmodified SPA shell.
+  // Do not forward stale entity metadata after route-level transformation.
+  headers.delete("Content-Length");
+  headers.delete("ETag");
 
   return new Response(html, {
     status: response.status,
