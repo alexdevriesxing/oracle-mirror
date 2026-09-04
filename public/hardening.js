@@ -1,3 +1,5 @@
+import "./telemetry.js";
+
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
 hardeningStylesheet.href = "/hardening.css";
