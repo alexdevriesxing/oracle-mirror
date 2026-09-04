@@ -1,0 +1,32 @@
+:focus-visible {
+  outline: 3px solid var(--gold-light, #f0d060);
+  outline-offset: 3px;
+}
+
+[role="button"]:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-radius: 6px;
+}
+
+html[data-reduced-effects="true"] #particles {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
