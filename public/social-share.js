@@ -160,8 +160,10 @@ function numerologyPayload() {
 
 function loveMatchPayload() {
   const output = document.querySelector('[data-output="love-match"]');
-  const scoreText = output?.querySelector(".score-num")?.textContent || "";
-  const score = Number(scoreText.replace(/[^0-9]/g, ""));
+  const scoreNode = output?.querySelector(".score-num");
+  const scoreMatch = scoreNode?.textContent?.match(/\d{1,3}/);
+  if (!scoreMatch) return null;
+  const score = Number(scoreMatch[0]);
   const tier = output?.querySelector(".love-match-tier")?.textContent?.replace(/💝/g, "").trim() || "";
   return sanitizeSharePayload({ kind: "love-match", score, tier });
 }
