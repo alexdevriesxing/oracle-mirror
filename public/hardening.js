@@ -1,4 +1,5 @@
 import "./telemetry.js";
+import "./daily-ritual.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
