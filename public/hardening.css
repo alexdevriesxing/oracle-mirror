@@ -12,6 +12,14 @@ textarea:focus-visible {
   border-radius: 6px;
 }
 
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown:focus-within .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
 html[data-reduced-effects="true"] #particles {
   display: none !important;
 }
