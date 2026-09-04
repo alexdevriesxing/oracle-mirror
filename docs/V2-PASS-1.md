@@ -16,7 +16,7 @@ The first V2 architecture goal is crawl isolation without rewriting every existi
 ## Pass 1 implementation
 
 1. `src/v2-index.ts` wraps the established Worker handler.
-2. The established handler still performs metadata, FAQ, dream, and Olympus SSR enrichment.
+2. The established handler performs metadata, FAQ, and dream SSR enrichment.
 3. `src/ssr-shell.ts` then keeps only the requested top-level `page-*` application section plus shared header/footer chrome.
 4. The server swaps the monolithic client entry for `public/hydrate-shell.js`.
 5. The hydrator fetches one full shell in the browser, restores missing realm sections, and only then imports the established `public/script.js` application.
@@ -26,7 +26,7 @@ This is an intentionally transitional architecture. It fixes server-response top
 
 ## Acceptance criteria
 
-- A direct `/tarot` response does not contain the Numerology, Love Match, Dream, or Olympus page bodies.
+- A direct `/tarot` response does not contain the Numerology, Love Match, or Dream page bodies.
 - A direct `/numerology` response does not contain unrelated realm bodies.
 - `/` initially contains the homepage application page only.
 - Shared navigation, footer, global ads, metadata, canonical tags, and structured data remain intact.
@@ -39,7 +39,6 @@ This is an intentionally transitional architecture. It fixes server-response top
 
 M1 SEO/freshness cleanup:
 
-- convert Oracle of Olympus to a World Cup 2026 prediction archive;
 - freeze completed match sitemap dates/frequencies;
 - remove World Cup positioning from evergreen homepage metadata/navigation priority;
 - `noindex,follow` the private Archive utility route and remove it from the sitemap;

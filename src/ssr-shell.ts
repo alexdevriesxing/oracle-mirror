@@ -18,7 +18,6 @@ const TOP_LEVEL_PAGE_IDS = [
   "page-birthchart",
   "page-palmistry",
   "page-iching",
-  "page-olympus",
 ] as const;
 
 const FOOTER_BOUNDARY_MARKERS = [
@@ -97,7 +96,6 @@ export function pageSectionIdForPath(pathname: string): string | null {
 
   if (path === "/" || path === "") return "page-home";
   if (path === "/love-oracle" || path === "/love-match") return "page-love-match";
-  if (path === "/oracle-of-olympus" || path.startsWith("/oracle-of-olympus/")) return "page-olympus";
 
   const direct: Record<string, string> = {
     "/crystal-ball": "page-crystal-ball",

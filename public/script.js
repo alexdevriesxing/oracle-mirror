@@ -209,7 +209,6 @@ const ROUTE_BY_PAGE = {
   tarot: "/tarot",
   love: "/love-oracle",
   "love-match": "/love-match",
-  olympus: "/oracle-of-olympus",
   magic8: "/magic-8-ball",
   numerology: "/numerology",
   "daily-fortune": "/daily-fortune",
@@ -263,7 +262,6 @@ const REALM_PAGES = new Set([
   "birthchart",
   "palmistry",
   "iching",
-  "olympus",
 ]);
 
 const SCREEN_META = {
@@ -347,10 +345,6 @@ const SCREEN_META = {
     title: "Contact | Oracle Mirror",
     description: "Contact Oracle Mirror about the site, privacy, cookies, or advertising.",
   },
-  olympus: {
-    title: "Oracle of Olympus | Mystical Sports Predictions | Oracle Mirror",
-    description: "Summon Pythia Nikephoros for divine verdicts, omens, and football match outcomes.",
-  },
 };
 
 const ROUTE_META_BY_PATH = {
@@ -382,10 +376,6 @@ function getRouteState(pathname = window.location.pathname) {
   }
   if (ROUTE_STATE_BY_PATH[normalized]) {
     return { ...ROUTE_STATE_BY_PATH[normalized], isResult: false, path: normalized };
-  }
-  if (normalized.startsWith("/oracle-of-olympus")) {
-    const matchId = normalized.substring("/oracle-of-olympus".length + 1);
-    return { pageId: "olympus", isResult: false, path: normalized, matchId: matchId || null };
   }
   return {
     pageId: PAGE_BY_ROUTE.get(normalized) || "home",
@@ -444,34 +434,19 @@ function showPage(pageId, options = {}) {
     p.classList.remove("active");
   }
 
-  const targetId = pageId === "olympus" ? "page-olympus" : `page-${pageId}`;
+  const targetId = `page-${pageId}`;
   const target = document.getElementById(targetId);
   if (target) {
     target.classList.add("active");
     if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const routePath = options.routePath
-    || (options.matchId
-      ? `/oracle-of-olympus/${options.matchId}`
-      : (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/"));
+  const routePath = options.routePath || (isResult ? RESULT_ROUTE_BY_REALM[pageId] : ROUTE_BY_PAGE[pageId] || "/");
   if (push && routePath && window.location.pathname !== routePath) {
     history.pushState({ pageId, isResult, matchId: options.matchId }, "", routePath);
   }
 
   updateDocumentMeta(pageId, isResult, routePath);
-
-  if (pageId === "olympus" && options.matchId) {
-    const match = OLYMPUS_MATCHES_JS[options.matchId];
-    if (match) {
-      document.title = `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`;
-      document.querySelector('meta[name="description"]')?.setAttribute("content", `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`);
-    }
-  }
-
-  if (pageId === "olympus" && !options.matchId) {
-    showMatchList();
-  }
 
   if (pageId === "love-match" && options.lovePanel) {
     setLoveMatchPanel(options.lovePanel, { emitTracking: false });
@@ -532,18 +507,10 @@ window.addEventListener("popstate", () => {
     push: false,
     isResult: route.isResult,
     scroll: false,
-    matchId: route.matchId,
     routePath: route.path,
     lovePanel: route.lovePanel,
     resultKind: route.resultKind,
   });
-  if (route.pageId === "olympus") {
-    if (route.matchId) {
-      showMatchDetail(route.matchId);
-    } else {
-      showMatchList();
-    }
-  }
 });
 
 // Close mobile menu on outside click
@@ -2032,479 +1999,11 @@ document.getElementById("btn-love-match")?.addEventListener("click", async () =>
   btn.disabled = false;
 });
 
-// =========================================================
-// ORACLE OF OLYMPUS (Mystical Sports Predictions)
-// =========================================================
-
-// Fixtures come from the Worker (/api/oracle-of-olympus/matches), which serves
-// the full World Cup 2026 schedule from KV — kept fresh by a cron sync.
-let OLYMPUS_MATCHES_JS = {};
-let olympusMatchesPromise = null;
-
-function loadOlympusMatches() {
-  if (!olympusMatchesPromise) {
-    olympusMatchesPromise = fetch("/api/oracle-of-olympus/matches")
-      .then((res) => {
-        if (!res.ok) throw new Error(`Fixture request failed: HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const map = {};
-        for (const match of data.matches || []) {
-          map[match.matchId] = match;
-        }
-        OLYMPUS_MATCHES_JS = map;
-        return map;
-      })
-      .catch((err) => {
-        olympusMatchesPromise = null; // allow a retry on the next visit
-        throw err;
-      });
-  }
-  return olympusMatchesPromise;
-}
-
-const OLYMPUS_FALLBACK_TEMPLATES = {
-  divineVerdict: [
-    "Nike's gaze flickers over the pitch, where {teamA} and {teamB} clash. The stars align closely, indicating that {winner} shall find the golden paths to victory, leaving the adversary in shadows.",
-    "Ares rattles his shield above the arena. Though {teamA} fights with the strength of lions, the swift spears of {teamB} will strike like lightning at the turning of the tide.",
-    "Hermes stands balanced between the hosts. Neither side holds the supreme favor of the heavens; they shall match goal for goal, and the scales of battle will remain in perfect equilibrium."
-  ],
-  olympianOmen: [
-    "Athena whispers of tactical structure in the midfield, but Poseidon warns that the defense of {loser} may flood under pressure.",
-    "Apollo shines upon the frontline of {winner}, predicting that three key chances will test the keeper's shield.",
-    "Zeus casts a shadow of storm over the pitch; the midfield struggle will be harsh, and a single card of crimson may shift the balance."
-  ],
-  whyTheMirrorSeesThis: [
-    "The statistical mirror reflects the deep tournament legacy and defensive structures of {winner}. They possess the stamina of Heracles in the final minutes.",
-    "The mirror shows a clash of elements: the fire of {teamA}'s attack meets the deep water of {teamB}'s defense, pointing to a dramatic finish."
-  ]
-};
-
-let currentMatchId = null;
-
-// How many days a finished match stays on the landing list before it is hidden.
-const OLYMPUS_MATCH_RETENTION_DAYS = 7;
-
-// Status is derived from the match date in the visitor's local time, so the
-// list updates by itself — no manual edits needed when a match is played.
-function deriveMatchStatus(dateStr) {
-  const now = new Date();
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  if (dateStr === today) return "today";
-  return dateStr < today ? "completed" : "upcoming";
-}
-
-function isMatchExpired(dateStr) {
-  const matchEnd = new Date(`${dateStr}T23:59:59`).getTime();
-  if (!Number.isFinite(matchEnd)) return false;
-  return Date.now() - matchEnd > OLYMPUS_MATCH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-}
-
-function getLocalMysticalProphecy(match) {
-  const winner = match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB;
-  const loser = match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamB : match.teamA;
-  const isDrawFavored = Math.abs(match.probabilities.teamAWin - match.probabilities.teamBWin) <= 5 || match.probabilities.draw > 30;
-
-  let verdictTpl = "";
-  if (isDrawFavored) {
-    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[2];
-  } else if (winner === match.teamA) {
-    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[0];
-  } else {
-    verdictTpl = OLYMPUS_FALLBACK_TEMPLATES.divineVerdict[1];
-  }
-
-  const omenTpl = OLYMPUS_FALLBACK_TEMPLATES.olympianOmen[Math.floor(Math.random() * OLYMPUS_FALLBACK_TEMPLATES.olympianOmen.length)];
-  const whyTpl = OLYMPUS_FALLBACK_TEMPLATES.whyTheMirrorSeesThis[Math.floor(Math.random() * OLYMPUS_FALLBACK_TEMPLATES.whyTheMirrorSeesThis.length)];
-
-  const replacePlaceholders = (text) => {
-    return text
-      .replace(/{teamA}/g, match.teamA)
-      .replace(/{teamB}/g, match.teamB)
-      .replace(/{winner}/g, winner)
-      .replace(/{loser}/g, loser);
-  };
-
-  return {
-    persona: "Pythia Nikephoros",
-    title: "Oracle of Olympus",
-    divineVerdict: replacePlaceholders(verdictTpl),
-    predictedScore: match.predictedScore,
-    mostLikelyOutcome: isDrawFavored ? "Draw" : `${winner} win`,
-    confidence: match.confidence,
-    whyTheMirrorSeesThis: replacePlaceholders(whyTpl),
-    olympianOmen: replacePlaceholders(omenTpl),
-    mortalWarning: "The clouds over Olympus are temporarily silent, but the statistical mirror still speaks.",
-    disclaimer: "Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes."
-  };
-}
-
-// Flag codes ship with each match from the API (flagA/flagB).
-function getTeamFlagCode(match, side) {
-  return (side === "a" ? match.flagA : match.flagB) || "un";
-}
-
-function getTeamFlagHtml(match, side, sizeClass = "small") {
-  const code = getTeamFlagCode(match, side);
-  const teamName = side === "a" ? match.teamA : match.teamB;
-  const size = sizeClass === "large" ? 80 : 40;
-  // Small flags appear 144x in the match list — lazy-load them; large detail
-  // flags are above the fold and load eagerly. Width hints reduce CLS.
-  const loadingAttrs = sizeClass === "large" ? 'decoding="async"' : 'loading="lazy" decoding="async"';
-  return `<img src="https://flagcdn.com/w${size}/${code}.png" class="flag-img flag-${sizeClass}" alt="${teamName} flag" width="${size}" ${loadingAttrs} onerror="this.src='https://flagcdn.com/w${size}/un.png'" />`;
-}
-
-async function showMatchList() {
-  const landing = document.getElementById("olympus-landing-view");
-  const detail = document.getElementById("olympus-detail-view");
-  if (landing) landing.style.display = "flex";
-  if (detail) detail.style.display = "none";
-
-  const container = document.getElementById("olympus-match-list");
-  if (!container) return;
-
-  container.innerHTML = `
-    <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
-      The mists gather above the arena — summoning the fixtures...
-    </p>`;
-
-  let matches;
-  try {
-    matches = await loadOlympusMatches();
-  } catch (err) {
-    console.warn("Failed to load Olympus fixtures:", err);
-    container.innerHTML = `
-      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
-        The mists are too thick to read the fixtures right now. Return in a moment, seeker.
-      </p>`;
-    return;
-  }
-
-  const visibleMatches = Object.values(matches)
-    .filter(match => !isMatchExpired(match.date))
-    .sort((a, b) => a.date.localeCompare(b.date) || (a.group || "").localeCompare(b.group || ""));
-
-  if (visibleMatches.length === 0) {
-    container.innerHTML = `
-      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
-        The arena lies silent — Pythia Nikephoros awaits the next contests. New prophecies will appear here soon.
-      </p>`;
-    return;
-  }
-
-  let lastDate = "";
-  const cardsHtml = visibleMatches.map(match => {
-    const status = deriveMatchStatus(match.date);
-    const statusLabel = status === "completed"
-      ? '<span class="match-status status-completed">Completed</span>'
-      : (status === "today" ? '<span class="match-status status-today">Today</span>' : '<span class="match-status status-upcoming">Upcoming</span>');
-
-    const dateHeader = match.date !== lastDate
-      ? `<h3 class="match-date-header" style="width:100%; text-align:center; font-family: var(--font-heading); color: var(--gold-light, #d4af37); margin: 1.2rem 0 0.4rem;">${formatMatchDate(match.date)}</h3>`
-      : "";
-    lastDate = match.date;
-
-    const scoreLine = match.finalScore
-      ? `<div class="predicted-score-preview">Final Result: <strong>${match.finalScore}</strong></div>`
-      : `<div class="predicted-score-preview">Score: <strong>${match.predictedScore}</strong></div>`;
-
-    return `
-      ${dateHeader}
-      <div class="match-card" data-match-id="${match.matchId}">
-        <div class="match-card-header">
-          <span class="match-comp">${match.competition} — ${match.stage}</span>
-          ${statusLabel}
-        </div>
-        <div class="match-teams-layout">
-          <div class="match-team-box team-a-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match, "a")}.png')">
-            <span class="match-team-name">${match.teamA}</span>
-            ${getTeamFlagHtml(match, "a", "small")}
-          </div>
-          <div class="match-vs-coin">
-            <span>VS</span>
-          </div>
-          <div class="match-team-box team-b-box" style="--flag-url: url('https://flagcdn.com/w160/${getTeamFlagCode(match, "b")}.png')">
-            ${getTeamFlagHtml(match, "b", "small")}
-            <span class="match-team-name">${match.teamB}</span>
-          </div>
-        </div>
-        <div class="match-meta-info">
-          <span>📅 ${match.date}</span>
-          <span>📍 ${match.venue}</span>
-        </div>
-        <div class="match-prediction-preview">
-          ${scoreLine}
-          <div class="outcome-confidence">Confidence: <span class="conf-badge conf-${match.confidence.toLowerCase()}">${match.confidence}</span></div>
-        </div>
-        <p class="entertainment-disclaimer mini-disclaimer">
-          Oracle Mirror sports predictions are mystical entertainment. They are not betting advice or guaranteed outcomes.
-        </p>
-      </div>
-    `;
-  }).join("");
-
-  container.innerHTML = cardsHtml;
-
-  container.querySelectorAll(".match-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const matchId = card.dataset.matchId;
-      showPage("olympus", { matchId });
-      showMatchDetail(matchId);
-    });
-  });
-}
-
-function formatMatchDate(dateStr) {
-  const parsed = new Date(`${dateStr}T12:00:00`);
-  if (Number.isNaN(parsed.getTime())) return dateStr;
-  return parsed.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-}
-
-async function showMatchDetail(matchId) {
-  currentMatchId = matchId;
-
-  const landing = document.getElementById("olympus-landing-view");
-  const detail = document.getElementById("olympus-detail-view");
-  if (landing) landing.style.display = "none";
-  if (detail) detail.style.display = "flex";
-
-  const detailCard = document.getElementById("olympus-detail-card");
-  if (!detailCard) return;
-
-  detailCard.innerHTML = `
-    <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
-      The mists gather above the arena...
-    </p>`;
-
-  let match = null;
-  try {
-    const matches = await loadOlympusMatches();
-    match = matches[matchId];
-  } catch (err) {
-    console.warn("Failed to load Olympus fixture detail:", err);
-  }
-
-  if (!match) {
-    detailCard.innerHTML = `
-      <p class="olympus-empty-state" style="text-align:center; font-style:italic; color: var(--gold-light, #d4af37); padding: 2rem 1rem;">
-        The oracle finds no such contest in the scrolls of fate. Return to the arena and choose another.
-      </p>`;
-    return;
-  }
-
-  document.title = `${match.teamA} vs ${match.teamB} Mystical Prediction | Oracle Mirror`;
-  document.querySelector('meta[name="description"]')?.setAttribute(
-    "content",
-    `Mystical sports prediction and analysis for ${match.teamA} vs ${match.teamB} in the ${match.competition}. Summon the oracle for celestial omens.`
-  );
-
-  const totalProb = match.probabilities.teamAWin + match.probabilities.draw + match.probabilities.teamBWin;
-  const teamAWinPct = Math.round((match.probabilities.teamAWin / totalProb) * 100);
-  const drawPct = Math.round((match.probabilities.draw / totalProb) * 100);
-  const teamBWinPct = Math.round((match.probabilities.teamBWin / totalProb) * 100);
-  
-  detailCard.innerHTML = `
-    <div class="match-detail-main">
-      <div class="match-detail-header">
-        <span class="match-comp">${match.competition} — ${match.stage}</span>
-        <span class="match-venue-date">📅 ${match.date} | 📍 ${match.venue}</span>
-      </div>
-      <div class="match-teams-large-layout">
-        <div class="match-team-box-lg team-a-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match, "a")}.png')">
-          <div class="flag-wrapper-lg">
-            ${getTeamFlagHtml(match, "a", "large")}
-          </div>
-          <span class="match-team-name-lg">${match.teamA}</span>
-        </div>
-
-        <div class="match-vs-coin-lg">
-          <span>VS</span>
-        </div>
-
-        <div class="match-team-box-lg team-b-box-lg" style="--flag-url: url('https://flagcdn.com/w320/${getTeamFlagCode(match, "b")}.png')">
-          <div class="flag-wrapper-lg">
-            ${getTeamFlagHtml(match, "b", "large")}
-          </div>
-          <span class="match-team-name-lg">${match.teamB}</span>
-        </div>
-      </div>
-      ${match.finalScore ? `
-      <div class="deterministic-prediction-block final-result-block">
-        <h3>Final Result</h3>
-        <div class="predicted-score-large">${match.finalScore}</div>
-      </div>` : ""}
-      <div class="deterministic-prediction-block">
-        <h3>Statistical Prediction</h3>
-        <div class="predicted-score-large">${match.predictedScore}</div>
-        
-        <div class="probabilities-gauge">
-          <div class="gauge-bar">
-            <div class="gauge-fill fill-team-a" style="width: ${teamAWinPct}%;" title="${match.teamA} Win: ${teamAWinPct}%"></div>
-            <div class="gauge-fill fill-draw" style="width: ${drawPct}%;" title="Draw: ${drawPct}%"></div>
-            <div class="gauge-fill fill-team-b" style="width: ${teamBWinPct}%;" title="${match.teamB} Win: ${teamBWinPct}%"></div>
-          </div>
-          <div class="gauge-labels">
-            <span class="gauge-lbl-team-a">${match.teamA}: ${teamAWinPct}%</span>
-            <span class="gauge-lbl-draw">Draw: ${drawPct}%</span>
-            <span class="gauge-lbl-team-b">${match.teamB}: ${teamBWinPct}%</span>
-          </div>
-        </div>
-
-        <div class="match-meta-grid">
-          <div class="meta-item">
-            <strong>Confidence</strong>
-            <span class="conf-badge conf-${match.confidence.toLowerCase()}">${match.confidence}</span>
-          </div>
-          <div class="meta-item">
-            <strong>Most Likely Outcome</strong>
-            <span>${teamAWinPct > teamBWinPct ? match.teamA + ' Win' : match.teamB + ' Win'}</span>
-          </div>
-        </div>
-
-        <div class="reasoning-text">
-          <strong>Statistical Reasoning:</strong>
-          <p>${match.dataReasoning}</p>
-        </div>
-
-        <div class="history-summary-text">
-          <strong>Historical Summary:</strong>
-          <p>${match.historicalSummary}</p>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("olympus-response-container").style.display = "none";
-  document.getElementById("btn-summon-oracle").style.display = "inline-block";
-  document.getElementById("olympus-loading").style.display = "none";
-}
-
-async function summonOracle() {
-  const match = OLYMPUS_MATCHES_JS[currentMatchId];
-  if (!match) return;
-
-  const btn = document.getElementById("btn-summon-oracle");
-  const loading = document.getElementById("olympus-loading");
-  const container = document.getElementById("olympus-response-container");
-  const output = document.querySelector('[data-output="olympus"]');
-
-  if (btn) btn.style.display = "none";
-  if (loading) loading.style.display = "block";
-  if (container) container.style.display = "none";
-  setReadingState(true);
-
-  trackEvent("question_submitted", {
-    realm: "olympus",
-    question_length: match.matchId.length,
-  });
-  trackEvent("reading_started", { realm: "olympus" });
-
-  let prophecyData = null;
-
-  try {
-    // Send exactly the fields the worker's strict validator allows.
-    const payload = {
-      matchId: match.matchId,
-      teamA: match.teamA,
-      teamB: match.teamB,
-      competition: match.competition,
-      stage: match.stage,
-      date: match.date,
-      venue: match.venue,
-      predictedScore: match.predictedScore,
-      probabilities: match.probabilities,
-      confidence: match.confidence,
-      historicalSummary: match.historicalSummary,
-    };
-    const data = await callAPI("/api/oracle-of-olympus/predict", payload);
-    if (data.error) {
-      throw new Error(data.error);
-    }
-    prophecyData = data;
-  } catch (err) {
-    console.warn("API prediction failed, falling back to local templates:", err);
-    prophecyData = getLocalMysticalProphecy(match);
-  }
-
-  if (output) {
-    output.innerHTML = `
-      <div class="oracle-scroll-wrapper">
-        <div class="oracle-scroll-title">Pythia Nikephoros Speaks</div>
-        
-        <div class="prophecy-section divine-verdict-section">
-          <h4>⚡ Divine Verdict</h4>
-          <p class="prophecy-text">"${prophecyData.divineVerdict}"</p>
-        </div>
-
-        <div class="prophecy-two-column">
-          <div class="prophecy-section">
-            <h4>🕊️ Olympian Omen</h4>
-            <p class="prophecy-text">${prophecyData.olympianOmen}</p>
-          </div>
-          <div class="prophecy-section">
-            <h4>🌟 Why the Mirror Sees This</h4>
-            <p class="prophecy-text">${prophecyData.whyTheMirrorSeesThis}</p>
-          </div>
-        </div>
-
-        <div class="prophecy-meta-row">
-          <div><strong>Outcome:</strong> ${prophecyData.mostLikelyOutcome}</div>
-          <div><strong>Predicted Score:</strong> ${prophecyData.predictedScore}</div>
-          <div><strong>Confidence:</strong> ${prophecyData.confidence}</div>
-        </div>
-
-        <div class="prophecy-warning-block">
-          <p>⚠️ <strong>Mortal Warning:</strong> ${prophecyData.mortalWarning}</p>
-        </div>
-
-        <p class="entertainment-disclaimer prophecy-disclaimer">
-          ${prophecyData.disclaimer}
-        </p>
-      </div>
-      
-      <div class="prophecy-actions">
-        <button class="btn-gold btn-small" id="btn-save-olympus-archive">Save Prophecy to Archive</button>
-      </div>
-    `;
-  }
-
-  if (loading) loading.style.display = "none";
-  if (container) container.style.display = "block";
-  setReadingState(false);
-
-  const saveBtn = document.getElementById("btn-save-olympus-archive");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", () => {
-      const archiveText = `[Oracle of Olympus Prophecy] Verdict: ${prophecyData.divineVerdict}\n\nOutcome: ${prophecyData.mostLikelyOutcome}\nOmen: ${prophecyData.olympianOmen}\n\n${prophecyData.disclaimer}`;
-      saveToArchive("olympus", `${match.teamA} vs ${match.teamB} Prediction`, archiveText, {
-        matchId: match.matchId,
-        predictedScore: prophecyData.predictedScore
-      });
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Saved to Archive";
-      saveBtn.style.opacity = "0.6";
-    });
-  }
-
-  // Optimize Adsterra Ad placements:
-  const adSlot = createResultAdSlot("olympus");
-  adSlot.classList.add("result-aftercare");
-  if (output) output.appendChild(adSlot);
-  registerAdSlots(adSlot);
-  activateSlotsForScreen("result", "olympus");
-}
 
 // --- Boot ---
 initAdSystem();
 syncFortuneQuestionnaire();
 
-// Olympus events wireup
-document.getElementById("btn-summon-oracle")?.addEventListener("click", summonOracle);
-document.getElementById("btn-back-to-matches")?.addEventListener("click", () => {
-  showPage("olympus");
-  showMatchList();
-});
 
 const initialRoute = getRouteState();
 showPage(initialRoute.pageId, {
@@ -2512,19 +2011,11 @@ showPage(initialRoute.pageId, {
   isResult: initialRoute.isResult,
   scroll: false,
   emitTracking: false,
-  matchId: initialRoute.matchId,
   routePath: initialRoute.path,
   lovePanel: initialRoute.lovePanel,
   resultKind: initialRoute.resultKind,
 });
 
-if (initialRoute.pageId === "olympus") {
-  if (initialRoute.matchId) {
-    showMatchDetail(initialRoute.matchId);
-  } else {
-    showMatchList();
-  }
-}
 
 trackEvent("page_view", {
   page_path: window.location.pathname,

@@ -7,7 +7,7 @@
 // structured data always matches on-page content.
 //
 // Tone rules: reflective, entertainment-framed, no deterministic promises, no
-// medical/legal/financial claims. Dream Interpreter and Oracle of Olympus keep
+// medical/legal/financial claims. Dream Interpreter keeps
 // their bespoke FAQ handling in index.ts and are intentionally absent here.
 
 export type RelatedRealm = {

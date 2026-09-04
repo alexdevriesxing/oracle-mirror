@@ -1,6 +1,3 @@
-import { WC2026_GROUP_FIXTURES, fixtureMatchId, deriveMatchStatus } from "./olympus-data.ts";
-import type { MatchData } from "./olympus-data.ts";
-import { getOlympusMatches, syncOlympusFixtures } from "./olympus-sync.ts";
 import {
   DREAM_SYMBOLS,
   retrieveDreamKnowledge,
@@ -10,21 +7,10 @@ import {
 import { REALM_SEO_CONTENT, realmFaqJsonLd, realmSeoHtml } from "./realm-content.ts";
 import { renderDreamHubPage, renderDreamSymbolPage, dreamSymbolSlugs, dreamGuidePath } from "./dream-pages.ts";
 
-export { deriveMatchStatus } from "./olympus-data.ts";
-export type { MatchData, MatchStatus, Probabilities } from "./olympus-data.ts";
 
 export interface Env {
   AI: any;
   ASSETS: Fetcher;
-  ORACLE_KV?: KVNamespace;
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  CLOUDFLARE_AI_GATEWAY_ID?: string;
-  AI_PROVIDER?: string;
-  AI_MODEL?: string;
-  AI_API_KEY?: string;
-  FOOTBALL_DATA_API_KEY?: string;
-  ORACLE_ALLOWED_ORIGIN?: string;
-  ORACLE_CACHE_TTL_SECONDS?: string;
   ADSTERRA_ADS_TXT?: string;
 }
 
@@ -66,7 +52,6 @@ const BREADCRUMB_NAMES: Record<string, string> = {
   "/birth-chart": "Birth Chart",
   "/palm-reading": "Palm Reading",
   "/iching-oracle": "I Ching Oracle",
-  "/oracle-of-olympus": "World Cup 2026 Predictions",
 };
 
 const PAGE_ID_BY_ROUTE: Record<string, string> = {
@@ -87,7 +72,6 @@ const PAGE_ID_BY_ROUTE: Record<string, string> = {
   "/cookie-policy": "cookie-policy",
   "/contact": "contact",
   "/love-match": "love-match",
-  "/oracle-of-olympus": "olympus",
   "/birth-chart": "birthchart",
   "/palm-reading": "palmistry",
   "/iching-oracle": "iching",
@@ -113,14 +97,13 @@ const PAGE_SECTION_ID_BY_PAGE: Record<string, string> = {
   birthchart: "page-birthchart",
   palmistry: "page-palmistry",
   iching: "page-iching",
-  olympus: "page-olympus",
 };
 
 const APP_ROUTES: Record<string, AppRouteMeta> = {
   "/": {
     title: "Free Tarot, Horoscopes & Fortune Telling Online | Oracle Mirror",
     description:
-      "Get free tarot card readings, daily horoscopes, numerology, crystal ball answers, love compatibility, AI Soulmate Vision, and World Cup 2026 predictions — all inside Oracle Mirror.",
+      "Get free tarot card readings, daily horoscopes, dream interpretation, numerology, crystal ball guidance, love compatibility, birth charts, palmistry, and I Ching — all inside Oracle Mirror.",
   },
   "/crystal-ball": {
     title: "Free Crystal Ball Reading Online — Ask Madame Fortuna | Oracle Mirror",
@@ -198,11 +181,6 @@ const APP_ROUTES: Record<string, AppRouteMeta> = {
     title: "Love Compatibility Calculator — Zodiac, Numerology & Tarot | Oracle Mirror",
     description:
       "Test your love compatibility free: zodiac match, numerology, tarot, quiz, and omens combine into a Cosmic Chemistry Score plus AI Soulmate Vision.",
-  },
-  "/oracle-of-olympus": {
-    title: "World Cup 2026 Predictions — All 72 Group Stage Matches | Oracle Mirror",
-    description:
-      "Free FIFA World Cup 2026 predictions for every group stage match: predicted scores, win probabilities, and mystical AI analysis from the Oracle of Olympus. Updated throughout the tournament.",
   },
   "/birth-chart": {
     title: "Free Birth Chart Reading — Sun, Moon & Rising Signs | Oracle Mirror",
@@ -322,168 +300,6 @@ function pageIdForPath(pathname: string): string | undefined {
   return resultPageIdBySlug[resultSlug];
 }
 
-function olympusMatchMeta(match: MatchData): AppRouteMeta {
-  const resultPrefix = match.finalScore ? `Final score: ${match.finalScore}. ` : "";
-  return {
-    title: `${match.teamA} vs ${match.teamB} Prediction — ${match.stage}, World Cup 2026 | Oracle Mirror`,
-    description: `${resultPrefix}${match.teamA} vs ${match.teamB} FIFA World Cup 2026 ${match.stage} prediction: predicted score ${match.predictedScore}, win probabilities, and AI oracle analysis. ${match.date} at ${match.venue}.`,
-  };
-}
-
-function sportsEventJsonLd(match: MatchData): string {
-  const [stadium, city] = match.venue.split(", ");
-  const event = {
-    "@context": "https://schema.org",
-    "@type": "SportsEvent",
-    name: `${match.teamA} vs ${match.teamB} — ${match.competition} ${match.stage}`,
-    description: `${match.competition} ${match.stage} match between ${match.teamA} and ${match.teamB}${match.finalScore ? `. Final score: ${match.finalScore}` : `. Oracle Mirror predicted score: ${match.predictedScore}`}.`,
-    startDate: match.date,
-    eventStatus: "https://schema.org/EventScheduled",
-    sport: "Soccer",
-    location: {
-      "@type": "StadiumOrArena",
-      name: stadium,
-      ...(city ? { address: { "@type": "PostalAddress", addressLocality: city } } : {}),
-    },
-    homeTeam: { "@type": "SportsTeam", name: match.teamA },
-    awayTeam: { "@type": "SportsTeam", name: match.teamB },
-    competitor: [
-      { "@type": "SportsTeam", name: match.teamA },
-      { "@type": "SportsTeam", name: match.teamB },
-    ],
-    organizer: { "@type": "Organization", name: "FIFA", url: "https://www.fifa.com/" },
-    url: canonicalUrl(`/oracle-of-olympus/${match.matchId}`),
-  };
-  return `<script type="application/ld+json">${JSON.stringify(event)}</script>`;
-}
-
-function olympusItemListJsonLd(matches: Record<string, MatchData>): string {
-  const sorted = Object.values(matches).sort(
-    (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
-  );
-  const itemList = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "FIFA World Cup 2026 Group Stage Predictions",
-    description: "Predicted scores, win probabilities, and oracle prophecies for all 72 World Cup 2026 group stage matches.",
-    numberOfItems: sorted.length,
-    itemListElement: sorted.map((m, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      url: canonicalUrl(`/oracle-of-olympus/${m.matchId}`),
-      name: `${m.teamA} vs ${m.teamB} prediction (${m.stage}, ${m.date})`,
-    })),
-  };
-  return `<script type="application/ld+json">${JSON.stringify(itemList)}</script>`;
-}
-
-function ssrMatchLine(match: MatchData): string {
-  const result = match.finalScore
-    ? `Final score: ${match.finalScore}`
-    : `Predicted: ${match.predictedScore}`;
-  return `<li><a href="/oracle-of-olympus/${match.matchId}">${match.teamA} vs ${match.teamB} prediction</a> — ${match.stage} · ${match.venue} · ${result} · Confidence: ${match.confidence}</li>`;
-}
-
-// Crawlable fallback list rendered into the match container; the client
-// replaces it with interactive cards as soon as script.js hydrates.
-function ssrMatchListHtml(matches: Record<string, MatchData>): string {
-  const sorted = Object.values(matches).sort(
-    (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
-  );
-  const sections: string[] = [];
-  let currentDate = "";
-  let openList = false;
-  for (const match of sorted) {
-    if (match.date !== currentDate) {
-      if (openList) sections.push("</ul>");
-      currentDate = match.date;
-      sections.push(`<h3 class="match-date-header">${match.date}</h3><ul>`);
-      openList = true;
-    }
-    sections.push(ssrMatchLine(match));
-  }
-  if (openList) sections.push("</ul>");
-  return `<div class="match-list-ssr">
-  <p>Free FIFA World Cup 2026 predictions for all ${sorted.length} group stage matches: predicted scores, win probabilities, confidence levels, and AI oracle prophecies. Completed matches show real final scores.</p>
-  ${sections.join("\n  ")}
-</div>`;
-}
-
-// Crawlable match detail rendered into the detail container pre-hydration.
-function ssrMatchDetailHtml(match: MatchData, allMatches: Record<string, MatchData>): string {
-  const resultLine = match.finalScore
-    ? `<p><strong>Final Result:</strong> ${match.finalScore}</p>`
-    : "";
-  const siblings = Object.values(allMatches)
-    .filter((m) => m.group === match.group && m.matchId !== match.matchId)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const siblingLinks = siblings.length
-    ? `<p><strong>More ${match.stage} predictions:</strong> ${siblings
-        .map((m) => `<a href="/oracle-of-olympus/${m.matchId}">${m.teamA} vs ${m.teamB} (${m.date})</a>`)
-        .join(" · ")}</p>`
-    : "";
-  return `<div class="match-detail-ssr">
-  <h2>${match.teamA} vs ${match.teamB} — ${match.competition} ${match.stage} Prediction</h2>
-  <p><strong>Date:</strong> ${match.date} | <strong>Venue:</strong> ${match.venue}</p>
-  ${resultLine}
-  <p><strong>Predicted Score:</strong> ${match.predictedScore}</p>
-  <p><strong>Win Probabilities:</strong> ${match.teamA} ${match.probabilities.teamAWin}%, Draw ${match.probabilities.draw}%, ${match.teamB} ${match.probabilities.teamBWin}%</p>
-  <p><strong>Most Likely Outcome:</strong> ${match.probabilities.teamAWin > match.probabilities.teamBWin ? match.teamA : match.teamB} win</p>
-  <p><strong>Confidence:</strong> ${match.confidence}</p>
-  <p><strong>Statistical Analysis:</strong> ${match.dataReasoning}</p>
-  <p><strong>Background:</strong> ${match.historicalSummary}</p>
-  ${siblingLinks}
-  <p><a href="/oracle-of-olympus">All World Cup 2026 predictions</a></p>
-  <p class="entertainment-disclaimer">Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.</p>
-</div>`;
-}
-
-function matchBreadcrumbJsonLd(match: MatchData): string {
-  const breadcrumb = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Oracle Mirror", item: `${CANONICAL_HOST}/` },
-      { "@type": "ListItem", position: 2, name: "World Cup 2026 Predictions", item: canonicalUrl("/oracle-of-olympus") },
-      { "@type": "ListItem", position: 3, name: `${match.teamA} vs ${match.teamB}`, item: canonicalUrl(`/oracle-of-olympus/${match.matchId}`) },
-    ],
-  };
-  return `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`;
-}
-
-// Mirrors the visible FAQ rendered in the Olympus landing section of index.html.
-const OLYMPUS_FAQ: ReadonlyArray<[string, string]> = [
-  [
-    "Are Oracle of Olympus predictions betting advice?",
-    "No. Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes.",
-  ],
-  [
-    "How does Oracle Mirror predict World Cup 2026 matches?",
-    "Every match starts from a deterministic statistical baseline built on team strength, historical tournament performance, and matchup context. Summoning the oracle adds an AI-narrated prophecy from Pythia Nikephoros on top of those numbers.",
-  ],
-  [
-    "Does Oracle Mirror cover every World Cup 2026 group stage match?",
-    "Yes. All 72 group stage fixtures across the 12 groups are listed with predicted scores, win probabilities, and confidence levels. Fixtures and statuses refresh automatically throughout the tournament.",
-  ],
-  [
-    "Is the Oracle of Olympus free to use?",
-    "Yes. Every prediction and oracle prophecy is free, with no account or sign-up required.",
-  ],
-];
-
-function olympusFaqJsonLd(): string {
-  const faq = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: OLYMPUS_FAQ.map(([question, answer]) => ({
-      "@type": "Question",
-      name: question,
-      acceptedAnswer: { "@type": "Answer", text: answer },
-    })),
-  };
-  return `<script type="application/ld+json">${JSON.stringify(faq)}</script>`;
-}
-
 // Mirrors the visible FAQ rendered in the dream-interpreter section of index.html.
 const DREAM_FAQ: ReadonlyArray<[string, string]> = [
   [
@@ -600,7 +416,6 @@ const HOME_REALM_CARDS: ReadonlyArray<[route: string, name: string]> = [
   ["/mystics", "Meet the Mystics"],
   ["/archive", "Reading Archive"],
   ["/love-match", "Love Compatibility — The Temple of Love"],
-  ["/oracle-of-olympus", "World Cup 2026 Predictions"],
   ["/birth-chart", "Birth Chart Reading"],
   ["/palm-reading", "Palm Reading"],
   ["/iching-oracle", "I Ching Oracle"],
@@ -720,9 +535,7 @@ async function serveAppShell(
   request: Request,
   env: Env,
   pathname: string,
-  meta: AppRouteMeta,
-  olympusMatch?: MatchData,
-  allMatches?: Record<string, MatchData>
+  meta: AppRouteMeta
 ): Promise<Response> {
   const url = new URL(request.url);
   const indexRequest = new Request(`${url.origin}/`, {
@@ -733,12 +546,10 @@ async function serveAppShell(
   let html = injectRuntimeConfig(injectRouteMeta(await response.text(), pathname, meta), env);
   html = activateServerPage(html, pathname);
 
-  // The static shell carries the home-page FAQPage schema; Google allows only
-  // one FAQPage per URL, so swap it out on Olympus routes (landing gets the
-  // football FAQ, match pages get none — SportsEvent is the star there).
+  // The static shell carries the home-page FAQPage schema; route-specific
+  // realms replace it with their own visible FAQ where appropriate.
   const staticFaqPageRe = /<script type="application\/ld\+json">(?:(?!<\/script>)[\s\S])*?"@type":\s*"FAQPage"(?:(?!<\/script>)[\s\S])*?<\/script>/;
   const normalized = normalizePath(pathname);
-  const isOlympusLanding = normalized === "/oracle-of-olympus";
   const isDreamRealm = normalized === "/dream-interpreter";
 
   if (normalized === "/love-oracle") {
@@ -785,52 +596,6 @@ async function serveAppShell(
       );
   }
 
-  if (isOlympusLanding || olympusMatch) {
-    html = html.replace(staticFaqPageRe, "");
-    // Pre-activate the Olympus section so crawlers without JS see the World Cup
-    // content as the visible page instead of the home realm grid. The client
-    // router re-applies the same state on hydration.
-    html = html
-      .replace('<main id="page-home" class="page active">', '<main id="page-home" class="page">')
-      .replace(
-        '<section id="page-olympus" class="page realm-page realm-olympus">',
-        '<section id="page-olympus" class="page realm-page realm-olympus active">'
-      );
-  }
-
-  if (isOlympusLanding && html.includes("</head>")) {
-    html = html.replace("</head>", `${olympusFaqJsonLd()}\n  </head>`);
-    if (allMatches) {
-      html = html
-        .replace("</head>", `${olympusItemListJsonLd(allMatches)}\n  </head>`)
-        .replace(
-          '<div class="match-list" id="olympus-match-list">',
-          `<div class="match-list" id="olympus-match-list">${ssrMatchListHtml(allMatches)}`
-        );
-    }
-  }
-
-  if (olympusMatch) {
-    const match = olympusMatch;
-    if (html.includes("</head>")) {
-      html = html.replace("</head>", `${sportsEventJsonLd(match)}\n${matchBreadcrumbJsonLd(match)}\n  </head>`);
-    }
-    // Show the detail subview server-side and render the prediction into it.
-    html = html
-      .replace(
-        'id="olympus-landing-view" class="olympus-subview active" style="width: 100%; display: flex;',
-        'id="olympus-landing-view" class="olympus-subview" style="width: 100%; display: none;'
-      )
-      .replace(
-        'id="olympus-detail-view" class="olympus-subview" style="display:none;',
-        'id="olympus-detail-view" class="olympus-subview" style="display:flex;'
-      )
-      .replace(
-        '<div class="match-detail-card-container" id="olympus-detail-card" style="width: 100%; max-width: 800px; padding: 0 1rem;">',
-        `<div class="match-detail-card-container" id="olympus-detail-card" style="width: 100%; max-width: 800px; padding: 0 1rem;">${ssrMatchDetailHtml(match, allMatches ?? {})}`
-      );
-  }
-
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   return new Response(html, {
@@ -860,18 +625,6 @@ function sitemapResponse(): Response {
     <lastmod>${SITEMAP_LASTMOD}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>`
-      )
-    )
-    .concat(
-      WC2026_GROUP_FIXTURES.map(
-        // Match pages refresh continuously during the tournament (statuses,
-        // results), so lastmod is the serve date rather than a fixed constant.
-        ([, , teamA, teamB]) => `  <url>
-    <loc>${canonicalUrl(`/oracle-of-olympus/${fixtureMatchId(teamA, teamB)}`)}</loc>
-    <lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
   </url>`
       )
     )
@@ -958,59 +711,32 @@ function adsTxtResponse(env: Env): Response {
   });
 }
 
-function llmsTxtResponse(matches: Record<string, MatchData>): Response {
-  const byGroup = new Map<string, MatchData[]>();
-  for (const match of Object.values(matches)) {
-    const list = byGroup.get(match.group) ?? [];
-    list.push(match);
-    byGroup.set(match.group, list);
-  }
-  const groupSections = Array.from(byGroup.keys())
-    .sort()
-    .map((group) => {
-      const lines = (byGroup.get(group) ?? [])
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map((m) => {
-          const score = m.finalScore ? `final score ${m.finalScore}` : `predicted ${m.predictedScore}`;
-          return `- [${m.teamA} vs ${m.teamB}](${canonicalUrl(`/oracle-of-olympus/${m.matchId}`)}): ${m.date}, ${m.venue} — ${score} (confidence: ${m.confidence}).`;
-        })
-        .join("\n");
-      return `### Group ${group}\n\n${lines}`;
-    })
-    .join("\n\n");
-
+function llmsTxtResponse(): Response {
   return new Response(`# Oracle Mirror
 
-> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors get personalized tarot card readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball answers, palm readings, I Ching hexagram consultations, birth chart interpretations, love compatibility scores, an AI-generated Soulmate Vision portrait, and FIFA World Cup 2026 match predictions from the Oracle of Olympus. Every reading is generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
+> Oracle Mirror (https://oraclemirror.com) is a free, interactive fortune-telling site. Visitors can explore tarot readings, daily horoscopes, Chinese zodiac fortunes, numerology life path readings, crystal ball guidance, dream interpretation, palm readings, I Ching consultations, birth chart interpretations, love compatibility, and an AI-generated Soulmate Vision portrait. Readings are generated on demand, free to use, and saved only in the visitor's own browser. The site is for entertainment purposes.
 
 ## Readings
 
-- [Crystal Ball Reading](https://oraclemirror.com/crystal-ball): Ask Madame Fortuna any question and receive a poetic, personalized prophecy. A 7-step alignment ritual (life area, time horizon, mood, birth element, omen, moon phase, tarot sigil) shapes the reading.
-- [Dream Interpretation](https://oraclemirror.com/dream-interpreter): Describe a dream to Morpheus Vey, the Dream-Walker. He asks two short clarifying questions, then interprets the dream using Jungian, Freudian, emotional, and cross-cultural symbolism. Free, conversational, no sign-up.
-- [Dream Symbols & Meanings](https://oraclemirror.com/dreams): A free dream dictionary with a dedicated guide page per common symbol (falling, flying, teeth falling out, being chased, water, death, snakes, baby, house, exams, being lost, fire, birds, money, being naked) covering Jungian, Freudian, emotional, and folklore meanings plus reflection questions.
+- [Crystal Ball Reading](https://oraclemirror.com/crystal-ball): Ask Madame Fortuna a question and receive a poetic, personalized prophecy.
+- [Dream Interpretation](https://oraclemirror.com/dream-interpreter): Describe a dream to Morpheus Vey, who asks clarifying questions before offering an interpretation grounded in classic dream symbolism.
+- [Dream Symbols & Meanings](https://oraclemirror.com/dreams): A dream dictionary with dedicated guides for common symbols and reflection questions.
 - [Daily Horoscope](https://oraclemirror.com/western-zodiac): Pick one of the 12 zodiac signs for a horoscope covering love, career, health, and a lucky number.
 - [Chinese Zodiac](https://oraclemirror.com/chinese-zodiac): Enter a birth year to find the matching zodiac animal and receive a fortune on personality, destiny, and compatibility.
-- [Tarot Reading](https://oraclemirror.com/tarot): Draw a free 3-card Past-Present-Future spread from the 22 Major Arcana with an interpretation woven around your question.
+- [Tarot Reading](https://oraclemirror.com/tarot): Draw a free 3-card Past-Present-Future spread from the Major Arcana.
 - [Magic 8 Ball](https://oraclemirror.com/magic-8-ball): Instant yes-or-no answers with a mystical elaboration.
-- [Numerology](https://oraclemirror.com/numerology): Calculates the life path number from a birth date (including master numbers 11, 22, 33) and explains its meaning.
-- [Daily Fortune](https://oraclemirror.com/daily-fortune): A fortune for today with a cosmic theme, advice, lucky number, color, element, and affirmation.
-- [Love Compatibility](https://oraclemirror.com/love-match): Combines zodiac, numerology, tarot, quiz, and omen frameworks into a Cosmic Chemistry Score (0-100%), plus the AI Soulmate Vision portrait generator.
-- [Love Oracle](https://oraclemirror.com/love-oracle): Ask Rosalind a direct free relationship question about romance, soulmates, compatibility, timing, or emotional uncertainty.
-- [Birth Chart](https://oraclemirror.com/birth-chart): Maps Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
+- [Numerology](https://oraclemirror.com/numerology): Calculate a life path number from a birth date, including master numbers 11, 22, and 33.
+- [Daily Fortune](https://oraclemirror.com/daily-fortune): A daily cosmic theme, advice, lucky number, color, element, and affirmation.
+- [Love Compatibility](https://oraclemirror.com/love-match): Zodiac, numerology, tarot, quiz, and omen frameworks combine into a Cosmic Chemistry Score plus Soulmate Vision.
+- [Love Oracle](https://oraclemirror.com/love-oracle): Ask Rosalind a relationship question about romance, compatibility, timing, or emotional uncertainty.
+- [Birth Chart](https://oraclemirror.com/birth-chart): Sun, Moon, Ascendant, Mercury, Venus, and Mars placements with an interpretation.
 - [Palm Reading](https://oraclemirror.com/palm-reading): Palmistry reading of the heart, head, life, and fate lines.
 - [I Ching](https://oraclemirror.com/iching-oracle): Cast three coins six times to build a hexagram and consult the Book of Changes.
-- [World Cup 2026 Predictions](https://oraclemirror.com/oracle-of-olympus): Predicted scores, win probabilities, and AI oracle prophecies for all 72 FIFA World Cup 2026 group stage matches, refreshed automatically during the tournament.
-
-## World Cup 2026 Predictions (Oracle of Olympus)
-
-Every group stage match has its own prediction page with a predicted score, win/draw probabilities, confidence level, statistical reasoning, and an optional AI prophecy. Predictions are entertainment, not betting advice. Completed matches show the real final score.
-
-${groupSections}
 
 ## Key Facts
 
 - All readings are free; no account or sign-up is required.
-- Reading history is stored only in the visitor's browser (localStorage); nothing is uploaded to a server.
+- Reading history is stored only in the visitor's browser (localStorage).
 - Readings are AI-assisted, presented through fortune-teller personas, and intended for entertainment.
 - Canonical host: https://oraclemirror.com (www redirects here).
 
@@ -1546,378 +1272,6 @@ Flawless composition, 8k resolution, highly detailed face, sharp focus, professi
   });
 }
 
-function checkAllowedOrigin(origin: string, env: Env): string | null {
-  const allowed = env.ORACLE_ALLOWED_ORIGIN || "https://oraclemirror.com,https://www.oraclemirror.com";
-  const origins = allowed.split(",").map(o => o.trim().toLowerCase());
-  const normalizedOrigin = origin.trim().toLowerCase();
-  
-  if (normalizedOrigin.startsWith("http://localhost:") || normalizedOrigin.startsWith("http://127.0.0.1:")) {
-    return origin;
-  }
-  
-  if (origins.includes(normalizedOrigin)) {
-    return origin;
-  }
-  
-  return null;
-}
-
-const ipLimits = new Map<string, { count: number; resetTime: number }>();
-const IP_LIMITS_MAX_ENTRIES = 10000;
-
-function checkRateLimit(ip: string): string | null {
-  const now = Date.now();
-  const limitWindow = 60 * 1000;
-  const maxRequests = 10;
-
-  if (ipLimits.size > IP_LIMITS_MAX_ENTRIES) {
-    for (const [key, value] of ipLimits) {
-      if (now > value.resetTime) ipLimits.delete(key);
-    }
-  }
-
-  const record = ipLimits.get(ip);
-  if (!record || now > record.resetTime) {
-    ipLimits.set(ip, { count: 1, resetTime: now + limitWindow });
-    return null;
-  }
-
-  if (record.count >= maxRequests) {
-    const secondsLeft = Math.ceil((record.resetTime - now) / 1000);
-    return `Too many prediction requests. Please wait ${secondsLeft} seconds before summoning the Oracle again.`;
-  }
-
-  record.count++;
-  return null;
-}
-
-async function callAIGateway(
-  env: Env,
-  provider: string,
-  model: string,
-  systemPrompt: string,
-  userPrompt: string
-): Promise<string> {
-  if (provider === "workers-ai") {
-    if (!env.AI) {
-      throw new Error("AI binding is not configured");
-    }
-    const gatewayId = env.CLOUDFLARE_AI_GATEWAY_ID || "default";
-    const result = await env.AI.run(model, {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ]
-    }, {
-      gateway: { id: gatewayId }
-    });
-    return (result.response ?? result.message ?? JSON.stringify(result)).trim();
-  }
-
-  if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_AI_GATEWAY_ID) {
-    throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_GATEWAY_ID are required for provider-native AI Gateway");
-  }
-
-  const baseUrl = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.CLOUDFLARE_AI_GATEWAY_ID}`;
-  
-  if (provider === "openai") {
-    if (!env.AI_API_KEY) throw new Error("AI_API_KEY is required for OpenAI provider");
-    const response = await fetch(`${baseUrl}/openai/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.AI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.7
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`OpenAI gateway call failed: ${response.status} ${await response.text()}`);
-    }
-    const data: any = await response.json();
-    return data.choices[0].message.content.trim();
-  }
-
-  if (provider === "anthropic") {
-    if (!env.AI_API_KEY) throw new Error("AI_API_KEY is required for Anthropic provider");
-    const response = await fetch(`${baseUrl}/anthropic/v1/messages`, {
-      method: "POST",
-      headers: {
-        "x-api-key": env.AI_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: model,
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [
-          { role: "user", content: userPrompt }
-        ]
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`Anthropic gateway call failed: ${response.status} ${await response.text()}`);
-    }
-    const data: any = await response.json();
-    return data.content[0].text.trim();
-  }
-
-  throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-export function cleanForbiddenWords(text: string): string {
-  let cleaned = text;
-  const replacements: Array<[RegExp, string]> = [
-    [/\bguaranteed\s+win\b/gi, "strong alignment"],
-    [/\bsure\s+bet\b/gi, "promising path"],
-    [/\block\b/gi, "solid outcome"],
-    [/\brisk-free\b/gi, "uncertain but favored"],
-    [/\bbet\s+now\b/gi, "watch closely"],
-    [/\bprofit\b/gi, "mystical reward"],
-    [/\binvestment\b/gi, "venture"]
-  ];
-  for (const [regex, replacement] of replacements) {
-    cleaned = cleaned.replace(regex, replacement);
-  }
-  return cleaned;
-}
-
-function parseAndCleanOracleResponse(rawText: string, requestData: any): any {
-  let text = rawText.trim();
-  if (text.startsWith("```")) {
-    text = text.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
-  }
-
-  let parsed: any;
-  try {
-    parsed = JSON.parse(text);
-  } catch (err) {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      parsed = JSON.parse(jsonMatch[0]);
-    } else {
-      throw new Error("Failed to parse LLM output as JSON");
-    }
-  }
-
-  const result: any = {
-    persona: "Pythia Nikephoros",
-    title: "Oracle of Olympus",
-    divineVerdict: cleanForbiddenWords(parsed.divineVerdict || parsed.verdict || "The oracle is silent."),
-    predictedScore: cleanForbiddenWords(parsed.predictedScore || requestData.predictedScore),
-    mostLikelyOutcome: cleanForbiddenWords(parsed.mostLikelyOutcome || `${requestData.teamA} win`),
-    confidence: cleanForbiddenWords(parsed.confidence || requestData.confidence),
-    whyTheMirrorSeesThis: cleanForbiddenWords(parsed.whyTheMirrorSeesThis || parsed.reasoning || "The scales of fate balance here."),
-    olympianOmen: cleanForbiddenWords(parsed.olympianOmen || parsed.omen || "Hermes flies with wings of chance."),
-    mortalWarning: cleanForbiddenWords(parsed.mortalWarning || "This prophecy is for entertainment only and is not betting advice."),
-    disclaimer: "Oracle Mirror sports predictions are mystical entertainment powered by historical patterns and public football data. They are not betting advice, financial advice, or guaranteed outcomes."
-  };
-
-  return result;
-}
-
-async function handleOracleOfOlympusPredict(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-  const origin = request.headers.get("Origin") || "";
-  const allowedOrigin = checkAllowedOrigin(origin, env);
-  
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigin || "https://oraclemirror.com",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
-  }
-
-  if (env.ORACLE_ALLOWED_ORIGIN && !allowedOrigin) {
-    return new Response(JSON.stringify({ error: "Forbidden: Origin not allowed" }), { status: 403, headers: corsHeaders });
-  }
-
-  const contentLengthStr = request.headers.get("content-length");
-  if (contentLengthStr) {
-    const contentLength = parseInt(contentLengthStr, 10);
-    if (contentLength > 5120) {
-      return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders });
-    }
-  }
-
-  const clientIP = request.headers.get("cf-connecting-ip") || "unknown-ip";
-  const rateLimitError = checkRateLimit(clientIP);
-  if (rateLimitError) {
-    return new Response(JSON.stringify({ error: rateLimitError }), { status: 429, headers: corsHeaders });
-  }
-
-  let bodyText = "";
-  try {
-    const reader = request.body?.getReader();
-    if (reader) {
-      let result = await reader.read();
-      let bytesRead = 0;
-      const chunks = [];
-      const decoder = new TextDecoder();
-      while (!result.done) {
-        bytesRead += result.value.length;
-        if (bytesRead > 5120) {
-          return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: corsHeaders });
-        }
-        chunks.push(result.value);
-        result = await reader.read();
-      }
-      const combined = new Uint8Array(bytesRead);
-      let offset = 0;
-      for (const chunk of chunks) {
-        combined.set(chunk, offset);
-        offset += chunk.length;
-      }
-      bodyText = decoder.decode(combined);
-    } else {
-      bodyText = await request.text();
-    }
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Invalid request payload" }), { status: 400, headers: corsHeaders });
-  }
-
-  let data: any;
-  try {
-    data = JSON.parse(bodyText);
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: corsHeaders });
-  }
-
-  const required = [
-    "matchId", "teamA", "teamB", "competition", "stage", "date", "venue",
-    "predictedScore", "probabilities", "confidence", "historicalSummary"
-  ];
-  for (const field of required) {
-    if (data[field] === undefined) {
-      return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), { status: 400, headers: corsHeaders });
-    }
-  }
-
-  const allowedFields = new Set([
-    ...required,
-    "deterministicPredictionData",
-    "dataReasoning",
-    "group",
-    "flagA",
-    "flagB",
-    "finalScore",
-  ]);
-  for (const key of Object.keys(data)) {
-    if (!allowedFields.has(key)) {
-      return new Response(JSON.stringify({ error: `Unexpected field: ${key}` }), { status: 400, headers: corsHeaders });
-    }
-  }
-
-  if (typeof data.teamA !== "string" || data.teamA.trim().length === 0 ||
-      typeof data.teamB !== "string" || data.teamB.trim().length === 0) {
-    return new Response(JSON.stringify({ error: "Team names cannot be empty" }), { status: 400, headers: corsHeaders });
-  }
-
-  const probs = data.probabilities;
-  if (!probs || typeof probs.teamAWin !== "number" || typeof probs.draw !== "number" || typeof probs.teamBWin !== "number") {
-    return new Response(JSON.stringify({ error: "Invalid probabilities schema" }), { status: 400, headers: corsHeaders });
-  }
-
-  const stringFields = ["matchId", "competition", "stage", "date", "venue", "predictedScore", "confidence", "historicalSummary"];
-  for (const field of stringFields) {
-    if (typeof data[field] !== "string" || data[field].length > 1000) {
-      return new Response(JSON.stringify({ error: `Invalid string field: ${field}` }), { status: 400, headers: corsHeaders });
-    }
-  }
-
-  const matchId = data.matchId;
-  const predictedScore = data.predictedScore;
-  const provider = env.AI_PROVIDER || "workers-ai";
-  const model = env.AI_MODEL || (provider === "workers-ai" ? "@cf/meta/llama-3.3-70b-instruct-fp8-fast" : "gpt-4o-mini");
-
-  const cacheKeyUrl = `https://oraclemirror-cache.internal/api/oracle-of-olympus/predict?matchId=${matchId}&predictedScore=${encodeURIComponent(predictedScore)}&model=${encodeURIComponent(model)}`;
-  const cache = caches.default;
-  const cacheKeyRequest = new Request(cacheKeyUrl, { method: "GET" });
-  
-  const cachedResponse = await cache.match(cacheKeyRequest);
-  if (cachedResponse) {
-    const responseHeaders = new Headers(cachedResponse.headers);
-    responseHeaders.set("Access-Control-Allow-Origin", allowedOrigin || "https://oraclemirror.com");
-    return new Response(cachedResponse.body, {
-      status: cachedResponse.status,
-      headers: responseHeaders
-    });
-  }
-
-  const systemPrompt = `You are Pythia Nikephoros, the Oracle of Olympus. You create mystical sports predictions for Oracle Mirror. Your predictions are for entertainment only. Use the provided historical and statistical match data. Do not invent unavailable statistics. Do not mention betting odds. Do not give gambling advice. Do not claim certainty. Stay in character as an ancient Greek sports oracle, but always give a clear predicted score, likely outcome, confidence level, and short reasoning.`;
-
-  const userPrompt = `Create a mystical football prediction using this data:
-Competition: ${data.competition}
-Stage: ${data.stage}
-Match: ${data.teamA} vs ${data.teamB}
-Venue: ${data.venue}
-Date: ${data.date}
-Predicted score from deterministic model: ${data.predictedScore}
-Probabilities: Team A Win: ${probs.teamAWin}%, Draw: ${probs.draw}%, Team B Win: ${probs.teamBWin}%
-Confidence: ${data.confidence}
-Historical summary: ${data.historicalSummary}
-
-Return strict JSON with:
-divineVerdict,
-predictedScore,
-mostLikelyOutcome,
-confidence,
-whyTheMirrorSeesThis,
-olympianOmen,
-mortalWarning,
-disclaimer.`;
-
-  let responseJson: any = null;
-  try {
-    const rawResultText = await callAIGateway(env, provider, model, systemPrompt, userPrompt);
-    responseJson = parseAndCleanOracleResponse(rawResultText, data);
-  } catch (err) {
-    console.error("Oracle AI generation failed:", err);
-    return new Response(JSON.stringify({ error: "Oracle call failed", details: String(err) }), { status: 502, headers: corsHeaders });
-  }
-
-  let ttlSeconds = 12 * 3600;
-  const envTtl = env.ORACLE_CACHE_TTL_SECONDS ? parseInt(env.ORACLE_CACHE_TTL_SECONDS, 10) : NaN;
-  if (Number.isFinite(envTtl) && envTtl > 0) {
-    ttlSeconds = envTtl;
-  } else {
-    const stored = await getOlympusMatches(env);
-    const matchDate = stored.matches[matchId]?.date ?? data.date;
-    const status = deriveMatchStatus(matchDate);
-    if (status === "completed") {
-      ttlSeconds = 30 * 24 * 3600;
-    } else if (status === "today") {
-      ttlSeconds = 2 * 3600;
-    }
-  }
-
-  const finalHeaders = new Headers(corsHeaders);
-  finalHeaders.set("Content-Type", "application/json");
-  finalHeaders.set("Cache-Control", `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}`);
-
-  const okResponse = new Response(JSON.stringify(responseJson), {
-    status: 200,
-    headers: finalHeaders
-  });
-
-  ctx.waitUntil(cache.put(cacheKeyRequest, okResponse.clone()));
-
-  return okResponse;
-}
-
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -1943,8 +1297,7 @@ export default {
     }
 
     if (url.pathname === "/llms.txt") {
-      const stored = await getOlympusMatches(env);
-      return llmsTxtResponse(stored.matches);
+      return llmsTxtResponse();
     }
 
     // Google Search Console ownership verification; must serve 200 at the exact
@@ -1958,33 +1311,6 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       if (url.pathname === "/api/health") {
         return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
-      }
-
-      if (url.pathname === "/api/oracle-of-olympus/matches") {
-        if (request.method !== "GET") {
-          return errorResponse("Method not allowed", 405);
-        }
-        const stored = await getOlympusMatches(env);
-        // Warm KV in the background the first time the seed is served.
-        if (stored.source === "seed" && env.ORACLE_KV) {
-          ctx.waitUntil(syncOlympusFixtures(env));
-        }
-        const matches = Object.values(stored.matches).sort(
-          (a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group)
-        );
-        return new Response(
-          JSON.stringify({ updatedAt: stored.updatedAt, source: stored.source, matches }),
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "public, max-age=900",
-            },
-          }
-        );
-      }
-
-      if (url.pathname === "/api/oracle-of-olympus/predict") {
-        return await handleOracleOfOlympusPredict(request, env, ctx);
       }
 
       if (request.method !== "POST") {
@@ -2039,20 +1365,6 @@ export default {
     const normalizedPath = url.pathname.length > 1 && url.pathname.endsWith("/")
       ? url.pathname.slice(0, -1)
       : url.pathname;
-    if (normalizedPath === "/oracle-of-olympus") {
-      const stored = await getOlympusMatches(env);
-      return serveAppShell(request, env, url.pathname, APP_ROUTES["/oracle-of-olympus"], undefined, stored.matches);
-    }
-
-    if (normalizedPath.startsWith("/oracle-of-olympus/")) {
-      const matchId = normalizedPath.substring("/oracle-of-olympus/".length);
-      const stored = await getOlympusMatches(env);
-      const match = stored.matches[matchId];
-      if (match) {
-        return serveAppShell(request, env, url.pathname, olympusMatchMeta(match), match, stored.matches);
-      }
-    }
-
     // Server-rendered dream symbol guide pages (standalone HTML, not the shell).
     if (normalizedPath === "/dreams") {
       return guidePageResponse(renderDreamHubPage());
@@ -2070,9 +1382,5 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
-  },
-
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(syncOlympusFixtures(env));
-  },
+  }
 } satisfies ExportedHandler<Env>;
