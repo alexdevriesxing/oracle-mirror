@@ -35,7 +35,7 @@ test("homepage freshness removes World Cup promotion and preserves evergreen rea
 test("homepage ItemList removes Olympus and renumbers remaining items", () => {
   const html = rewriteHtmlFreshness(homeHtml, "/");
   assert.doesNotMatch(html, /https:\/\/oraclemirror\.com\/oracle-of-olympus/);
-  assert.match(html, /"name":"Dream Interpreter","url":"https:\/\/oraclemirror\.com\/dream-interpreter","position":2/);
+  assert.match(html, /"position":2,"name":"Dream Interpreter","url":"https:\/\/oraclemirror\.com\/dream-interpreter"/);
 });
 
 test("private archive is noindex,follow", () => {
