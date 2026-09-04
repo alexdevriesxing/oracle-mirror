@@ -45,6 +45,44 @@ test("telemetry writes sanitized Analytics Engine points", async () => {
   assert.doesNotMatch(serialized, /private user question/);
 });
 
+test("daily ritual telemetry retains coarse product metrics and drops arbitrary content", async () => {
+  const points: unknown[] = [];
+  const env = {
+    ANALYTICS: {
+      writeDataPoint(point: unknown) {
+        points.push(point);
+      },
+    },
+  } as any;
+
+  const response = await handleTelemetry(telemetryRequest({
+    session_id: "session-ritual-12345",
+    events: [{
+      event: "daily_ritual_revealed",
+      ritual_card: "The Star",
+      recommendation: "tarot",
+      badge: "Seven-Day Seer",
+      streak: 7,
+      best_streak: 8,
+      total_days: 12,
+      mood_score: 81,
+      love_score: 73,
+      money_score: 66,
+      private_note: "this must never be stored",
+    }],
+  }), env);
+
+  assert.equal(response.status, 204);
+  assert.equal(points.length, 1);
+  const serialized = JSON.stringify(points[0]);
+  assert.match(serialized, /daily_ritual_revealed/);
+  assert.match(serialized, /The Star/);
+  assert.match(serialized, /Seven-Day Seer/);
+  assert.match(serialized, /tarot/);
+  assert.match(serialized, /81/);
+  assert.doesNotMatch(serialized, /this must never be stored/);
+});
+
 test("telemetry rejects cross-origin submissions", async () => {
   const response = await handleTelemetry(telemetryRequest({
     session_id: "session-12345678",
