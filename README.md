@@ -6,6 +6,7 @@ Oracle Mirror is a fantasy-themed fortune-telling web app built on Cloudflare Wo
 
 - Your Mirror Today — a zero-API-cost daily ritual with a deterministic card, moon phase, lucky signals, energy scores, streaks, badges, and a recommended realm.
 - The Mirror Journey — a private seven-day progression layer with weekly recaps, realm-exploration quests, visible badge shelves, Major Arcana collection progress, and daily sharing.
+- Social Share Cards — privacy-safe 1080×1920 visual cards for the Daily Mirror, Tarot, Numerology, and Love Match, with native sharing and PNG fallback.
 - Crystal Ball — conversational readings with Madame Fortuna.
 - Dream Interpreter — Morpheus asks clarifying questions and grounds interpretations in a dream-symbol corpus.
 - Western Zodiac and Chinese Zodiac readings.
@@ -33,6 +34,7 @@ All readings are entertainment experiences. Avoid entering sensitive personal in
 - **Hardening:** `public/hardening.js` adds reduced-effects behavior and accessibility semantics; `src/security-headers.ts` applies explicit security headers.
 - **Daily ritual:** `public/daily-ritual-core.js` generates deterministic daily values and streak state, while `public/daily-ritual.js` / `public/daily-ritual.css` render the homepage return loop. State stays in localStorage and no reading text is uploaded.
 - **Mirror Journey:** `public/mirror-journey-core.js` stores a bounded local history of generated daily-card metadata and coarse realm visits. `public/mirror-journey.js` / `public/mirror-journey.css` render the seven-day timeline, weekly recap, exploration quest, badge shelf, collection progress, and share action without storing user questions or reading text.
+- **Social sharing:** `public/share-card-core.js` sanitizes share payloads, while `public/social-share.js` / `public/social-share.css` render 1080×1920 PNG cards on demand. Share cards intentionally exclude private Tarot questions, numerology birth dates, Love Match names, and full reading text.
 - **Ads:** `public/ad-config.js` and `public/ads.js` manage Adsterra placements, lazy loading, viewability, unfilled collapse, and refresh eligibility. `public/monetization.js` applies the M2 experiment/policy layer.
 - **Analytics:** `public/telemetry.js` sends allowlisted, non-reading-content events to `/api/telemetry`; `src/telemetry.ts` writes sanitized points to Workers Analytics Engine when bound.
 
@@ -135,6 +137,9 @@ public/
   mirror-journey-core.js
   mirror-journey.js
   mirror-journey.css
+  share-card-core.js
+  social-share.js
+  social-share.css
   monetization.js
   telemetry.js
   ad-config.js
@@ -161,3 +166,4 @@ wrangler.toml
 - M2 monetization details and Analytics Engine query examples are documented in `docs/M2-MONETIZATION.md`.
 - M3 daily-return mechanics are documented in `docs/M3-DAILY-RITUAL.md`.
 - M4 Mirror Journey retention and progression mechanics are documented in `docs/M4-MIRROR-JOURNEY.md`.
+- M5 privacy-safe social sharing is documented in `docs/M5-SOCIAL-SHARE.md`.
