@@ -15,12 +15,13 @@ const SAFE_STRING_FIELDS = [
   "site_name", "slot_id", "ad_instance_id", "placement", "format", "zone_id",
   "screen", "screen_type", "realm", "realm_type", "reason", "error_reason",
   "trigger", "page_path", "consent_state", "ad_mode", "device", "source",
-  "state", "result_kind",
+  "state", "result_kind", "ritual_card", "badge", "recommendation",
 ] as const;
 
 const SAFE_NUMBER_FIELDS = [
   "answer_length", "attempt", "next_attempt", "engaged_seconds", "readings_completed",
-  "ads_filled", "ads_viewable_1s", "shares",
+  "ads_filled", "ads_viewable_1s", "shares", "streak", "best_streak", "total_days",
+  "mood_score", "love_score", "money_score",
 ] as const;
 
 const SAFE_BOOLEAN_FIELDS = [
@@ -90,6 +91,9 @@ function analyticsPoint(sessionId: string, event: SafeEvent, versionId: string, 
       s.page_path || "",
       s.result_kind || "",
       s.state || "",
+      s.ritual_card || "",
+      s.badge || "",
+      s.recommendation || "",
       versionId,
       versionTag,
     ],
@@ -105,6 +109,12 @@ function analyticsPoint(sessionId: string, event: SafeEvent, versionId: string, 
       n.next_attempt || 0,
       b.eligible ? 1 : 0,
       b.blocked ? 1 : 0,
+      n.streak || 0,
+      n.best_streak || 0,
+      n.total_days || 0,
+      n.mood_score || 0,
+      n.love_score || 0,
+      n.money_score || 0,
     ],
   };
 }
