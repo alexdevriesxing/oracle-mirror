@@ -30,6 +30,20 @@ jobs:
       - name: Excise retired event source
         run: python3 scripts/pass5_remove_retired_event.py
 
+      - name: Normalize migrated TypeScript literals
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/index.ts')
+          s = p.read_text(encoding='utf-8')
+          broken = '.join("\n");'.replace('\\n', '\n')
+          fixed = '.join("\\n");'
+          if broken not in s:
+              raise SystemExit('Expected migrated sitemap join literal was not found')
+          p.write_text(s.replace(broken, fixed, 1), encoding='utf-8')
+          PY
+
       - name: Inspect migrated Worker boundary
         run: nl -ba src/index.ts | sed -n '615,645p'
 
