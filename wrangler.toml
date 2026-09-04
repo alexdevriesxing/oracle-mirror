@@ -9,11 +9,8 @@ binding = "AI"
 binding = "ORACLE_KV"
 id = "b277f41b3df54315977eb7aa50c4e539"
 
-# Refresh Oracle of Olympus fixtures/results every 2 hours.
-# Live scores require the FOOTBALL_DATA_API_KEY secret; without it the
-# sync stores the static schedule seed.
-[triggers]
-crons = ["0 */2 * * *"]
+# Oracle of Olympus is now a post-tournament World Cup 2026 prediction archive.
+# The previous two-hour fixture/results sync was retired after the tournament.
 
 [assets]
 directory = "./public"
