@@ -15,7 +15,38 @@ function cleanNumber(value, minimum = 0, maximum = 100) {
   return Math.max(minimum, Math.min(maximum, Math.round(number)));
 }
 
+function isNormalizedSharePayload(input) {
+  return Boolean(
+    input &&
+    typeof input === "object" &&
+    input.version === SHARE_CARD_VERSION &&
+    SAFE_KINDS.has(input.kind) &&
+    typeof input.eyebrow === "string" &&
+    typeof input.title === "string" &&
+    typeof input.glyph === "string" &&
+    typeof input.subtitle === "string" &&
+    Array.isArray(input.lines) &&
+    typeof input.footer === "string"
+  );
+}
+
+function normalizedCopy(input) {
+  if (!isNormalizedSharePayload(input)) return null;
+  return {
+    version: SHARE_CARD_VERSION,
+    kind: input.kind,
+    eyebrow: cleanText(input.eyebrow, 80),
+    title: cleanText(input.title, 120),
+    glyph: cleanText(input.glyph, 8) || "✦",
+    subtitle: cleanText(input.subtitle, 160),
+    lines: input.lines.slice(0, 4).map((line) => cleanText(line, 140)).filter(Boolean),
+    footer: cleanText(input.footer, 160),
+  };
+}
+
 export function sanitizeSharePayload(input) {
+  const normalized = normalizedCopy(input);
+  if (normalized) return normalized;
   if (!input || typeof input !== "object") return null;
   const kind = SAFE_KINDS.has(input.kind) ? input.kind : null;
   if (!kind) return null;
