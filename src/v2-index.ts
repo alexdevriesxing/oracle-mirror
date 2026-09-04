@@ -7,11 +7,9 @@ import {
 } from "./ssr-shell.ts";
 import {
   isHtmlResponse,
-  isLlmsResponse,
-  isRemovedWorldCupPath,
+  isRetiredEventPath,
   isSitemapResponse,
   rewriteHtmlFreshness,
-  rewriteLlmsFreshness,
   rewriteSitemapFreshness,
 } from "./seo-freshness.ts";
 import { withSecurityHeaders } from "./security-headers.ts";
@@ -33,7 +31,7 @@ function responseWithBody(response: Response, body: string, contentType?: string
   });
 }
 
-function removedWorldCupResponse(request: Request): Response {
+function removedLegacyEventResponse(request: Request): Response {
   const url = new URL(request.url);
   const wantsJson = url.pathname.startsWith("/api/")
     || (request.headers.get("accept") || "").includes("application/json");
@@ -72,13 +70,6 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
     );
   }
 
-  if (isLlmsResponse(url.pathname, response)) {
-    return responseWithBody(
-      response,
-      rewriteLlmsFreshness(await response.text()),
-      "text/plain; charset=UTF-8"
-    );
-  }
 
   if (isHtmlResponse(response)) {
     return responseWithBody(
@@ -123,8 +114,8 @@ export default {
       return withSecurityHeaders(await handleTelemetry(request, env));
     }
 
-    if (isRemovedWorldCupPath(url.pathname)) {
-      return withSecurityHeaders(removedWorldCupResponse(request));
+    if (isRetiredEventPath(url.pathname)) {
+      return withSecurityHeaders(removedLegacyEventResponse(request));
     }
 
     let response = await app.fetch(request, env, ctx);

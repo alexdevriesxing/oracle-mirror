@@ -15,7 +15,6 @@ const fixture = `<!DOCTYPE html>
     <section id="page-crystal-ball" class="page realm-page"><h2>Crystal Ball Only</h2></section>
     <section id="page-tarot" class="page realm-page"><h2>Tarot Only</h2></section>
     <section id="page-love-match" class="page realm-page"><h2>Love Match Only</h2></section>
-    <section id="page-olympus" class="page realm-page"><h2>Olympus Only</h2></section>
     <aside class="oracle-ad oracle-ad-footer">Footer ad</aside>
     <footer>Shared Footer</footer>
     <script src="/script.js" type="module"></script>
@@ -28,7 +27,6 @@ test("maps public and result routes to their top-level page section", () => {
   assert.equal(pageSectionIdForPath("/love-oracle"), "page-love-match");
   assert.equal(pageSectionIdForPath("/result/love-oracle"), "page-love-match");
   assert.equal(pageSectionIdForPath("/result/tarot"), "page-tarot");
-  assert.equal(pageSectionIdForPath("/oracle-of-olympus/canada-vs-mexico"), "page-olympus");
   assert.equal(pageSectionIdForPath("/dreams/falling"), null);
 });
 
@@ -39,7 +37,6 @@ test("prunes unrelated app pages but preserves shared chrome", () => {
   assert.doesNotMatch(html, /Home realm grid/);
   assert.doesNotMatch(html, /Crystal Ball Only/);
   assert.doesNotMatch(html, /Love Match Only/);
-  assert.doesNotMatch(html, /Olympus Only/);
   assert.match(html, /Shared Header/);
   assert.match(html, /Shared Footer/);
   assert.match(html, /Footer ad/);

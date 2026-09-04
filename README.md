@@ -1,123 +1,151 @@
 # Oracle Mirror
 
-Oracle Mirror is a fantasy-themed fortune-telling web application that runs entirely on [Cloudflare Workers](https://developers.cloudflare.com/workers/) with integrated [Workers AI](https://developers.cloudflare.com/workers-ai/).
-It delivers tarot readings, horoscopes, numerology, love compatibility, and FIFA World Cup 2026 match predictions through atmospheric oracle personas — live at [oraclemirror.com](https://oraclemirror.com).
+Oracle Mirror is a fantasy-themed fortune-telling web app built on Cloudflare Workers, Workers AI, static assets, and a route-scoped V2 SSR shell. It is live at [oraclemirror.com](https://oraclemirror.com).
 
-## Features
+## Experiences
 
-- **Enchanted UI** — Dark, illustrated interface with an ornate mirror hero, ambient particle effects, and unique visual themes for each realm.
-- **Mystical Realms** — Each with its own oracle persona, AI prompt, and dedicated page:
-  - **Crystal Ball** — Madame Fortuna answers questions through a 7-step alignment ritual and chat.
-  - **Western Zodiac** — Astaria reads planetary alignments for your zodiac sign.
-  - **Chinese Zodiac** — Master Longwei reveals your destiny based on your birth year.
-  - **Tarot** — Seraphina draws a Past-Present-Future three-card spread.
-  - **Love Oracle & Love Match** — Rosalind guides hearts through cosmic compatibility scores.
-  - **Soulmate Vision** — AI-generated portrait (Flux-1-schnell) and destined location of your cosmic soulmate.
-  - **Magic 8 Ball** — The Cosmic 8-Ball delivers playful cosmic answers.
-  - **Numerology** — Pythius calculates your Life Path Number from your birthday.
-  - **Daily Fortune** — The Dawn Oracle inscribes today's fortune at sunrise.
-  - **Birth Chart, Palm Reading, I Ching** — Astrological placements, palmistry lines, and hexagram consultations.
-  - **Archive** — LocalStorage-powered history of all your past readings.
-- **Oracle of Olympus (World Cup 2026)** — Pythia Nikephoros predicts all 72 group stage matches:
-  - Full fixture seed with a deterministic prediction engine (scores, win probabilities, confidence).
-  - Match statuses (upcoming/today/completed) derived from dates; old matches auto-hide after 7 days.
-  - A cron trigger (every 2 hours) syncs fixtures into KV; with a [football-data.org](https://www.football-data.org/) API key configured, real final scores overlay the predictions automatically.
-  - Per-match SEO pages with SportsEvent/BreadcrumbList JSON-LD, sitemap coverage, and an `llms.txt` index for AI assistants.
-- **Workers AI via AI Gateway** — All inference routes through AI Gateway for caching and observability. Pluggable provider support (Workers AI, OpenAI, Anthropic) for Olympus prophecies.
-- **Fallback fortunes** — Graceful degradation with mystical one-liners (and template prophecies) when AI is unavailable.
-- **Hardening** — Origin allowlist, per-IP rate limiting, payload size limits, strict request validation, and betting-language sanitization on sports content.
+- Crystal Ball — conversational readings with Madame Fortuna.
+- Dream Interpreter — Morpheus asks clarifying questions and grounds interpretations in a dream-symbol corpus.
+- Western Zodiac and Chinese Zodiac readings.
+- Tarot — interactive Past / Present / Future Major Arcana reading.
+- Love Oracle and Love Match compatibility.
+- Magic 8 Ball.
+- Numerology life-path calculator.
+- Daily Fortune.
+- Birth Chart.
+- Palm Reading.
+- I Ching.
+- Mystics — character/lore hub.
+- Private browser Archive for saved readings.
+- Dream symbol guide hub and individual symbol pages.
 
-## API Endpoints
-
-| Method | Path | Body | Description |
-|--------|------|------|-------------|
-| GET | `/api/health` | — | Returns `OK` |
-| GET | `/api/oracle-of-olympus/matches` | — | All World Cup 2026 fixtures with predictions (KV-backed) |
-| POST | `/api/oracle-of-olympus/predict` | match payload | AI prophecy for a fixture (validated, rate-limited, cached) |
-| POST | `/api/chat` | `{ messages, readingProfile? }` | Crystal Ball conversation with Madame Fortuna |
-| POST | `/api/reading` | `{ query }` | One-shot crystal ball reading |
-| POST | `/api/western-zodiac` | `{ sign }` | Western horoscope |
-| POST | `/api/chinese-zodiac` | `{ year }` | Chinese zodiac reading |
-| POST | `/api/tarot` | `{ question, cards? }` | Three-card tarot spread |
-| POST | `/api/love` | `{ question, name1?, name2? }` | Love oracle |
-| POST | `/api/love-match` | `{ type, seekerName, partnerName, seekerValue, partnerValue }` | Compatibility reading |
-| POST | `/api/soulmate-vision` | `{ energy, element, age, idealDate }` | AI soulmate portrait + location |
-| POST | `/api/magic8` | `{ question }` | Magic 8 Ball |
-| POST | `/api/numerology` | `{ birthday }` | Life path numerology |
-| POST | `/api/daily-fortune` | `{ sign? }` | Daily fortune |
-| POST | `/api/birthchart` | `{ birthday, birthtime?, sign, placements }` | Birth chart reading |
-| POST | `/api/palmistry` | `{ handShape, lines }` | Palm reading |
-| POST | `/api/iching` | `{ question, hexagramTitle, hexagramLines }` | I Ching interpretation |
-| POST | `/api/feedback` | `{ ... }` | Submit feedback |
-
-SEO/GAIO routes served by the worker: `/sitemap.xml`, `/robots.txt`, `/llms.txt`.
-
-## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) 22.6+ (the test runner uses native TypeScript type stripping)
-- A Cloudflare account with Workers, Workers AI, and KV enabled
-- (Optional) An AI Gateway configured on your account
-- (Optional) A free [football-data.org](https://www.football-data.org/client/register) API key for live World Cup scores
-
-### Setup
-
-```bash
-npm install        # install dev dependencies
-npm run build      # bundle the worker with esbuild → dist/index.js
-npm run typecheck  # tsc --noEmit
-npm test           # node:test suite (prediction engine, sanitization, sync)
-npm run dev        # wrangler dev on http://localhost:8787
-npm run deploy     # build + wrangler deploy
-```
-
-### Configuration (`wrangler.toml`)
-
-- `[ai]` — Workers AI binding (`AI`).
-- `[[kv_namespaces]]` — `ORACLE_KV` stores the synced World Cup fixtures. Create your own with `npx wrangler kv namespace create ORACLE_KV` and update the `id`.
-- `[triggers]` — cron `0 */2 * * *` refreshes fixtures/results.
-- `[assets]` — serves `public/` with `run_worker_first = true`.
-
-### Secrets / Vars (optional)
-
-| Name | Purpose |
-|------|---------|
-| `FOOTBALL_DATA_API_KEY` | Enables live World Cup final scores (`npx wrangler secret put FOOTBALL_DATA_API_KEY`) |
-| `AI_PROVIDER` / `AI_MODEL` / `AI_API_KEY` | Route Olympus prophecies through OpenAI or Anthropic via AI Gateway instead of Workers AI |
-| `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_AI_GATEWAY_ID` | Required for provider-native AI Gateway calls |
-| `ORACLE_ALLOWED_ORIGIN` | Comma-separated CORS origin allowlist for the predict API |
-| `ORACLE_CACHE_TTL_SECONDS` | Override the prophecy cache TTL |
-| `AD_CONSENT_REQUIRED` | Gate ad scripts behind a consent prompt |
-
-## Project Structure
-
-```
-oracle-mirror-code/
-├── package.json          # Scripts: build, dev, test, typecheck, deploy
-├── tsconfig.json         # TypeScript configuration (strict, noEmit)
-├── wrangler.toml         # Worker config: AI, KV, cron, assets, routes
-├── public/               # Static assets served by the worker
-│   ├── index.html        # SPA with all realm pages + structured data
-│   ├── styles.css        # Fantasy themes, animations, responsive layout
-│   ├── script.js         # Navigation, API calls, particles, archive, Olympus UI
-│   └── ads.js            # Ad slot management and diagnostics
-├── src/
-│   ├── index.ts          # Worker: routing, API endpoints, SEO injection, cron
-│   ├── olympus-data.ts   # WC2026 fixture seed + deterministic prediction engine
-│   └── olympus-sync.ts   # KV store + football-data.org result sync
-├── tests/
-│   └── prediction.test.ts # node:test suite
-└── dist/                 # esbuild output (gitignored)
-```
+All readings are entertainment experiences. Avoid entering sensitive personal information.
 
 ## Architecture
 
-- **Backend**: Single Cloudflare Worker handles all `/api/*` routes, injects per-route SEO metadata and JSON-LD into the SPA shell, and serves static assets via the `ASSETS` binding.
-- **Frontend**: Single-page application with CSS-based page transitions. No framework dependencies — pure vanilla HTML/CSS/JS. World Cup fixtures are fetched from the worker API (no hardcoded data).
-- **AI**: `@cf/meta/llama-3.1-8b-instruct` via Workers AI + AI Gateway for readings; `@cf/black-forest-labs/flux-1-schnell` for Soulmate Vision portraits.
-- **Storage**: Reading history lives client-side in LocalStorage; World Cup fixtures live in Workers KV, refreshed by cron.
+- **Cloudflare Worker:** `src/v2-index.ts` is the production entry point. It wraps the core application handler with route-scoped SSR, security headers, SEO freshness rules, telemetry, and legacy URL tombstones.
+- **Core application:** `src/index.ts` provides reading APIs, metadata, sitemap/robots/llms output, dream-guide routing, and the static app shell.
+- **Workers AI:** the default inference model is `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
+- **Static app:** `public/index.html`, `public/script.js`, and `public/styles.css` contain the interactive realms.
+- **Route-scoped SSR:** initial HTML contains only the requested realm plus shared chrome; `public/hydrate-shell.js` restores the complete client shell before the legacy application module starts.
+- **Hardening:** `public/hardening.js` adds reduced-effects behavior and accessibility semantics; `src/security-headers.ts` applies explicit security headers.
+- **Ads:** `public/ad-config.js` and `public/ads.js` manage Adsterra placements, lazy loading, viewability, unfilled collapse, and refresh eligibility. `public/monetization.js` applies the M2 experiment/policy layer.
+- **Analytics:** `public/telemetry.js` sends allowlisted, non-reading-content events to `/api/telemetry`; `src/telemetry.ts` writes sanitized points to Workers Analytics Engine when bound.
 
-## License
+## Routes
 
-This project is provided for educational purposes under the MIT license.
+Public reading routes include:
+
+`/crystal-ball`, `/dream-interpreter`, `/western-zodiac`, `/chinese-zodiac`, `/tarot`, `/love-oracle`, `/love-match`, `/magic-8-ball`, `/numerology`, `/daily-fortune`, `/birth-chart`, `/palm-reading`, `/iching-oracle`, `/mystics`, `/dreams`, and `/dreams/:symbol`.
+
+Utility routes include `/archive`, `/privacy-policy`, `/cookie-policy`, `/contact`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/ads.txt`, and `/api/health`.
+
+Result shells under `/result/*` are intentionally noindex.
+
+## API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Health check |
+| POST | `/api/chat` | Crystal Ball conversation |
+| POST | `/api/dream` | Dream Interpreter conversation |
+| POST | `/api/reading` | One-shot crystal-ball reading |
+| POST | `/api/western-zodiac` | Western horoscope |
+| POST | `/api/chinese-zodiac` | Chinese zodiac reading |
+| POST | `/api/tarot` | Tarot interpretation |
+| POST | `/api/love` | Love Oracle |
+| POST | `/api/love-match` | Compatibility interpretation |
+| POST | `/api/magic8` | Magic 8 Ball |
+| POST | `/api/numerology` | Numerology reading |
+| POST | `/api/daily-fortune` | Daily fortune |
+| POST | `/api/birthchart` | Birth-chart interpretation |
+| POST | `/api/palmistry` | Palm reading |
+| POST | `/api/soulmate-vision` | Soulmate Vision |
+| POST | `/api/iching` | I Ching interpretation |
+| POST | `/api/telemetry` | Privacy-safe analytics ingestion |
+
+## Local development
+
+Requirements: Node.js 22.6+ and a Cloudflare account when running Worker-bound features.
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run build
+npx wrangler@4 dev
+```
+
+## Deployment
+
+Production deploys are gated by `.github/workflows/v2-ci.yml`. After a green `master` build, `.github/workflows/deploy-cloudflare.yml` deploys the exact verified SHA when these GitHub Actions secrets are configured:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+The deployment workflow then verifies production metadata, security headers, and retired-URL behavior.
+
+Manual deployment:
+
+```bash
+npm run deploy
+```
+
+## Cloudflare bindings
+
+`wrangler.toml` currently defines:
+
+- `AI` — Workers AI.
+- `ASSETS` — static asset binding.
+- `ANALYTICS` — Workers Analytics Engine dataset (`oracle_mirror_events`).
+- `CF_VERSION_METADATA` — Worker version metadata used in analytics.
+- custom domains for `oraclemirror.com` and `www.oraclemirror.com`.
+
+`ADSTERRA_ADS_TXT` is an optional Worker secret used to serve the production `ads.txt` seller record.
+
+## Quality gates
+
+The V2 CI workflow runs on `master` and `v2/**` branches:
+
+1. `npm ci`
+2. `npm audit --audit-level=high`
+3. `npm run typecheck`
+4. `npm test`
+5. `npm run build`
+
+## Key files
+
+```text
+.github/workflows/
+  v2-ci.yml
+  deploy-cloudflare.yml
+public/
+  index.html
+  script.js
+  styles.css
+  hydrate-shell.js
+  hardening.js
+  monetization.js
+  telemetry.js
+  ad-config.js
+  ads.js
+src/
+  index.ts
+  v2-index.ts
+  ssr-shell.ts
+  seo-freshness.ts
+  security-headers.ts
+  telemetry.ts
+  dream-data.ts
+  dream-pages.ts
+  realm-content.ts
+tests/
+docs/
+wrangler.toml
+```
+
+## Notes
+
+- The private Archive is `noindex,follow` and excluded from the sitemap.
+- Historical URLs for removed temporary experiences may return HTTP 410 so search engines can retire them cleanly; removed feature code is not kept in the product bundle.
+- M2 monetization details and Analytics Engine query examples are documented in `docs/M2-MONETIZATION.md`.
