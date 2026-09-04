@@ -15,7 +15,8 @@ const SAFE_KEYS = new Set([
   "attempt", "next_attempt", "result_kind", "engaged_seconds", "readings_completed",
   "ads_filled", "ads_viewable_1s", "shares",
   "ritual_card", "badge", "recommendation", "streak", "best_streak", "total_days",
-  "mood_score", "love_score", "money_score",
+  "mood_score", "love_score", "money_score", "journey_days", "unique_cards",
+  "realms_explored",
 ]);
 
 function getSessionId() {
@@ -60,7 +61,7 @@ function updateCounters(event) {
   if (event.event === "result_rendered") counters.readings_completed += 1;
   if (event.event === "ad_slot_filled") counters.ads_filled += 1;
   if (event.event === "ad_slot_viewable_1s") counters.ads_viewable_1s += 1;
-  if (event.event === "share_complete" || event.event === "share_completed") counters.shares += 1;
+  if (event.event === "share_complete" || event.event === "share_completed" || event.event === "mirror_journey_share") counters.shares += 1;
 }
 
 async function postPayload(payload, preferBeacon = false) {
