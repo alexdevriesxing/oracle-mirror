@@ -1,0 +1,20 @@
+name: Pass 5 Retired Feature Scan
+
+on:
+  push:
+    branches:
+      - v2/pass-5-remove-olympus-source
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate retired feature residue
+        shell: bash
+        run: |
+          echo '=== retired feature references ==='
+          grep -RniE 'oracle-of-olympus|world cup 2026|oracle of olympus|pythia nikephoros|football_data|olympus|WC2026|sports prediction' \
+            --exclude-dir=.git \
+            --exclude='pass5-scan.yml' \
+            README.md src public tests docs .github || true
