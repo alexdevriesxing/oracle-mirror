@@ -21,7 +21,8 @@ const SAFE_STRING_FIELDS = [
 const SAFE_NUMBER_FIELDS = [
   "answer_length", "attempt", "next_attempt", "engaged_seconds", "readings_completed",
   "ads_filled", "ads_viewable_1s", "shares", "streak", "best_streak", "total_days",
-  "mood_score", "love_score", "money_score",
+  "mood_score", "love_score", "money_score", "journey_days", "unique_cards",
+  "realms_explored",
 ] as const;
 
 const SAFE_BOOLEAN_FIELDS = [
@@ -115,6 +116,9 @@ function analyticsPoint(sessionId: string, event: SafeEvent, versionId: string, 
       n.mood_score || 0,
       n.love_score || 0,
       n.money_score || 0,
+      n.journey_days || 0,
+      n.unique_cards || 0,
+      n.realms_explored || 0,
     ],
   };
 }

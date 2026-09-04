@@ -203,6 +203,9 @@ function renderRevealed(container, mirror, state, trigger = "auto") {
   };
 
   track("daily_ritual_revealed", eventDetails);
+  window.dispatchEvent(new CustomEvent("oracle:daily-ritual-completed", {
+    detail: { mirror, state },
+  }));
 
   container.querySelector("[data-ritual-recommendation]")?.addEventListener("click", () => {
     track("daily_ritual_recommendation_click", {
