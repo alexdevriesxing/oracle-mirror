@@ -2,7 +2,14 @@ export const SHARE_CARD_VERSION = 1;
 export const SHARE_CARD_WIDTH = 1080;
 export const SHARE_CARD_HEIGHT = 1920;
 
-const SAFE_KINDS = new Set(["daily", "tarot", "numerology", "love-match"]);
+const SAFE_KINDS = new Set([
+  "daily",
+  "tarot",
+  "numerology",
+  "love-match",
+  "pick-card",
+  "three-doors",
+]);
 
 function cleanText(value, max = 120) {
   if (typeof value !== "string") return "";
@@ -99,6 +106,40 @@ export function sanitizeSharePayload(input) {
       subtitle: "My Oracle Mirror numerology result",
       lines: ["Calculated without displaying my birth date"],
       footer: "Birth date excluded from this card",
+    };
+  }
+
+  if (kind === "pick-card") {
+    const card = cleanText(input.card, 64);
+    const message = cleanText(input.message, 140);
+    if (!card || !message) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "PICK A CARD",
+      title: card,
+      glyph: cleanText(input.glyph, 8) || "✦",
+      subtitle: "My instant Oracle Mirror tarot prompt",
+      lines: [message],
+      footer: "A playful symbolic reflection from Oracle Mirror",
+    };
+  }
+
+  if (kind === "three-doors") {
+    const outcome = cleanText(input.outcome, 72);
+    const message = cleanText(input.message, 140);
+    if (!outcome || !message) return null;
+    const category = cleanText(input.category, 32);
+    const door = cleanText(input.door, 32);
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "THREE DOORS",
+      title: outcome,
+      glyph: cleanText(input.glyph, 8) || "✦",
+      subtitle: [door ? `${door} Door` : "Mystery Door", category].filter(Boolean).join(" · "),
+      lines: [message],
+      footer: "A playful symbolic reveal from Oracle Mirror",
     };
   }
 

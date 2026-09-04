@@ -2,6 +2,7 @@ import "./telemetry.js";
 import "./daily-ritual.js";
 import "./mirror-journey.js";
 import "./social-share.js";
+import "./instant-mysteries.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
