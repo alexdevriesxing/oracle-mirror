@@ -9,8 +9,15 @@ binding = "AI"
 binding = "ORACLE_KV"
 id = "b277f41b3df54315977eb7aa50c4e539"
 
-# Oracle of Olympus is now a post-tournament World Cup 2026 prediction archive.
-# The previous two-hour fixture/results sync was retired after the tournament.
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "oracle_mirror_events"
+
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
+# The temporary World Cup / Oracle of Olympus feature and its scheduled sync
+# were removed in V2 Pass 2. No scheduled trigger remains.
 
 [assets]
 directory = "./public"

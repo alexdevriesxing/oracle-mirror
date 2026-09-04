@@ -11,7 +11,7 @@
     "dev": "wrangler dev",
     "test": "node --test --experimental-strip-types \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && npx --yes wrangler@4 deploy"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240506.0",

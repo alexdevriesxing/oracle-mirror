@@ -15,8 +15,11 @@ import {
   rewriteSitemapFreshness,
 } from "./seo-freshness.ts";
 import { withSecurityHeaders } from "./security-headers.ts";
+import { handleTelemetry } from "./telemetry.ts";
+import type { TelemetryEnv } from "./telemetry.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
+type V2Env = Env & TelemetryEnv;
 
 function responseWithBody(response: Response, body: string, contentType?: string): Response {
   const headers = new Headers(response.headers);
@@ -113,8 +116,12 @@ async function transformHtmlResponse(response: Response, request: Request): Prom
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: V2Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/telemetry") {
+      return withSecurityHeaders(await handleTelemetry(request, env));
+    }
 
     if (isRemovedWorldCupPath(url.pathname)) {
       return withSecurityHeaders(removedWorldCupResponse(request));
@@ -126,7 +133,7 @@ export default {
     return withSecurityHeaders(response);
   },
 
-  async scheduled(_controller: ScheduledController, _env: Env, _ctx: ExecutionContext): Promise<void> {
+  async scheduled(_controller: ScheduledController, _env: V2Env, _ctx: ExecutionContext): Promise<void> {
     return;
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<V2Env>;
