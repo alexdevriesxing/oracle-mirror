@@ -1,6 +1,6 @@
 const CANONICAL_HOST = "https://oraclemirror.com";
 const PASS_DATE = "2026-09-04";
-const WORLD_CUP_FINAL_DATE = "2026-07-19";
+const OLYMPUS_PATH = "/oracle-of-olympus";
 
 function normalizePath(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith("/")) return pathname.slice(0, -1);
@@ -36,13 +36,34 @@ function setTitleFamily(html: string, title: string): string {
   return output;
 }
 
+function rewriteJsonLdWithoutOlympus(html: string): string {
+  return html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g, (full, rawJson) => {
+    try {
+      const data = JSON.parse(rawJson);
+      if (data?.["@type"] === "ItemList" && Array.isArray(data.itemListElement)) {
+        data.itemListElement = data.itemListElement
+          .filter((item: { url?: string }) => !item?.url?.includes(OLYMPUS_PATH))
+          .map((item: Record<string, unknown>, index: number) => ({ ...item, position: index + 1 }));
+        return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+      }
+    } catch {
+      // Preserve hand-authored JSON-LD formatting when it is not parseable here.
+    }
+    return full;
+  });
+}
+
+function removeOlympusLinks(html: string): string {
+  // Removes navigation, homepage card, footer link, and any other direct public
+  // entry points to the retired feature. The underlying legacy DOM may remain
+  // temporarily during the monolith decomposition, but there is no public route.
+  return html.replace(/<a\b[^>]*href="\/oracle-of-olympus"[^>]*>[\s\S]*?<\/a>/g, "");
+}
+
 export function rewriteHtmlFreshness(html: string, pathname: string): string {
   const path = normalizePath(pathname);
-  let output = html;
+  let output = removeOlympusLinks(rewriteJsonLdWithoutOlympus(html));
 
-  // Keep the evergreen homepage focused on Oracle Mirror's core divination
-  // experience. The World Cup remains accessible as a historical archive, but
-  // is no longer promoted as a live/current feature.
   if (path === "/") {
     const title = "Free Tarot, Horoscopes & Mystical Readings | Oracle Mirror";
     const description =
@@ -54,60 +75,16 @@ export function rewriteHtmlFreshness(html: string, pathname: string): string {
         "Free interactive tarot readings, daily horoscopes, numerology, crystal ball answers, love compatibility, AI Soulmate Vision, and World Cup 2026 match predictions.",
         "Free interactive tarot readings, daily horoscopes, dream interpretation, numerology, crystal ball answers, love compatibility, birth charts, palmistry, I Ching, and AI Soulmate Vision."
       )
-      .replace("&#9889; World Cup Oracle", "&#9889; 2026 Archive")
-      .replace(/World Cup 2026 Predictions/g, "World Cup 2026 Prediction Archive")
       .replace(
         "Seekers can consult ten mystical realms: Madame Fortuna's Crystal Ball, Astaria's Western Zodiac horoscope, Master Longwei's Chinese Zodiac Jade Pavilion, Seraphina's Tarot drawing, Rosalind's Love compatibility oracle, the new Temple of Matches (Love Match), the Cosmic Magic 8 Ball arcade, Pythius's life path Numerology calculator, and the Dawn Oracle's Daily Fortune scroll.",
-        "Oracle Mirror spans crystal ball readings, dream interpretation, Western and Chinese zodiac guidance, Tarot, the Love Oracle and compatibility tools, Magic 8 Ball, numerology, daily fortunes, birth charts, palmistry, I Ching, and the Oracle of Olympus prediction archive."
+        "Oracle Mirror offers crystal ball readings, dream interpretation, Western and Chinese zodiac guidance, Tarot, the Love Oracle and compatibility tools, Magic 8 Ball, numerology, daily fortunes, birth charts, palmistry, and I Ching."
       );
   }
 
   // The private browser journal is useful product UI, not a public search
-  // landing page. Keep links crawlable while removing the shell from indexing.
+  // landing page. Keep its internal links crawlable while removing it from the index.
   if (path === "/archive") {
     output = setMeta(output, "name", "robots", "noindex,follow");
-  }
-
-  if (path === "/oracle-of-olympus") {
-    const title = "World Cup 2026 Prediction Archive — Oracle of Olympus | Oracle Mirror";
-    const description =
-      "Explore Oracle Mirror's archived FIFA World Cup 2026 group-stage predictions, predicted scores, win probabilities, oracle analysis, and final results where available.";
-    output = setTitleFamily(output, title);
-    output = setDescriptionFamily(output, description);
-    output = output
-      .replace(/World Cup 2026 Predictions/g, "World Cup 2026 Prediction Archive")
-      .replace(/Mystical Sports Predictions/g, "Prediction Archive")
-      .replace(
-        "Free FIFA World Cup 2026 predictions for all 72 group stage matches — predicted scores, win probabilities, and oracle prophecies, refreshed automatically throughout the tournament. Select a fixture to view its statistical mirror and summon the oracle's prophecy.",
-        "A retrospective archive of Oracle Mirror's FIFA World Cup 2026 predictions for all 72 group-stage matches — predicted scores, win probabilities, oracle prophecies, and final results where available. Select a fixture to compare what the mirror foresaw with what happened."
-      )
-      .replace(
-        "Fixtures and statuses refresh automatically throughout the tournament.",
-        "The archive preserves all 72 group-stage prediction pages alongside final results where available."
-      )
-      .replace(
-        "Updated throughout the tournament.",
-        "Preserved as a post-tournament archive."
-      )
-      .replace(
-        "How does Oracle Mirror predict World Cup 2026 matches?",
-        "How did Oracle Mirror predict World Cup 2026 matches?"
-      )
-      .replace(
-        "Does Oracle Mirror cover every World Cup 2026 group stage match?",
-        "Does the archive cover every World Cup 2026 group-stage match?"
-      );
-  }
-
-  if (path.startsWith("/oracle-of-olympus/")) {
-    output = output
-      .replace(/<title>(.*?) Prediction — (.*?)<\/title>/s, "<title>$1 Archived Prediction — $2</title>")
-      .replace(/content="([^"]*?) FIFA World Cup 2026 ([^"]*?) prediction:/g, 'content="$1 FIFA World Cup 2026 $2 archived prediction:')
-      .replace(/AI oracle analysis\./g, "AI oracle analysis preserved for retrospective comparison.")
-      .replace(
-        '"eventStatus":"https://schema.org/EventScheduled"',
-        '"eventStatus":"https://schema.org/EventCompleted"'
-      );
   }
 
   return output;
@@ -117,18 +94,8 @@ function transformUrlBlock(block: string): string {
   const loc = block.match(/<loc>(.*?)<\/loc>/)?.[1] ?? "";
 
   if (loc === `${CANONICAL_HOST}/archive`) return "";
-
-  if (loc === `${CANONICAL_HOST}/oracle-of-olympus`) {
-    return block
-      .replace(/<lastmod>.*?<\/lastmod>/, `<lastmod>${PASS_DATE}</lastmod>`)
-      .replace(/<changefreq>.*?<\/changefreq>/, "<changefreq>monthly</changefreq>");
-  }
-
-  if (loc.startsWith(`${CANONICAL_HOST}/oracle-of-olympus/`)) {
-    return block
-      .replace(/<lastmod>.*?<\/lastmod>/, `<lastmod>${WORLD_CUP_FINAL_DATE}</lastmod>`)
-      .replace(/<changefreq>.*?<\/changefreq>/, "<changefreq>yearly</changefreq>")
-      .replace(/<priority>0\.6<\/priority>/, "<priority>0.5</priority>");
+  if (loc === `${CANONICAL_HOST}${OLYMPUS_PATH}` || loc.startsWith(`${CANONICAL_HOST}${OLYMPUS_PATH}/`)) {
+    return "";
   }
 
   if (loc === `${CANONICAL_HOST}/`) {
@@ -146,24 +113,28 @@ export function rewriteSitemapFreshness(xml: string): string {
 }
 
 export function rewriteLlmsFreshness(text: string): string {
-  return text
-    .replace(
-      "and FIFA World Cup 2026 match predictions from the Oracle of Olympus.",
-      "and a retrospective FIFA World Cup 2026 prediction archive from the Oracle of Olympus."
-    )
-    .replace(
-      /- \[World Cup 2026 Predictions\]\(https:\/\/oraclemirror\.com\/oracle-of-olympus\):[^\n]*/,
-      "- [World Cup 2026 Prediction Archive](https://oraclemirror.com/oracle-of-olympus): Retrospective archive of all 72 group-stage predictions with predicted scores, win probabilities, confidence levels, oracle analysis, and final results where available."
-    )
-    .replace(
-      "## World Cup 2026 Predictions (Oracle of Olympus)",
-      "## World Cup 2026 Prediction Archive (Oracle of Olympus)"
-    )
-    .replace(
-      "Every group stage match has its own prediction page with a predicted score, win/draw probabilities, confidence level, statistical reasoning, and an optional AI prophecy. Predictions are entertainment, not betting advice. Completed matches show the real final score.",
-      "The archive preserves a prediction page for every group-stage match, including the original predicted score, win/draw probabilities, confidence level, statistical reasoning, optional AI prophecy, and final score where available. Predictions were entertainment, not betting advice."
-    )
-    .replace(/refreshed automatically during the tournament\./g, "preserved after the tournament for retrospective comparison.");
+  let output = text
+    .replace(/, and FIFA World Cup 2026 match predictions from the Oracle of Olympus/g, "")
+    .replace(/, and a retrospective FIFA World Cup 2026 prediction archive from the Oracle of Olympus/g, "")
+    .replace(/\n- \[World Cup 2026[^\n]*\n/g, "\n")
+    .replace(/\n## World Cup 2026[^\n]*\n[\s\S]*?(?=\n## Key Facts)/, "\n")
+    .replace(/\n- \[Oracle of Olympus[^\n]*\n/g, "\n");
+
+  // Safety net for generated group links should upstream wording change.
+  output = output
+    .split("\n")
+    .filter((line) => !line.includes(OLYMPUS_PATH))
+    .join("\n");
+
+  return output;
+}
+
+export function isRemovedWorldCupPath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return path === OLYMPUS_PATH
+    || path.startsWith(`${OLYMPUS_PATH}/`)
+    || path === "/api/oracle-of-olympus/matches"
+    || path === "/api/oracle-of-olympus/predict";
 }
 
 export function isHtmlResponse(response: Response): boolean {
