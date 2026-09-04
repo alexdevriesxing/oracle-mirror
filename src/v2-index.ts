@@ -8,6 +8,7 @@ import {
 import {
   isHtmlResponse,
   isLlmsResponse,
+  isRemovedWorldCupPath,
   isSitemapResponse,
   rewriteHtmlFreshness,
   rewriteLlmsFreshness,
@@ -19,7 +20,6 @@ const FULL_SHELL_QUERY = "__oracle_full_shell";
 function responseWithBody(response: Response, body: string, contentType?: string): Response {
   const headers = new Headers(response.headers);
   if (contentType) headers.set("Content-Type", contentType);
-  // Upstream entity metadata describes the pre-transformed payload.
   headers.delete("Content-Length");
   headers.delete("ETag");
   return new Response(body, {
@@ -27,6 +27,33 @@ function responseWithBody(response: Response, body: string, contentType?: string
     statusText: response.statusText,
     headers,
   });
+}
+
+function removedWorldCupResponse(request: Request): Response {
+  const url = new URL(request.url);
+  const wantsJson = url.pathname.startsWith("/api/")
+    || (request.headers.get("accept") || "").includes("application/json");
+
+  if (wantsJson) {
+    return new Response(JSON.stringify({ error: "This feature has been removed." }), {
+      status: 410,
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  }
+
+  return new Response(
+    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex,follow\"><title>Page Removed | Oracle Mirror</title></head><body><main><h1>This Oracle Mirror feature has been removed.</h1><p><a href=\"/\">Return to Oracle Mirror</a></p></main></body></html>",
+    {
+      status: 410,
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+        "Cache-Control": "public, max-age=86400",
+      },
+    }
+  );
 }
 
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
@@ -73,9 +100,6 @@ async function transformHtmlResponse(response: Response, request: Request): Prom
   const requestedPageId = pageSectionIdForPath(url.pathname);
   if (!requestedPageId) return response;
 
-  // Hydration fetches the complete application shell before script.js starts.
-  // Return the full, freshness-corrected HTML so all realm DOM is available to
-  // the client router, while ordinary requests receive route-scoped SSR markup.
   if (url.searchParams.get(FULL_SHELL_QUERY) === "1") {
     return response;
   }
@@ -89,14 +113,21 @@ async function transformHtmlResponse(response: Response, request: Request): Prom
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Oracle of Olympus / World Cup 2026 was a temporary event feature and is
+    // fully retired. Return 410 before the legacy handler can query KV, sync
+    // fixtures, render match pages, or expose prediction APIs.
+    if (isRemovedWorldCupPath(url.pathname)) {
+      return removedWorldCupResponse(request);
+    }
+
     let response = await app.fetch(request, env, ctx);
     response = await applyFreshnessTransforms(response, request);
     return transformHtmlResponse(response, request);
   },
 
-  // The World Cup 2026 tournament is complete. Keep the scheduled handler as a
-  // deliberate no-op so an accidentally retained external schedule cannot
-  // restart obsolete fixture synchronization.
+  // The old World Cup fixture cron has also been removed from wrangler.toml.
   async scheduled(_controller: ScheduledController, _env: Env, _ctx: ExecutionContext): Promise<void> {
     return;
   },
