@@ -14,6 +14,8 @@ const SAFE_KEYS = new Set([
   "state", "ads", "analytics", "consent_required", "refresh_eligible", "enabled",
   "attempt", "next_attempt", "result_kind", "engaged_seconds", "readings_completed",
   "ads_filled", "ads_viewable_1s", "shares",
+  "ritual_card", "badge", "recommendation", "streak", "best_streak", "total_days",
+  "mood_score", "love_score", "money_score",
 ]);
 
 function getSessionId() {

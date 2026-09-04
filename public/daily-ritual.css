@@ -1,0 +1,496 @@
+.daily-ritual {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 1.25rem auto 2.75rem;
+}
+
+.ritual-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 100%, rgba(212, 175, 55, 0.12), transparent 30%),
+    linear-gradient(145deg, rgba(17, 9, 39, 0.96), rgba(5, 3, 13, 0.97));
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.ritual-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 14% 22%, rgba(255,255,255,.42) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 17%, rgba(255,255,255,.32) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38% 82%, rgba(212,175,55,.42) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 89% 64%, rgba(196,181,253,.34) 0 1px, transparent 1.5px);
+}
+
+.ritual-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.ritual-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.ritual-kicker {
+  margin: 0 0 0.35rem;
+  color: var(--gold-light, #e9cc75);
+  font-family: var(--font-heading, serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.ritual-heading-row h2 {
+  margin: 0;
+  color: var(--text-gold, #f4dd94);
+  font-family: var(--font-heading, serif);
+  font-size: clamp(1.65rem, 3.4vw, 2.45rem);
+  letter-spacing: 0.015em;
+}
+
+.ritual-intro {
+  max-width: 720px;
+  margin: 0.5rem 0 0;
+  color: var(--text-muted, #b9b2c9);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.ritual-streak {
+  min-width: 88px;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  gap: 0 0.35rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
+}
+
+.ritual-streak-flame {
+  grid-row: 1 / 3;
+  color: var(--gold-light, #e9cc75);
+  font-size: 1.2rem;
+}
+
+.ritual-streak strong {
+  font-family: var(--font-heading, serif);
+  color: var(--text-cream, #f5eed3);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.ritual-streak small {
+  color: var(--text-muted, #b9b2c9);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.ritual-streak-active {
+  border-color: rgba(212, 175, 55, 0.42);
+  box-shadow: 0 0 22px rgba(212, 175, 55, 0.1);
+}
+
+.ritual-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.ritual-preview > div {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255,255,255,.022);
+}
+
+.ritual-preview span {
+  color: var(--text-muted, #b9b2c9);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ritual-preview strong {
+  color: rgba(245, 238, 211, 0.42);
+  font-family: var(--font-heading, serif);
+  font-size: 1.6rem;
+  filter: blur(1px);
+}
+
+.ritual-lock-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  max-width: 680px;
+  margin: 1.25rem auto;
+  color: var(--text-muted, #b9b2c9);
+  text-align: center;
+}
+
+.ritual-lock-copy p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ritual-lock-glyph {
+  color: #c4b5fd;
+  font-size: 1.3rem;
+}
+
+.ritual-reveal {
+  display: block;
+  margin: 0.4rem auto 0;
+  min-width: min(100%, 280px);
+}
+
+.ritual-privacy-note {
+  margin: 0.7rem 0 0;
+  color: var(--text-muted, #b9b2c9);
+  opacity: 0.75;
+  font-size: 0.77rem;
+  text-align: center;
+}
+
+.ritual-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+}
+
+.ritual-card {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 1.2rem;
+}
+
+.ritual-card-label {
+  margin: 0 0 0.8rem;
+  color: var(--gold-light, #e9cc75);
+  font-family: var(--font-heading, serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ritual-card h3 {
+  margin: 0 0 0.55rem;
+  color: var(--text-cream, #f5eed3);
+  font-family: var(--font-heading, serif);
+  font-size: 1.15rem;
+}
+
+.ritual-card p:not(.ritual-card-label) {
+  margin: 0;
+  color: var(--text-muted, #b9b2c9);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.ritual-tarot-card {
+  grid-column: span 4;
+  text-align: center;
+  background: linear-gradient(160deg, rgba(139, 92, 246, 0.11), rgba(255,255,255,.018));
+}
+
+.ritual-tarot-glyph {
+  width: 66px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 0.8rem;
+  border: 1px solid rgba(212,175,55,.4);
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(212,175,55,.11), rgba(139,92,246,.12));
+  color: var(--gold-light, #e9cc75);
+  font-size: 2rem;
+  box-shadow: inset 0 0 18px rgba(139,92,246,.12), 0 8px 22px rgba(0,0,0,.22);
+}
+
+.ritual-cosmic-card {
+  grid-column: span 8;
+}
+
+.ritual-moon-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.ritual-moon-line span {
+  color: #c4b5fd;
+  font-size: 1.65rem;
+}
+
+.ritual-moon-line strong {
+  color: var(--text-cream, #f5eed3);
+  font-family: var(--font-heading, serif);
+  font-size: 1.2rem;
+}
+
+.ritual-signals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.15rem;
+}
+
+.ritual-signals > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem;
+  border-radius: 10px;
+  background: rgba(5, 3, 13, 0.42);
+}
+
+.ritual-signals small {
+  color: var(--text-muted, #b9b2c9);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.ritual-signals strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-cream, #f5eed3);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.ritual-color-dot {
+  width: 0.72rem;
+  height: 0.72rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--ritual-lucky-color);
+  box-shadow: 0 0 8px var(--ritual-lucky-color);
+}
+
+.ritual-energy-card,
+.ritual-recommendation-card {
+  grid-column: span 6;
+}
+
+.ritual-score + .ritual-score {
+  margin-top: 0.85rem;
+}
+
+.ritual-score-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+  color: var(--text-muted, #b9b2c9);
+  font-size: 0.82rem;
+}
+
+.ritual-score-head strong {
+  color: var(--text-cream, #f5eed3);
+  font-family: var(--font-heading, serif);
+}
+
+.ritual-score-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ritual-score-track span {
+  display: block;
+  width: var(--ritual-score);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(139,92,246,.72), rgba(212,175,55,.9));
+}
+
+.ritual-recommendation-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ritual-recommendation-card .ritual-realm-link {
+  margin-top: 1rem;
+  text-decoration: none;
+}
+
+.ritual-full-fortune {
+  margin-top: 0.8rem;
+  color: var(--gold-light, #e9cc75);
+  font-size: 0.84rem;
+  text-decoration: none;
+}
+
+.ritual-full-fortune:hover,
+.ritual-full-fortune:focus-visible {
+  text-decoration: underline;
+}
+
+.ritual-footer-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.75fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ritual-badge-card,
+.ritual-complete-copy {
+  border: 1px solid rgba(212,175,55,.12);
+  border-radius: 14px;
+  background: rgba(5, 3, 13, 0.38);
+  padding: 0.9rem 1rem;
+}
+
+.ritual-badge-current {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ritual-badge-glyph {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(212,175,55,.1);
+  color: var(--gold-light, #e9cc75);
+  font-size: 1.05rem;
+}
+
+.ritual-badge-current span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ritual-badge-current strong,
+.ritual-complete-copy strong {
+  color: var(--text-cream, #f5eed3);
+  font-family: var(--font-heading, serif);
+  font-size: 0.9rem;
+}
+
+.ritual-badge-current small,
+.ritual-badge-next,
+.ritual-complete-copy span {
+  color: var(--text-muted, #b9b2c9);
+  font-size: 0.76rem;
+}
+
+.ritual-badge-next {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+.ritual-complete-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+@media (max-width: 760px) {
+  .daily-ritual {
+    width: min(100% - 1rem, 1120px);
+    margin-top: 0.75rem;
+  }
+
+  .ritual-heading-row {
+    align-items: stretch;
+  }
+
+  .ritual-streak {
+    min-width: 76px;
+  }
+
+  .ritual-preview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ritual-tarot-card,
+  .ritual-cosmic-card,
+  .ritual-energy-card,
+  .ritual-recommendation-card {
+    grid-column: 1 / -1;
+  }
+
+  .ritual-signals {
+    grid-template-columns: 1fr;
+  }
+
+  .ritual-footer-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 470px) {
+  .ritual-shell {
+    border-radius: 16px;
+    padding: 1rem;
+  }
+
+  .ritual-heading-row {
+    flex-direction: column;
+  }
+
+  .ritual-streak {
+    align-self: flex-start;
+  }
+
+  .ritual-preview > div {
+    min-height: 76px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ritual-revealed .ritual-tarot-glyph {
+    animation: ritual-card-arrive 520ms ease-out both;
+  }
+
+  .ritual-streak-active .ritual-streak-flame {
+    animation: ritual-glimmer 2.4s ease-in-out infinite;
+  }
+
+  @keyframes ritual-card-arrive {
+    from { opacity: 0; transform: translateY(8px) rotate(-2deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+  }
+
+  @keyframes ritual-glimmer {
+    0%, 100% { opacity: 0.75; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+}
