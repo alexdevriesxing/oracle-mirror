@@ -1,0 +1,89 @@
+name: Pass 5 Source Excision
+
+on:
+  push:
+    branches:
+      - v2/pass-5-remove-olympus-source
+
+permissions:
+  contents: write
+
+jobs:
+  excise:
+    if: ${{ !contains(github.event.head_commit.message, '[pass5-excised]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: v2/pass-5-remove-olympus-source
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Excise retired event source
+        run: python3 scripts/pass5_remove_retired_event.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify retired implementation is gone
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # The only allowed historical route references are the 410 tombstone,
+          # its regression test, and the production smoke test that verifies 410.
+          grep -RniE 'world cup 2026|oracle of olympus|pythia nikephoros|football_data|WC2026|sports predictions' \
+            README.md src public docs tests \
+            --exclude='seo-freshness.test.ts' \
+            && { echo 'Retired implementation text still exists.'; exit 1; } || true
+
+          test ! -e src/olympus-data.ts
+          test ! -e src/olympus-sync.ts
+          test ! -e tests/prediction.test.ts
+
+          # No frontend or core Worker implementation may retain the retired route.
+          ! grep -Rni 'oracle-of-olympus' public src/index.ts src/ssr-shell.ts README.md docs
+
+          # Keep the explicit historical 410 contract in the V2 tombstone layer.
+          grep -q 'oracle-of-olympus' src/seo-freshness.ts
+          grep -q 'oracle-of-olympus' tests/seo-freshness.test.ts
+          grep -q 'oracle-of-olympus' .github/workflows/deploy-cloudflare.yml
+
+      - name: Remove one-shot migration tooling
+        run: |
+          rm -f scripts/pass5_remove_retired_event.py
+          rm -f .github/workflows/pass5-excise.yml
+          rm -f .github/workflows/pass5-scan.yml
+
+      - name: Commit cleaned repository
+        shell: bash
+        run: |
+          git config user.name 'oracle-mirror-v2-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No migration changes to commit.'
+            exit 1
+          fi
+          git commit -m '[pass5-excised] remove retired event implementation'
+          git push origin HEAD:v2/pass-5-remove-olympus-source
