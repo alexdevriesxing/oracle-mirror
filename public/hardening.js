@@ -1,6 +1,7 @@
 import "./telemetry.js";
 import "./daily-ritual.js";
 import "./mirror-journey.js";
+import "./social-share.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";

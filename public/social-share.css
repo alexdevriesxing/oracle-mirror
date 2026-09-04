@@ -1,0 +1,173 @@
+.oracle-share-open {
+  overflow: hidden;
+}
+
+.oracle-share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.oracle-share-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 3, 10, 0.84);
+  backdrop-filter: blur(10px);
+}
+
+.oracle-share-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 100%);
+  max-height: min(92vh, 980px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(300px, 1fr);
+  grid-template-areas:
+    "copy preview"
+    "actions preview"
+    "status preview";
+  gap: 20px 28px;
+  padding: 34px;
+  border: 1px solid rgba(212, 175, 55, 0.38);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(19, 13, 34, 0.98), rgba(7, 5, 13, 0.98));
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.56), 0 0 80px rgba(167, 139, 250, 0.14);
+}
+
+.oracle-share-copy {
+  grid-area: copy;
+  align-self: end;
+}
+
+.oracle-share-kicker {
+  margin: 0 0 8px;
+  color: var(--gold, #d4af37);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.oracle-share-copy h2 {
+  margin: 0 0 14px;
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+}
+
+.oracle-share-copy p:last-child {
+  margin-bottom: 0;
+  color: rgba(245, 243, 255, 0.74);
+  line-height: 1.65;
+}
+
+.oracle-share-preview {
+  grid-area: preview;
+  display: grid;
+  place-items: center;
+  min-height: 520px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.oracle-share-preview img {
+  display: block;
+  width: min(100%, 360px);
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.44);
+}
+
+.oracle-share-actions {
+  grid-area: actions;
+  align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.oracle-share-actions button {
+  min-width: 150px;
+}
+
+.oracle-share-status {
+  grid-area: status;
+  min-height: 1.5em;
+  margin: 0;
+  color: rgba(245, 243, 255, 0.68);
+  font-size: 0.9rem;
+}
+
+.oracle-share-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.oracle-share-close:hover,
+.oracle-share-close:focus-visible {
+  border-color: rgba(212, 175, 55, 0.8);
+  color: #fff;
+}
+
+.oracle-share-result-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .oracle-share-modal {
+    padding: 10px;
+  }
+
+  .oracle-share-dialog {
+    width: 100%;
+    max-height: 96vh;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "copy"
+      "preview"
+      "actions"
+      "status";
+    padding: 26px 18px 20px;
+    border-radius: 22px;
+  }
+
+  .oracle-share-preview {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .oracle-share-preview img {
+    width: min(100%, 300px);
+    max-height: 54vh;
+  }
+
+  .oracle-share-actions button {
+    flex: 1 1 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oracle-share-modal *,
+  .oracle-share-modal *::before,
+  .oracle-share-modal *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
