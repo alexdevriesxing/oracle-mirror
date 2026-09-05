@@ -17,6 +17,12 @@ import { handleTelemetry } from "./telemetry.ts";
 import type { TelemetryEnv } from "./telemetry.ts";
 import { handleCouncil } from "./council.ts";
 import type { CouncilEnv } from "./council.ts";
+import {
+  augmentSitemapWithRunes,
+  handleRuneRoute,
+  injectRunesDiscovery,
+  isRuneRoute,
+} from "./runes-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -67,7 +73,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isSitemapResponse(url.pathname, response)) {
     return responseWithBody(
       response,
-      rewriteSitemapFreshness(await response.text()),
+      augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())),
       "application/xml; charset=UTF-8"
     );
   }
@@ -75,7 +81,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isHtmlResponse(response)) {
     return responseWithBody(
       response,
-      rewriteHtmlFreshness(await response.text(), url.pathname),
+      injectRunesDiscovery(rewriteHtmlFreshness(await response.text(), url.pathname)),
       "text/html; charset=UTF-8"
     );
   }
@@ -117,6 +123,10 @@ export default {
 
     if (url.pathname === "/api/council") {
       return withSecurityHeaders(await handleCouncil(request, env));
+    }
+
+    if (request.method === "GET" && isRuneRoute(url.pathname)) {
+      return withSecurityHeaders(handleRuneRoute(url.pathname));
     }
 
     if (isRetiredEventPath(url.pathname)) {
