@@ -66,6 +66,10 @@ function removedLegacyEventResponse(request: Request): Response {
   );
 }
 
+function safeRuneDiscoveryHtml(html: string): string {
+  return injectRunesDiscovery(html).replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"');
+}
+
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
@@ -81,7 +85,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isHtmlResponse(response)) {
     return responseWithBody(
       response,
-      injectRunesDiscovery(rewriteHtmlFreshness(await response.text(), url.pathname)),
+      safeRuneDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname)),
       "text/html; charset=UTF-8"
     );
   }
@@ -125,7 +129,7 @@ export default {
       return withSecurityHeaders(await handleCouncil(request, env));
     }
 
-    if (request.method === "GET" && isRuneRoute(url.pathname)) {
+    if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) {
       return withSecurityHeaders(handleRuneRoute(url.pathname));
     }
 
