@@ -7,6 +7,7 @@ const SAFE_KINDS = new Set([
   "tarot",
   "advanced-tarot",
   "numerology",
+  "advanced-numerology",
   "love-match",
   "pick-card",
   "three-doors",
@@ -131,6 +132,28 @@ export function sanitizeSharePayload(input) {
       subtitle: "My Oracle Mirror numerology result",
       lines: ["Calculated without displaying my birth date"],
       footer: "Birth date excluded from this card",
+    };
+  }
+
+  if (kind === "advanced-numerology") {
+    const allowed = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33]);
+    const numbers = Array.isArray(input.numbers) ? input.numbers.slice(0, 6).map(Number) : [];
+    if (numbers.length !== 6 || numbers.some((value) => !allowed.has(value))) return null;
+    const year = cleanNumber(input.year, 1, 9999);
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "ADVANCED NUMEROLOGY",
+      title: `Life Path ${numbers[0]}`,
+      glyph: "◇",
+      subtitle: "My six-number Oracle Mirror profile",
+      lines: [
+        `Expression ${numbers[1]}`,
+        `Soul Urge ${numbers[2]}`,
+        `Personality ${numbers[3]}`,
+        `Birthday ${numbers[4]}`,
+      ],
+      footer: `Personal Year${year ? ` ${year}` : ""}: ${numbers[5]} · Name and birth date excluded`,
     };
   }
 
