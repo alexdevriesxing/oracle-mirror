@@ -30,6 +30,13 @@ import {
   injectLenormandDiscovery,
   isLenormandRoute,
 } from "./lenormand-pages.ts";
+import {
+  augmentLlmsWithAdvancedTarot,
+  augmentSitemapWithAdvancedTarot,
+  handleAdvancedTarotRoute,
+  injectAdvancedTarotDiscovery,
+  isAdvancedTarotRoute,
+} from "./tarot-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -74,10 +81,10 @@ function removedLegacyEventResponse(request: Request): Response {
 }
 
 function safeDiscoveryHtml(html: string): string {
-  return injectLenormandDiscovery(injectRunesDiscovery(html))
+  return injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))
     .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
     .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, and Lenormand card reading.");
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, and advanced 78-card Tarot.");
 }
 
 function augmentRuneLlms(text: string): string {
@@ -92,7 +99,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (url.pathname === "/llms.txt") {
     return responseWithBody(
       response,
-      augmentLlmsWithLenormand(augmentRuneLlms(await response.text())),
+      augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))),
       "text/plain; charset=UTF-8"
     );
   }
@@ -100,7 +107,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isSitemapResponse(url.pathname, response)) {
     return responseWithBody(
       response,
-      augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))),
+      augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))),
       "application/xml; charset=UTF-8"
     );
   }
@@ -158,6 +165,10 @@ export default {
 
     if (request.method === "GET" && isLenormandRoute(url.pathname)) {
       return withSecurityHeaders(handleLenormandRoute(url.pathname));
+    }
+
+    if (request.method === "GET" && isAdvancedTarotRoute(url.pathname)) {
+      return withSecurityHeaders(handleAdvancedTarotRoute(url.pathname));
     }
 
     if (isRetiredEventPath(url.pathname)) {
