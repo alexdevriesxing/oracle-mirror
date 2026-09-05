@@ -152,7 +152,7 @@ export default {
       return withSecurityHeaders(await handleCouncil(request, env));
     }
 
-    if (request.method === "GET" && isRuneRoute(url.pathname)) {
+    if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) {
       return withSecurityHeaders(handleRuneRoute(url.pathname));
     }
 
