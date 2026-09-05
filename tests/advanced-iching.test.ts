@@ -103,7 +103,7 @@ test("hexagram pages expose composition, original summaries, and schema", async 
   assert.match(html, /Upper: Water/);
   assert.match(html, /Lower: Fire/);
   assert.match(html, /Reflection meaning/);
-  assert.match(html, /does not reproduce a modern translation/);
+  assert.match(html, /rather than reproducing a modern translation/);
   assert.match(html, /"@type":"Article"/);
   assert.match(html, /BreadcrumbList/);
   const redirect = handleAdvancedIChingRoute("/iching/hexagrams/63");
@@ -122,7 +122,7 @@ test("trigram and coin-method pages explain structural and historical distinctio
   assert.match(coins, /Young Yang/);
   assert.match(coins, /Old Yang/);
   assert.match(coins, /not the earliest attested method/);
-  assert.match(coins, /different outcome probabilities/);
+  assert.match(coins, /does not have the same outcome probabilities/);
   assert.equal(handleAdvancedIChingRoute("/iching/trigrams/not-real").status, 404);
 });
 
