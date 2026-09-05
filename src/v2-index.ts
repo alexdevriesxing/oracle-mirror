@@ -44,6 +44,13 @@ import {
   injectAdvancedNumerologyDiscovery,
   isAdvancedNumerologyRoute,
 } from "./numerology-pages.ts";
+import {
+  augmentLlmsWithAdvancedIChing,
+  augmentSitemapWithAdvancedIChing,
+  handleAdvancedIChingRoute,
+  injectAdvancedIChingDiscovery,
+  isAdvancedIChingRoute,
+} from "./iching-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -88,10 +95,10 @@ function removedLegacyEventResponse(request: Request): Response {
 }
 
 function safeDiscoveryHtml(html: string): string {
-  return injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))
+  return injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))))
     .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
     .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, and advanced numerology.");
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, and Advanced I Ching.");
 }
 
 function augmentRuneLlms(text: string): string {
@@ -106,7 +113,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (url.pathname === "/llms.txt") {
     return responseWithBody(
       response,
-      augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text())))),
+      augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))),
       "text/plain; charset=UTF-8"
     );
   }
@@ -114,7 +121,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isSitemapResponse(url.pathname, response)) {
     return responseWithBody(
       response,
-      augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))))),
+      augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))),
       "application/xml; charset=UTF-8"
     );
   }
@@ -180,6 +187,10 @@ export default {
 
     if (request.method === "GET" && isAdvancedNumerologyRoute(url.pathname)) {
       return withSecurityHeaders(handleAdvancedNumerologyRoute(url.pathname));
+    }
+
+    if (request.method === "GET" && isAdvancedIChingRoute(url.pathname)) {
+      return withSecurityHeaders(handleAdvancedIChingRoute(url.pathname));
     }
 
     if (isRetiredEventPath(url.pathname)) {

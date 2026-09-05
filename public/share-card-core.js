@@ -17,6 +17,7 @@ const SAFE_KINDS = new Set([
   "oracle-duel",
   "runes",
   "lenormand",
+  "iching",
 ]);
 
 function cleanText(value, max = 120) {
@@ -282,6 +283,28 @@ export function sanitizeSharePayload(input) {
       subtitle: "Context · Focus · Direction",
       lines: cards.map((name, index) => `${positions[index] || `Card ${index + 1}`}: ${name}`),
       footer: "Only the three generated cards are shared — private context stays private",
+    };
+  }
+
+  if (kind === "iching") {
+    const current = cleanText(input.current, 88);
+    const transformed = cleanText(input.transformed, 88);
+    const changingLines = Array.isArray(input.changingLines)
+      ? [...new Set(input.changingLines.map(Number).filter((value) => Number.isInteger(value) && value >= 1 && value <= 6))].slice(0, 6)
+      : [];
+    if (!current) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "I CHING CAST",
+      title: current,
+      glyph: cleanText(input.currentSymbol, 8) || "☯",
+      subtitle: transformed ? "Changing lines reveal a transformed hexagram" : "A stable six-line cast",
+      lines: [
+        transformed ? `Transforms to ${transformed}` : "No changing lines appeared",
+        changingLines.length ? `Changing lines: ${changingLines.join(", ")}` : "Six stable lines",
+      ],
+      footer: "Generated hexagrams only — no private question is collected or shared",
     };
   }
 
