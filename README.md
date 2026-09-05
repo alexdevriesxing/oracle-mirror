@@ -6,9 +6,10 @@ Oracle Mirror is a fantasy-themed fortune-telling web app built on Cloudflare Wo
 
 - Your Mirror Today — a zero-API-cost daily ritual with a deterministic card, moon phase, lucky signals, energy scores, streaks, badges, and a recommended realm.
 - The Mirror Journey — a private seven-day progression layer with weekly recaps, realm-exploration quests, visible badge shelves, Major Arcana collection progress, and daily sharing.
-- Social Share Cards — privacy-safe 1080×1920 visual cards for the Daily Mirror, Tarot, Numerology, Love Match, Instant Mysteries, and Council of Mystics, with native sharing and PNG fallback.
+- Social Share Cards — privacy-safe 1080×1920 visual cards for the Daily Mirror, Tarot, Numerology, Love Match, Instant Mysteries, Council of Mystics, and Mirror Lab results, with native sharing and PNG fallback.
 - Instant Mysteries — zero-API-cost Mystic Roulette, Pick a Card, and Three Doors homepage rituals that feed into deeper Oracle Mirror realms.
 - Council of Mystics — one question is examined by three distinct fictional mystics and distilled into a single Mirror Verdict using one Workers AI request.
+- Mirror Lab — fully local Pendulum Oracle, five-question Aura Reading, and Oracle Duel experiences with no API or Workers AI cost.
 - Crystal Ball — conversational readings with Madame Fortuna.
 - Dream Interpreter — Morpheus asks clarifying questions and grounds interpretations in a dream-symbol corpus.
 - Western Zodiac and Chinese Zodiac readings.
@@ -36,9 +37,10 @@ All readings are entertainment experiences. Avoid entering sensitive personal in
 - **Hardening:** `public/hardening.js` adds reduced-effects behavior and accessibility semantics; `src/security-headers.ts` applies explicit security headers.
 - **Daily ritual:** `public/daily-ritual-core.js` generates deterministic daily values and streak state, while `public/daily-ritual.js` / `public/daily-ritual.css` render the homepage return loop. State stays in localStorage and no reading text is uploaded.
 - **Mirror Journey:** `public/mirror-journey-core.js` stores a bounded local history of generated daily-card metadata and coarse realm visits. `public/mirror-journey.js` / `public/mirror-journey.css` render the seven-day timeline, weekly recap, exploration quest, badge shelf, collection progress, and share action without storing user questions or reading text.
-- **Social sharing:** `public/share-card-core.js` sanitizes share payloads, while `public/social-share.js` / `public/social-share.css` render 1080×1920 PNG cards on demand. Share cards intentionally exclude private Tarot questions, numerology birth dates, Love Match names, Council question/answer text, and full reading text.
+- **Social sharing:** `public/share-card-core.js` sanitizes share payloads, while `public/social-share.js` / `public/social-share.css` render 1080×1920 PNG cards on demand. Share cards intentionally exclude private Tarot questions, numerology birth dates, Love Match names, Council question/answer text, Mirror Lab questions/answers, and full reading text.
 - **Instant Mysteries:** `public/instant-mysteries-core.js` contains the local mystic/card/door corpora and deterministic selectors, while `public/instant-mysteries.js` / `public/instant-mysteries.css` mount three accessible homepage micro-rituals without Worker AI or private-input access.
 - **Council of Mystics:** `src/council.ts` selects three fictional lenses and requests all three responses plus one synthesis in a single AI call. `public/council-core.js`, `public/council.js`, and `public/council.css` handle the homepage UI, optional local Archive saving, and privacy-safe sharing.
+- **Mirror Lab:** `public/interactive-oracles-core.js` contains deterministic Pendulum, Aura, and Oracle Duel logic. `public/interactive-oracles.js` / `public/interactive-oracles.css` render the experiences entirely client-side; no Mirror Lab question or quiz answer is sent to an API.
 - **Ads:** `public/ad-config.js` and `public/ads.js` manage Adsterra placements, lazy loading, viewability, unfilled collapse, and refresh eligibility. `public/monetization.js` applies the M2 experiment/policy layer.
 - **Analytics:** `public/telemetry.js` sends allowlisted, non-reading-content events to `/api/telemetry`; `src/telemetry.ts` writes sanitized points to Workers Analytics Engine when bound.
 
@@ -151,6 +153,9 @@ public/
   council-core.js
   council.js
   council.css
+  interactive-oracles-core.js
+  interactive-oracles.js
+  interactive-oracles.css
   monetization.js
   telemetry.js
   ad-config.js
@@ -181,3 +186,4 @@ wrangler.toml
 - M5 privacy-safe social sharing is documented in `docs/M5-SOCIAL-SHARE.md`.
 - M6 Instant Mysteries are documented in `docs/M6-INSTANT-MYSTERIES.md`.
 - M6 Council of Mystics is documented in `docs/M6-COUNCIL-OF-MYSTICS.md`.
+- M6 Mirror Lab is documented in `docs/M6-MIRROR-LAB.md`.

@@ -10,6 +10,9 @@ const SAFE_KINDS = new Set([
   "pick-card",
   "three-doors",
   "council",
+  "pendulum",
+  "aura",
+  "oracle-duel",
 ]);
 
 function cleanText(value, max = 120) {
@@ -158,6 +161,57 @@ export function sanitizeSharePayload(input) {
       subtitle: "Three voices · one Mirror Verdict",
       lines: mystics,
       footer: "My private question and answer text are excluded from this card",
+    };
+  }
+
+  if (kind === "pendulum") {
+    const outcome = cleanText(input.outcome, 64);
+    if (!outcome) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "PENDULUM ORACLE",
+      title: outcome,
+      glyph: cleanText(input.glyph, 8) || "◇",
+      subtitle: "The pendulum made its symbolic swing",
+      lines: ["My question is private and excluded"],
+      footer: "A playful reflection from Oracle Mirror — not a factual prediction",
+    };
+  }
+
+  if (kind === "aura") {
+    const aura = cleanText(input.aura, 64);
+    const traits = Array.isArray(input.traits)
+      ? input.traits.slice(0, 3).map((trait) => cleanText(trait, 48)).filter(Boolean)
+      : [];
+    if (!aura || !traits.length) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "AURA READING",
+      title: aura,
+      glyph: cleanText(input.glyph, 8) || "✺",
+      subtitle: "My Oracle Mirror aura quiz result",
+      lines: traits,
+      footer: "Quiz-based entertainment — no camera, scan, or biometric detection",
+    };
+  }
+
+  if (kind === "oracle-duel") {
+    const mystics = Array.isArray(input.mystics)
+      ? input.mystics.slice(0, 2).map((name) => cleanText(name, 48)).filter(Boolean)
+      : [];
+    const winner = cleanText(input.winner, 48);
+    if (mystics.length !== 2 || !winner || !mystics.includes(winner)) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "ORACLE DUEL",
+      title: `${winner} Won This Round`,
+      glyph: "⚔",
+      subtitle: `${mystics[0]} vs ${mystics[1]}`,
+      lines: ["I chose the perspective that resonated more"],
+      footer: "My private question and both interpretations are excluded",
     };
   }
 
