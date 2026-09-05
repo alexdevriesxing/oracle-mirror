@@ -14,6 +14,7 @@ const SAFE_KINDS = new Set([
   "aura",
   "oracle-duel",
   "runes",
+  "lenormand",
 ]);
 
 function cleanText(value, max = 120) {
@@ -233,6 +234,26 @@ export function sanitizeSharePayload(input) {
       subtitle: "Root · Present · Path Ahead",
       lines: runes.map((name, index) => `${positions[index] || `Rune ${index + 1}`}: ${name}`),
       footer: "A symbolic Elder Futhark reflection from Oracle Mirror",
+    };
+  }
+
+  if (kind === "lenormand") {
+    const cards = Array.isArray(input.cards)
+      ? input.cards.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
+      : [];
+    const positions = Array.isArray(input.positions)
+      ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean)
+      : [];
+    if (cards.length !== 3) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "LENORMAND LINE",
+      title: "Three Symbols in the Mirror",
+      glyph: "🗝",
+      subtitle: "Context · Focus · Direction",
+      lines: cards.map((name, index) => `${positions[index] || `Card ${index + 1}`}: ${name}`),
+      footer: "Only the three generated cards are shared — private context stays private",
     };
   }
 
