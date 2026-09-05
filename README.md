@@ -6,8 +6,9 @@ Oracle Mirror is a fantasy-themed fortune-telling web app built on Cloudflare Wo
 
 - Your Mirror Today — a zero-API-cost daily ritual with a deterministic card, moon phase, lucky signals, energy scores, streaks, badges, and a recommended realm.
 - The Mirror Journey — a private seven-day progression layer with weekly recaps, realm-exploration quests, visible badge shelves, Major Arcana collection progress, and daily sharing.
-- Social Share Cards — privacy-safe 1080×1920 visual cards for the Daily Mirror, Tarot, Numerology, Love Match, and supported instant rituals, with native sharing and PNG fallback.
+- Social Share Cards — privacy-safe 1080×1920 visual cards for the Daily Mirror, Tarot, Numerology, Love Match, Instant Mysteries, and Council of Mystics, with native sharing and PNG fallback.
 - Instant Mysteries — zero-API-cost Mystic Roulette, Pick a Card, and Three Doors homepage rituals that feed into deeper Oracle Mirror realms.
+- Council of Mystics — one question is examined by three distinct fictional mystics and distilled into a single Mirror Verdict using one Workers AI request.
 - Crystal Ball — conversational readings with Madame Fortuna.
 - Dream Interpreter — Morpheus asks clarifying questions and grounds interpretations in a dream-symbol corpus.
 - Western Zodiac and Chinese Zodiac readings.
@@ -27,7 +28,7 @@ All readings are entertainment experiences. Avoid entering sensitive personal in
 
 ## Architecture
 
-- **Cloudflare Worker:** `src/v2-index.ts` is the production entry point. It wraps the core application handler with route-scoped SSR, security headers, SEO freshness rules, telemetry, and legacy URL tombstones.
+- **Cloudflare Worker:** `src/v2-index.ts` is the production entry point. It wraps the core application handler with route-scoped SSR, security headers, SEO freshness rules, telemetry, the Council API, and legacy URL tombstones.
 - **Core application:** `src/index.ts` provides reading APIs, metadata, sitemap/robots/llms output, dream-guide routing, and the static app shell.
 - **Workers AI:** the default inference model is `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
 - **Static app:** `public/index.html`, `public/script.js`, and `public/styles.css` contain the interactive realms.
@@ -35,8 +36,9 @@ All readings are entertainment experiences. Avoid entering sensitive personal in
 - **Hardening:** `public/hardening.js` adds reduced-effects behavior and accessibility semantics; `src/security-headers.ts` applies explicit security headers.
 - **Daily ritual:** `public/daily-ritual-core.js` generates deterministic daily values and streak state, while `public/daily-ritual.js` / `public/daily-ritual.css` render the homepage return loop. State stays in localStorage and no reading text is uploaded.
 - **Mirror Journey:** `public/mirror-journey-core.js` stores a bounded local history of generated daily-card metadata and coarse realm visits. `public/mirror-journey.js` / `public/mirror-journey.css` render the seven-day timeline, weekly recap, exploration quest, badge shelf, collection progress, and share action without storing user questions or reading text.
-- **Social sharing:** `public/share-card-core.js` sanitizes share payloads, while `public/social-share.js` / `public/social-share.css` render 1080×1920 PNG cards on demand. Share cards intentionally exclude private Tarot questions, numerology birth dates, Love Match names, and full reading text.
+- **Social sharing:** `public/share-card-core.js` sanitizes share payloads, while `public/social-share.js` / `public/social-share.css` render 1080×1920 PNG cards on demand. Share cards intentionally exclude private Tarot questions, numerology birth dates, Love Match names, Council question/answer text, and full reading text.
 - **Instant Mysteries:** `public/instant-mysteries-core.js` contains the local mystic/card/door corpora and deterministic selectors, while `public/instant-mysteries.js` / `public/instant-mysteries.css` mount three accessible homepage micro-rituals without Worker AI or private-input access.
+- **Council of Mystics:** `src/council.ts` selects three fictional lenses and requests all three responses plus one synthesis in a single AI call. `public/council-core.js`, `public/council.js`, and `public/council.css` handle the homepage UI, optional local Archive saving, and privacy-safe sharing.
 - **Ads:** `public/ad-config.js` and `public/ads.js` manage Adsterra placements, lazy loading, viewability, unfilled collapse, and refresh eligibility. `public/monetization.js` applies the M2 experiment/policy layer.
 - **Analytics:** `public/telemetry.js` sends allowlisted, non-reading-content events to `/api/telemetry`; `src/telemetry.ts` writes sanitized points to Workers Analytics Engine when bound.
 
@@ -70,6 +72,7 @@ Result shells under `/result/*` are intentionally noindex.
 | POST | `/api/palmistry` | Palm reading |
 | POST | `/api/soulmate-vision` | Soulmate Vision |
 | POST | `/api/iching` | I Ching interpretation |
+| POST | `/api/council` | Three-mystic Council reading plus Mirror Verdict in one AI request |
 | POST | `/api/telemetry` | Privacy-safe analytics ingestion |
 
 ## Local development
@@ -145,6 +148,9 @@ public/
   instant-mysteries-core.js
   instant-mysteries.js
   instant-mysteries.css
+  council-core.js
+  council.js
+  council.css
   monetization.js
   telemetry.js
   ad-config.js
@@ -152,6 +158,7 @@ public/
 src/
   index.ts
   v2-index.ts
+  council.ts
   ssr-shell.ts
   seo-freshness.ts
   security-headers.ts
@@ -173,3 +180,4 @@ wrangler.toml
 - M4 Mirror Journey retention and progression mechanics are documented in `docs/M4-MIRROR-JOURNEY.md`.
 - M5 privacy-safe social sharing is documented in `docs/M5-SOCIAL-SHARE.md`.
 - M6 Instant Mysteries are documented in `docs/M6-INSTANT-MYSTERIES.md`.
+- M6 Council of Mystics is documented in `docs/M6-COUNCIL-OF-MYSTICS.md`.
