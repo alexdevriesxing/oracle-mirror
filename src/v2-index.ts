@@ -67,12 +67,24 @@ function removedLegacyEventResponse(request: Request): Response {
 }
 
 function safeRuneDiscoveryHtml(html: string): string {
-  return injectRunesDiscovery(html).replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"');
+  return injectRunesDiscovery(html)
+    .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
+    .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, and Elder Futhark Rune Casting.");
+}
+
+function augmentRuneLlms(text: string): string {
+  if (text.includes("## Rune Casting")) return text;
+  return `${text.trimEnd()}\n\n## Rune Casting\n- https://oraclemirror.com/runes — free three-rune Elder Futhark reflection with a 24-rune guide.\n- https://oraclemirror.com/runes/{rune} — individual meanings for Fehu through Othala, with modern symbolic interpretation clearly separated from historical context.\n`;
 }
 
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
+
+  if (url.pathname === "/llms.txt") {
+    return responseWithBody(response, augmentRuneLlms(await response.text()), "text/plain; charset=UTF-8");
+  }
 
   if (isSitemapResponse(url.pathname, response)) {
     return responseWithBody(
