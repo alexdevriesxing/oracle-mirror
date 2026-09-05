@@ -17,6 +17,13 @@ const v2Index = await readFile(new URL("../src/v2-index.ts", import.meta.url), "
 const ui = await readFile(new URL("../public/advanced-tarot.js", import.meta.url), "utf8");
 const css = await readFile(new URL("../public/advanced-tarot.css", import.meta.url), "utf8");
 
+function regexEscape(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function htmlText(value: string): string {
+  return value.replace(/&/g, "&amp;");
+}
+
 test("Tarot corpus contains exactly 78 unique cards with 22 Major and 56 Minor Arcana", () => {
   assert.equal(TAROT_CARDS.length, 78);
   assert.equal(new Set(TAROT_CARDS.map((card) => card.slug)).size, 78);
@@ -87,8 +94,8 @@ test("seven spread guides render position-level content and routes", async () =>
   for (const spread of TAROT_SPREAD_GUIDES) {
     assert.match(hub, new RegExp(`/tarot/spreads/${spread.slug}`));
     const page = await handleAdvancedTarotRoute(`/tarot/spreads/${spread.slug}`).text();
-    assert.match(page, new RegExp(spread.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    for (const position of spread.positions) assert.match(page, new RegExp(position.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(page, new RegExp(regexEscape(spread.name)));
+    for (const position of spread.positions) assert.match(page, new RegExp(regexEscape(htmlText(position))));
   }
 });
 
@@ -120,7 +127,7 @@ test("advanced Tarot share card strips arbitrary private fields and limits card 
     cards: ["The Star", "Two of Cups", "The Tower", "Queen of Swords", "The Sun"],
     positions: ["Present", "Challenge", "Foundation", "Recent Past", "Possibility"],
     orientations: ["Upright", "Reversed", "Upright", "Upright", "Reversed"],
-    question: "private question",
+    question: "my secret roadmap decision",
     name: "private name",
     email: "private@example.com",
     notes: "never share",
@@ -128,7 +135,7 @@ test("advanced Tarot share card strips arbitrary private fields and limits card 
   assert.equal(payload?.kind, "advanced-tarot");
   assert.equal(payload?.lines.length, 4);
   assert.match(payload?.title || "", /Celtic Cross/);
-  assert.doesNotMatch(JSON.stringify(payload), /private question|private name|example\.com|never share/i);
+  assert.doesNotMatch(JSON.stringify(payload), /my secret roadmap decision|private name|example\.com|never share/i);
 });
 
 test("advanced Tarot UI makes no feature API or AI calls and supports reduced motion", () => {
