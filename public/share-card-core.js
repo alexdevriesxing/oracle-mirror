@@ -9,6 +9,7 @@ const SAFE_KINDS = new Set([
   "love-match",
   "pick-card",
   "three-doors",
+  "council",
 ]);
 
 function cleanText(value, max = 120) {
@@ -140,6 +141,23 @@ export function sanitizeSharePayload(input) {
       subtitle: [door ? `${door} Door` : "Mystery Door", category].filter(Boolean).join(" · "),
       lines: [message],
       footer: "A playful symbolic reveal from Oracle Mirror",
+    };
+  }
+
+  if (kind === "council") {
+    const mystics = Array.isArray(input.mystics)
+      ? input.mystics.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
+      : [];
+    if (mystics.length !== 3) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "COUNCIL OF MYSTICS",
+      title: "The Council Spoke",
+      glyph: "◈",
+      subtitle: "Three voices · one Mirror Verdict",
+      lines: mystics,
+      footer: "My private question and answer text are excluded from this card",
     };
   }
 
