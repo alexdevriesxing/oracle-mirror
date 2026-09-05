@@ -17,6 +17,12 @@ import { handleTelemetry } from "./telemetry.ts";
 import type { TelemetryEnv } from "./telemetry.ts";
 import { handleCouncil } from "./council.ts";
 import type { CouncilEnv } from "./council.ts";
+import {
+  augmentSitemapWithRunes,
+  handleRuneRoute,
+  injectRunesDiscovery,
+  isRuneRoute,
+} from "./runes-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -60,14 +66,30 @@ function removedLegacyEventResponse(request: Request): Response {
   );
 }
 
+function safeRuneDiscoveryHtml(html: string): string {
+  return injectRunesDiscovery(html)
+    .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
+    .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, and Elder Futhark Rune Casting.");
+}
+
+function augmentRuneLlms(text: string): string {
+  if (text.includes("## Rune Casting")) return text;
+  return `${text.trimEnd()}\n\n## Rune Casting\n- https://oraclemirror.com/runes — free three-rune Elder Futhark reflection with a 24-rune guide.\n- https://oraclemirror.com/runes/{rune} — individual meanings for Fehu through Othala, with modern symbolic interpretation clearly separated from historical context.\n`;
+}
+
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
 
+  if (url.pathname === "/llms.txt") {
+    return responseWithBody(response, augmentRuneLlms(await response.text()), "text/plain; charset=UTF-8");
+  }
+
   if (isSitemapResponse(url.pathname, response)) {
     return responseWithBody(
       response,
-      rewriteSitemapFreshness(await response.text()),
+      augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())),
       "application/xml; charset=UTF-8"
     );
   }
@@ -75,7 +97,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (isHtmlResponse(response)) {
     return responseWithBody(
       response,
-      rewriteHtmlFreshness(await response.text(), url.pathname),
+      safeRuneDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname)),
       "text/html; charset=UTF-8"
     );
   }
@@ -117,6 +139,10 @@ export default {
 
     if (url.pathname === "/api/council") {
       return withSecurityHeaders(await handleCouncil(request, env));
+    }
+
+    if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) {
+      return withSecurityHeaders(handleRuneRoute(url.pathname));
     }
 
     if (isRetiredEventPath(url.pathname)) {

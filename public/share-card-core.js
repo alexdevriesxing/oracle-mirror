@@ -13,6 +13,7 @@ const SAFE_KINDS = new Set([
   "pendulum",
   "aura",
   "oracle-duel",
+  "runes",
 ]);
 
 function cleanText(value, max = 120) {
@@ -212,6 +213,26 @@ export function sanitizeSharePayload(input) {
       subtitle: `${mystics[0]} vs ${mystics[1]}`,
       lines: ["I chose the perspective that resonated more"],
       footer: "My private question and both interpretations are excluded",
+    };
+  }
+
+  if (kind === "runes") {
+    const runes = Array.isArray(input.runes)
+      ? input.runes.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
+      : [];
+    const positions = Array.isArray(input.positions)
+      ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean)
+      : [];
+    if (runes.length !== 3) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "THREE-RUNE CAST",
+      title: "The Futhark Spoke",
+      glyph: "ᚠ",
+      subtitle: "Root · Present · Path Ahead",
+      lines: runes.map((name, index) => `${positions[index] || `Rune ${index + 1}`}: ${name}`),
+      footer: "A symbolic Elder Futhark reflection from Oracle Mirror",
     };
   }
 
