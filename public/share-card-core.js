@@ -5,6 +5,7 @@ export const SHARE_CARD_HEIGHT = 1920;
 const SAFE_KINDS = new Set([
   "daily",
   "tarot",
+  "advanced-tarot",
   "numerology",
   "love-match",
   "pick-card",
@@ -100,6 +101,24 @@ export function sanitizeSharePayload(input) {
     };
   }
 
+  if (kind === "advanced-tarot") {
+    const cards = Array.isArray(input.cards) ? input.cards.slice(0, 4).map((card) => cleanText(card, 56)).filter(Boolean) : [];
+    const positions = Array.isArray(input.positions) ? input.positions.slice(0, 4).map((value) => cleanText(value, 32)).filter(Boolean) : [];
+    const orientations = Array.isArray(input.orientations) ? input.orientations.slice(0, 4).map((value) => cleanText(value, 16)).filter(Boolean) : [];
+    const spread = cleanText(input.spread, 72);
+    if (!spread || !cards.length) return null;
+    return {
+      version: SHARE_CARD_VERSION,
+      kind,
+      eyebrow: "ADVANCED TAROT",
+      title: spread,
+      glyph: "✦",
+      subtitle: `${Array.isArray(input.cards) ? input.cards.length : cards.length}-card Oracle Mirror spread`,
+      lines: cards.map((card, index) => `${positions[index] || `Card ${index + 1}`}: ${card}${orientations[index] ? ` · ${orientations[index]}` : ""}`),
+      footer: "Generated cards only — no private question is collected or shared",
+    };
+  }
+
   if (kind === "numerology") {
     const lifePath = cleanText(String(input.lifePath ?? ""), 16);
     if (!lifePath) return null;
@@ -150,9 +169,7 @@ export function sanitizeSharePayload(input) {
   }
 
   if (kind === "council") {
-    const mystics = Array.isArray(input.mystics)
-      ? input.mystics.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
-      : [];
+    const mystics = Array.isArray(input.mystics) ? input.mystics.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean) : [];
     if (mystics.length !== 3) return null;
     return {
       version: SHARE_CARD_VERSION,
@@ -183,9 +200,7 @@ export function sanitizeSharePayload(input) {
 
   if (kind === "aura") {
     const aura = cleanText(input.aura, 64);
-    const traits = Array.isArray(input.traits)
-      ? input.traits.slice(0, 3).map((trait) => cleanText(trait, 48)).filter(Boolean)
-      : [];
+    const traits = Array.isArray(input.traits) ? input.traits.slice(0, 3).map((trait) => cleanText(trait, 48)).filter(Boolean) : [];
     if (!aura || !traits.length) return null;
     return {
       version: SHARE_CARD_VERSION,
@@ -200,9 +215,7 @@ export function sanitizeSharePayload(input) {
   }
 
   if (kind === "oracle-duel") {
-    const mystics = Array.isArray(input.mystics)
-      ? input.mystics.slice(0, 2).map((name) => cleanText(name, 48)).filter(Boolean)
-      : [];
+    const mystics = Array.isArray(input.mystics) ? input.mystics.slice(0, 2).map((name) => cleanText(name, 48)).filter(Boolean) : [];
     const winner = cleanText(input.winner, 48);
     if (mystics.length !== 2 || !winner || !mystics.includes(winner)) return null;
     return {
@@ -218,12 +231,8 @@ export function sanitizeSharePayload(input) {
   }
 
   if (kind === "runes") {
-    const runes = Array.isArray(input.runes)
-      ? input.runes.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
-      : [];
-    const positions = Array.isArray(input.positions)
-      ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean)
-      : [];
+    const runes = Array.isArray(input.runes) ? input.runes.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean) : [];
+    const positions = Array.isArray(input.positions) ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean) : [];
     if (runes.length !== 3) return null;
     return {
       version: SHARE_CARD_VERSION,
@@ -238,12 +247,8 @@ export function sanitizeSharePayload(input) {
   }
 
   if (kind === "lenormand") {
-    const cards = Array.isArray(input.cards)
-      ? input.cards.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean)
-      : [];
-    const positions = Array.isArray(input.positions)
-      ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean)
-      : [];
+    const cards = Array.isArray(input.cards) ? input.cards.slice(0, 3).map((name) => cleanText(name, 48)).filter(Boolean) : [];
+    const positions = Array.isArray(input.positions) ? input.positions.slice(0, 3).map((name) => cleanText(name, 32)).filter(Boolean) : [];
     if (cards.length !== 3) return null;
     return {
       version: SHARE_CARD_VERSION,
