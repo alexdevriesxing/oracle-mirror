@@ -72,7 +72,7 @@ test("app-shell discovery adds a real rune link and v2 keeps it outside the lega
   const injected = injectRunesDiscovery(sample);
   assert.match(injected, /href="\/runes"/);
   assert.match(injected, /card-runes/);
-  assert.match(v2Index, /data-realm=\\"runes\\"/);
+  assert.match(v2Index, /data-realm="runes"/);
   assert.match(v2Index, /isRuneRoute/);
 });
 
