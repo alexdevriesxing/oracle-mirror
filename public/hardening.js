@@ -3,6 +3,7 @@ import "./daily-ritual.js";
 import "./mirror-journey.js";
 import "./social-share.js";
 import "./instant-mysteries.js";
+import "./council.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
