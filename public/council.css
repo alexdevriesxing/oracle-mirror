@@ -1,0 +1,187 @@
+.council-of-mystics {
+  width: min(1120px, calc(100% - 32px));
+  margin: 56px auto;
+  padding: 28px;
+  border: 1px solid rgba(214, 177, 91, 0.28);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(20, 13, 38, 0.94), rgba(8, 5, 18, 0.98));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.council-kicker {
+  margin: 0 0 8px;
+  color: #d9b76d;
+  font-family: Cinzel, serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.council-of-mystics h2 {
+  margin: 0;
+  font-family: "Cinzel Decorative", Cinzel, serif;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+}
+
+.council-intro {
+  max-width: 760px;
+  margin: 12px 0 22px;
+  color: rgba(245, 239, 255, 0.78);
+  line-height: 1.6;
+}
+
+.council-form textarea {
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid rgba(214, 177, 91, 0.32);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(2, 1, 8, 0.62);
+  color: #fff9ea;
+  font: inherit;
+  line-height: 1.55;
+}
+
+.council-form textarea:focus-visible,
+.council-actions button:focus-visible,
+.council-submit:focus-visible {
+  outline: 3px solid rgba(236, 198, 109, 0.7);
+  outline-offset: 3px;
+}
+
+.council-form-meta {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 9px;
+  color: rgba(245, 239, 255, 0.58);
+  font-size: 0.9rem;
+}
+
+.council-submit,
+.council-actions button {
+  border: 1px solid rgba(214, 177, 91, 0.55);
+  border-radius: 999px;
+  padding: 11px 18px;
+  background: linear-gradient(135deg, #c79b49, #f2d58a);
+  color: #180f24;
+  font-family: Cinzel, serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.council-submit[disabled] {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.council-status {
+  min-height: 1.4em;
+  margin: 14px 0 0;
+  color: #e8c878;
+}
+
+.council-results[hidden] {
+  display: none;
+}
+
+.council-seats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.council-seat {
+  padding: 20px;
+  border: 1px solid rgba(181, 146, 221, 0.25);
+  border-radius: 20px;
+  background: rgba(17, 10, 31, 0.76);
+}
+
+.council-seat-glyph {
+  font-size: 2rem;
+}
+
+.council-seat h3 {
+  margin: 10px 0 4px;
+  font-family: Cinzel, serif;
+}
+
+.council-seat-title {
+  margin: 0 0 12px;
+  color: #d8b96e;
+  font-size: 0.9rem;
+}
+
+.council-seat-response {
+  margin: 0;
+  color: rgba(250, 246, 255, 0.86);
+  line-height: 1.65;
+}
+
+.council-verdict {
+  margin-top: 20px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(236, 198, 109, 0.35);
+  background: radial-gradient(circle at top, rgba(107, 66, 155, 0.22), rgba(12, 7, 24, 0.88));
+}
+
+.council-verdict h3 {
+  margin: 0 0 10px;
+  font-family: "Cinzel Decorative", Cinzel, serif;
+  color: #efd487;
+}
+
+.council-verdict p {
+  line-height: 1.65;
+}
+
+.council-next-step {
+  margin-bottom: 0;
+  color: #f3dfaa;
+}
+
+.council-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.council-actions button {
+  background: rgba(214, 177, 91, 0.09);
+  color: #f2d58a;
+}
+
+.council-disclaimer {
+  margin: 18px 0 0;
+  color: rgba(245, 239, 255, 0.52);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 820px) {
+  .council-seats {
+    grid-template-columns: 1fr;
+  }
+
+  .council-of-mystics {
+    padding: 20px;
+    margin: 36px auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .council-of-mystics *,
+  .council-of-mystics *::before,
+  .council-of-mystics *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

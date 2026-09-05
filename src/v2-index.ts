@@ -15,9 +15,11 @@ import {
 import { withSecurityHeaders } from "./security-headers.ts";
 import { handleTelemetry } from "./telemetry.ts";
 import type { TelemetryEnv } from "./telemetry.ts";
+import { handleCouncil } from "./council.ts";
+import type { CouncilEnv } from "./council.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
-type V2Env = Env & TelemetryEnv;
+type V2Env = Env & TelemetryEnv & CouncilEnv;
 
 function responseWithBody(response: Response, body: string, contentType?: string): Response {
   const headers = new Headers(response.headers);
@@ -70,7 +72,6 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
     );
   }
 
-
   if (isHtmlResponse(response)) {
     return responseWithBody(
       response,
@@ -112,6 +113,10 @@ export default {
 
     if (url.pathname === "/api/telemetry") {
       return withSecurityHeaders(await handleTelemetry(request, env));
+    }
+
+    if (url.pathname === "/api/council") {
+      return withSecurityHeaders(await handleCouncil(request, env));
     }
 
     if (isRetiredEventPath(url.pathname)) {
