@@ -1,4 +1,4 @@
-export const MIRROR_JOURNAL_VERSION = 1;
+export const MIRROR_JOURNAL_VERSION = 2;
 export const MIRROR_JOURNAL_ARCHIVE_KEY = "oracle-mirror-archive";
 export const MIRROR_JOURNAL_MAX_ENTRIES = 100;
 export const MIRROR_JOURNAL_MAX_NOTE_LENGTH = 2000;
@@ -69,7 +69,7 @@ export function journalEntryId(entry, index = 0) {
 
 function normalizeJournalMeta(entry, index) {
   const current = entry && typeof entry.journal === "object" && entry.journal ? entry.journal : {};
-  const id = typeof current.id === "string" && /^journal-[a-z0-9]+$/i.test(current.id)
+  const id = typeof current.id === "string" && /^journal-[a-z0-9-]+$/i.test(current.id)
     ? current.id
     : journalEntryId(entry, index);
   return {
@@ -79,6 +79,8 @@ function normalizeJournalMeta(entry, index) {
     tags: parseJournalTags(current.tags),
     note: normalizeJournalNote(current.note),
     updatedAt: validDateString(current.updatedAt),
+    followUp: current.followUp === true,
+    followedUpAt: validDateString(current.followedUpAt),
   };
 }
 
@@ -129,6 +131,8 @@ export function updateMirrorJournalEntry(entries, id, patch = {}, now = new Date
       favorite: typeof patch.favorite === "boolean" ? patch.favorite : entry.journal.favorite,
       tags: Object.prototype.hasOwnProperty.call(patch, "tags") ? parseJournalTags(patch.tags) : entry.journal.tags,
       note: Object.prototype.hasOwnProperty.call(patch, "note") ? normalizeJournalNote(patch.note) : entry.journal.note,
+      followUp: typeof patch.followUp === "boolean" ? patch.followUp : entry.journal.followUp,
+      followedUpAt: Object.prototype.hasOwnProperty.call(patch, "followedUpAt") ? validDateString(patch.followedUpAt) : entry.journal.followedUpAt,
       updatedAt,
     };
     return { ...entry, journal };
