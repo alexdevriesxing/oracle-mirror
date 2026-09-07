@@ -15,12 +15,12 @@ import {
   KNOWLEDGE_TOPICS,
   augmentLlmsWithKnowledgeGraph,
   augmentSitemapWithKnowledgeGraph,
-  handleKnowledgeTopicRoute,
   injectKnowledgeGraph,
   injectKnowledgeGraphDiscovery,
   knowledgeTopicUrls,
   topicsForPath,
 } from "../src/knowledge-graph.ts";
+import { handleKnownKnowledgeTopicRoute, isKnownKnowledgeTopicRoute } from "../src/knowledge-graph-router.ts";
 
 function resolveReference(path: string): Response | undefined {
   if (path.startsWith("/runes")) return handleRuneRoute(path);
@@ -33,6 +33,10 @@ function resolveReference(path: string): Response | undefined {
   if (path.startsWith("/divination")) return handleDivinationRoute(path);
   if (path.startsWith("/dreams")) return handleDreamLibraryRoute(path);
   return undefined;
+}
+
+function reEscape(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 test("knowledge graph contains ten complete unique themes", () => {
@@ -61,20 +65,22 @@ test("every curated cross-system knowledge link resolves through a production ro
   }
 });
 
-test("topic hub and all ten topic pages are canonical indexable SSR pages", async () => {
+test("topic hub and all ten topic pages are canonical indexable SSR pages with guarded 404s", async () => {
   const urls = knowledgeTopicUrls();
   assert.equal(urls.length, 11);
   assert.equal(new Set(urls).size, 11);
   for (const path of urls) {
-    const response = handleKnowledgeTopicRoute(path);
+    assert.equal(isKnownKnowledgeTopicRoute(path), true, path);
+    const response = handleKnownKnowledgeTopicRoute(path);
     assert.equal(response.status, 200, path);
     const html = await response.text();
     assert.match(html, /<meta name="robots" content="index,follow,max-image-preview:large">/, path);
-    assert.match(html, new RegExp(`<link rel="canonical" href="https://oraclemirror\\.com${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}">`), path);
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://oraclemirror\\.com${reEscape(path)}">`), path);
     assert.match(html, /application\/ld\+json/, path);
     assert.match(html, /knowledge-graph\.css/, path);
   }
-  assert.equal(handleKnowledgeTopicRoute("/topics/not-a-real-theme").status, 404);
+  assert.equal(isKnownKnowledgeTopicRoute("/topics/not-a-real-theme"), false);
+  assert.equal(handleKnownKnowledgeTopicRoute("/topics/not-a-real-theme").status, 404);
 });
 
 test("direct and family-level path mapping yields relevant bounded topic panels", () => {
@@ -100,7 +106,7 @@ test("knowledge panel injection is accessible, stylesheet-aware, before footer, 
 test("sitemap, llms and app-shell discovery are complete and idempotent", () => {
   const baseXml = '<?xml version="1.0"?><urlset><url><loc>https://oraclemirror.com/</loc></url></urlset>';
   const xml = augmentSitemapWithKnowledgeGraph(baseXml);
-  for (const path of knowledgeTopicUrls()) assert.match(xml, new RegExp(`<loc>https://oraclemirror\\.com${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</loc>`));
+  for (const path of knowledgeTopicUrls()) assert.match(xml, new RegExp(`<loc>https://oraclemirror\\.com${reEscape(path)}</loc>`));
   assert.equal(augmentSitemapWithKnowledgeGraph(xml), xml);
 
   const llms = augmentLlmsWithKnowledgeGraph("# Oracle Mirror\n");
@@ -117,8 +123,8 @@ test("sitemap, llms and app-shell discovery are complete and idempotent", () => 
 
 test("V2 routes topic pages and decorates mature standalone reference responses", () => {
   const source = readFileSync("src/v2-index.ts", "utf8");
-  assert.match(source, /isKnowledgeTopicRoute\(url\.pathname\)/);
-  assert.match(source, /handleKnowledgeTopicRoute\(url\.pathname\)/);
+  assert.match(source, /isKnownKnowledgeTopicRoute\(url\.pathname\)/);
+  assert.match(source, /handleKnownKnowledgeTopicRoute\(url\.pathname\)/);
   assert.match(source, /decorateStandaloneKnowledge\(handleRuneRoute/);
   assert.match(source, /decorateStandaloneKnowledge\(handleLenormandRoute/);
   assert.match(source, /decorateStandaloneKnowledge\(handleAdvancedTarotRoute/);
@@ -133,7 +139,8 @@ test("V2 routes topic pages and decorates mature standalone reference responses"
 
 test("knowledge graph adds no AI, feature API, storage, tracking, or perpetual animation runtime", () => {
   const source = readFileSync("src/knowledge-graph.ts", "utf8");
+  const router = readFileSync("src/knowledge-graph-router.ts", "utf8");
   const css = readFileSync("public/knowledge-graph.css", "utf8");
-  assert.doesNotMatch(source, /env\.AI|\/api\/|fetch\(|localStorage|sessionStorage|dataLayer|requestAnimationFrame/);
+  assert.doesNotMatch(source + router, /env\.AI|\/api\/|fetch\(|localStorage|sessionStorage|dataLayer|requestAnimationFrame/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
