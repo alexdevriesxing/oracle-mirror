@@ -25,6 +25,7 @@ import { augmentLlmsWithAdvancedIChing, augmentSitemapWithAdvancedIChing, handle
 import { augmentLlmsWithAstrology, augmentSitemapWithAstrology, handleAstrologyRoute, injectAstrologyDiscovery, isAstrologyRoute } from "./astrology-pages.ts";
 import { augmentLlmsWithPalmistry, augmentSitemapWithPalmistry, handleAdvancedPalmistryRoute, injectPalmistryDiscovery, isAdvancedPalmistryRoute } from "./palmistry-pages.ts";
 import { augmentLlmsWithDreamLibrary, augmentSitemapWithDreamLibrary } from "./dream-pages-v2.ts";
+import { augmentLlmsWithDivination, augmentSitemapWithDivination, handleDivinationRoute, injectDivinationDiscovery, isDivinationRoute } from "./divination-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -58,10 +59,10 @@ function injectDreamLibraryDiscovery(html: string): string {
 }
 
 function safeDiscoveryHtml(html: string): string {
-  return injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))))
+  return injectDivinationDiscovery(injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))))))))
     .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
     .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, the expanded Dream Library, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, the expanded Dream Library, the grounded Divination Reference Library, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
 }
 
 function augmentRuneLlms(text: string): string {
@@ -73,10 +74,10 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
   if (url.pathname === "/llms.txt") {
-    return responseWithBody(response, augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text())))))))), "text/plain; charset=UTF-8");
+    return responseWithBody(response, augmentLlmsWithDivination(augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))))))), "text/plain; charset=UTF-8");
   }
   if (isSitemapResponse(url.pathname, response)) {
-    return responseWithBody(response, augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))))))))), "application/xml; charset=UTF-8");
+    return responseWithBody(response, augmentSitemapWithDivination(augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))))))), "application/xml; charset=UTF-8");
   }
   if (isHtmlResponse(response)) return responseWithBody(response, safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname)), "text/html; charset=UTF-8");
   return response;
@@ -106,6 +107,7 @@ export default {
     if (request.method === "GET" && isAdvancedIChingRoute(url.pathname)) return withSecurityHeaders(handleAdvancedIChingRoute(url.pathname));
     if (request.method === "GET" && isAstrologyRoute(url.pathname)) return withSecurityHeaders(handleAstrologyRoute(url.pathname));
     if (request.method === "GET" && isAdvancedPalmistryRoute(url.pathname)) return withSecurityHeaders(handleAdvancedPalmistryRoute(url.pathname));
+    if (request.method === "GET" && isDivinationRoute(url.pathname)) return withSecurityHeaders(handleDivinationRoute(url.pathname));
     if (isRetiredEventPath(url.pathname)) return withSecurityHeaders(removedLegacyEventResponse(request));
     let response = await app.fetch(request, env, ctx);
     response = await applyFreshnessTransforms(response, request);

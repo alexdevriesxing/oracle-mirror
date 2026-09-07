@@ -5,6 +5,7 @@ import "./social-share.js";
 import "./instant-mysteries.js";
 import "./council.js";
 import "./interactive-oracles.js";
+import "./divination-bridge.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
