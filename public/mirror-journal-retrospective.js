@@ -17,13 +17,16 @@ const JOURNEY_STORAGE_KEY = "oracle-mirror-journey-v1";
 const STYLE_ID = "mirror-journal-retrospective-styles";
 const ROOT_SELECTOR = "[data-journal-retrospective]";
 
-const stylesheet = document.createElement("link");
-stylesheet.rel = "stylesheet";
-stylesheet.href = "/mirror-journal-retrospective.css";
-stylesheet.id = STYLE_ID;
-if (!document.getElementById(STYLE_ID)) document.head.appendChild(stylesheet);
-
 let observer = null;
+
+function ensureStylesheet() {
+  if (document.getElementById(STYLE_ID)) return;
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = "/mirror-journal-retrospective.css";
+  stylesheet.id = STYLE_ID;
+  document.head.appendChild(stylesheet);
+}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -306,6 +309,7 @@ function render() {
 function install() {
   const shell = document.querySelector(".mirror-journal-shell");
   if (!shell) return;
+  ensureStylesheet();
   let root = shell.querySelector(ROOT_SELECTOR);
   if (!root) {
     root = el("section", "mirror-journal-retrospective");
