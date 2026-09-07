@@ -104,8 +104,8 @@ test("health and nightmare symbols avoid diagnosis, supernatural certainty, and 
   const demon = DREAM_SYMBOLS.find((symbol) => symbol.symbol === "demon");
   const murder = DREAM_SYMBOLS.find((symbol) => symbol.symbol === "murder");
   assert.ok(illness && demon && murder);
-  assert.match(illness!.theme ?? illness!.meaning, /diagnosis|care/i);
-  assert.match(demon!.meaning, /supernatural attack|reflection prompt/i);
-  assert.match(murder!.meaning, /literal prediction|reflection prompt/i);
+  assert.match(illness!.meaning, /diagnosis|care/i);
+  assert.match(demon!.meaning, /reflection prompt/i);
+  assert.match(murder!.meaning, /reflection prompt/i);
   assert.ok(symbolsForDreamTheme("nightmares").length >= 20);
 });
