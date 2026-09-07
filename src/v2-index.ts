@@ -29,11 +29,10 @@ import { augmentLlmsWithDivination, augmentSitemapWithDivination, handleDivinati
 import {
   augmentLlmsWithKnowledgeGraph,
   augmentSitemapWithKnowledgeGraph,
-  handleKnowledgeTopicRoute,
   injectKnowledgeGraph,
   injectKnowledgeGraphDiscovery,
-  isKnowledgeTopicRoute,
 } from "./knowledge-graph.ts";
+import { handleKnownKnowledgeTopicRoute, isKnownKnowledgeTopicRoute } from "./knowledge-graph-router.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -117,7 +116,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/api/telemetry") return withSecurityHeaders(await handleTelemetry(request, env));
     if (url.pathname === "/api/council") return withSecurityHeaders(await handleCouncil(request, env));
-    if (request.method === "GET" && isKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(handleKnowledgeTopicRoute(url.pathname));
+    if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(handleKnownKnowledgeTopicRoute(url.pathname));
     if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) return withSecurityHeaders(await decorateStandaloneKnowledge(handleRuneRoute(url.pathname), request));
     if (request.method === "GET" && isLenormandRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleLenormandRoute(url.pathname), request));
     if (request.method === "GET" && isAdvancedTarotRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleAdvancedTarotRoute(url.pathname), request));
