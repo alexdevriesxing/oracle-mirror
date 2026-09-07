@@ -37,7 +37,7 @@ test("Moon calculator page exposes methodology and local client",async()=>{
 });
 
 test("zodiac, planet, retrograde, transit, and birth-chart guides separate astronomy from symbolism",async()=>{
-  const aries=await handleAstrologyRoute("/astrology/zodiac/aries").text();assert.match(aries,/Aries Zodiac Sign/);assert.match(aries,/exact Sun sign near a cusp/);
+  const aries=await handleAstrologyRoute("/astrology/zodiac/aries").text();assert.match(aries,/Aries Zodiac Sign/);assert.match(aries,/Exact Sun sign near a cusp/);
   const mercury=await handleAstrologyRoute("/astrology/planets/mercury").text();assert.match(mercury,/Astronomy/);assert.match(mercury,/astrological interpretation/);
   const retro=await handleAstrologyRoute("/astrology/retrogrades/mercury").text();assert.match(retro,/apparent reversal/);assert.match(retro,/does not claim that retrograde motion causes/);
   const transits=await handleAstrologyRoute("/astrology/transits").text();assert.match(transits,/does not fabricate “today's transits”/);
