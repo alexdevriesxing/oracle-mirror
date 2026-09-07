@@ -24,6 +24,7 @@ import { augmentLlmsWithAdvancedNumerology, augmentSitemapWithAdvancedNumerology
 import { augmentLlmsWithAdvancedIChing, augmentSitemapWithAdvancedIChing, handleAdvancedIChingRoute, injectAdvancedIChingDiscovery, isAdvancedIChingRoute } from "./iching-pages.ts";
 import { augmentLlmsWithAstrology, augmentSitemapWithAstrology, handleAstrologyRoute, injectAstrologyDiscovery, isAstrologyRoute } from "./astrology-pages.ts";
 import { augmentLlmsWithPalmistry, augmentSitemapWithPalmistry, handleAdvancedPalmistryRoute, injectPalmistryDiscovery, isAdvancedPalmistryRoute } from "./palmistry-pages.ts";
+import { augmentLlmsWithDreamLibrary, augmentSitemapWithDreamLibrary } from "./dream-pages-v2.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -43,11 +44,24 @@ function removedLegacyEventResponse(request: Request): Response {
   return new Response("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex,follow\"><title>Page Removed | Oracle Mirror</title></head><body><main><h1>This Oracle Mirror feature has been removed.</h1><p><a href=\"/\">Return to Oracle Mirror</a></p></main></body></html>", { status: 410, headers: { "Content-Type": "text/html; charset=UTF-8", "Cache-Control": "public, max-age=86400" } });
 }
 
+function injectDreamLibraryDiscovery(html: string): string {
+  if (html.includes('href="/dreams" class="dropdown-item dream-library-link"')) return html;
+  let next = html.replace(
+    '<a href="/dream-interpreter" class="dropdown-item" data-nav="dream-interpreter">&#127769; Dream Interpreter</a>',
+    '<a href="/dream-interpreter" class="dropdown-item" data-nav="dream-interpreter">&#127769; Dream Interpreter</a>\n              <a href="/dreams" class="dropdown-item dream-library-link">📖 Dream Library</a>'
+  );
+  const dreamCard = '<a href="/dream-interpreter" class="card card-dream" data-realm="dream-interpreter">';
+  if (next.includes(dreamCard) && !next.includes('class="card card-dream-library"')) {
+    next = next.replace(dreamCard, '<a href="/dreams" class="card card-dream-library"><div class="card-frame"><div class="card-icon">📖</div><h3>Dream Library</h3><p class="card-desc">Explore 250+ dream symbols across ten meaningful themes</p></div></a>\n          ' + dreamCard);
+  }
+  return next;
+}
+
 function safeDiscoveryHtml(html: string): string {
-  return injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))))))
+  return injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))))
     .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
     .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, the expanded Dream Library, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
 }
 
 function augmentRuneLlms(text: string): string {
@@ -59,10 +73,10 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
   if (url.pathname === "/llms.txt") {
-    return responseWithBody(response, augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))))), "text/plain; charset=UTF-8");
+    return responseWithBody(response, augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text())))))))), "text/plain; charset=UTF-8");
   }
   if (isSitemapResponse(url.pathname, response)) {
-    return responseWithBody(response, augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))))), "application/xml; charset=UTF-8");
+    return responseWithBody(response, augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))))))))), "application/xml; charset=UTF-8");
   }
   if (isHtmlResponse(response)) return responseWithBody(response, safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname)), "text/html; charset=UTF-8");
   return response;
