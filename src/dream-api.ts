@@ -45,7 +45,7 @@ export async function handleExpandedDream(request: Request, env: DreamEnv): Prom
   const messages = body.messages;
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > 20) return json({ error: "Missing or invalid messages" }, 400);
   const cleaned = messages.map((message) => ({ role: message.role === "user" ? "user" : "assistant", content: typeof message.content === "string" ? message.content.trim().slice(0, 1200) : "" })).filter((message) => message.content);
-  const last = cleaned.at(-1);
+  const last = cleaned[cleaned.length - 1];
   if (!last || last.role !== "user") return json({ error: "Missing user message" }, 400);
   const userMessages = cleaned.filter((message) => message.role === "user");
   const phase = dreamPhaseForTurns(userMessages.length);
