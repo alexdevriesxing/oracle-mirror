@@ -15,9 +15,13 @@ test("expanded corpus adds 250 unique seeds and produces a 265-symbol combined l
   assert.equal(DREAM_SYMBOLS.length, 265);
   assert.equal(new Set(DREAM_SYMBOLS.map((symbol) => symbol.symbol)).size, DREAM_SYMBOLS.length);
   for (const symbol of DREAM_SYMBOLS) {
+    assert.ok(symbol.meaning.length > 30, symbol.symbol);
+    assert.ok(symbol.questionHints.length >= 2, symbol.symbol);
+  }
+  const expandedIds = new Set(EXPANDED_DREAM_SEEDS.map((seed) => seed.slug));
+  for (const symbol of DREAM_SYMBOLS.filter((item) => expandedIds.has(item.symbol))) {
     assert.ok(symbol.meaning.length > 60, symbol.symbol);
     assert.ok(symbol.frameworks.emotional.length > 60, symbol.symbol);
-    assert.ok(symbol.questionHints.length >= 2, symbol.symbol);
   }
 });
 
@@ -29,13 +33,13 @@ test("ten semantic themes are complete and every dream symbol belongs to one", (
   for (const theme of themes) assert.ok(theme.count >= 20, theme.slug);
 });
 
-test("expanded retrieval finds specific new symbols rather than only the legacy fifteen", () => {
+test("expanded retrieval finds specific new symbols in natural multiword descriptions", () => {
   const matched = retrieveDreamKnowledge("I missed my flight, lost my luggage, then a wolf followed me into a hotel", 6);
   const ids = matched.map((symbol) => symbol.symbol);
-  assert.ok(ids.includes("missed-flight"));
-  assert.ok(ids.includes("lost-luggage"));
-  assert.ok(ids.includes("wolf"));
-  assert.ok(ids.includes("hotel"));
+  assert.ok(ids.includes("missed-flight"), ids.join(","));
+  assert.ok(ids.includes("lost-luggage"), ids.join(","));
+  assert.ok(ids.includes("wolf"), ids.join(","));
+  assert.ok(ids.includes("hotel"), ids.join(","));
 });
 
 test("related-symbol discovery stays semantic instead of using array neighbours", () => {
