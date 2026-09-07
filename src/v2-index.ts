@@ -33,6 +33,13 @@ import {
   injectKnowledgeGraphDiscovery,
 } from "./knowledge-graph.ts";
 import { handleKnownKnowledgeTopicRoute, isKnownKnowledgeTopicRoute } from "./knowledge-graph-router.ts";
+import {
+  augmentLlmsWithReferenceSearch,
+  augmentSitemapWithReferenceSearch,
+  handleReferenceSearchRoute,
+  injectReferenceSearchDiscovery,
+  isReferenceSearchRoute,
+} from "./reference-search.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -65,11 +72,15 @@ function injectDreamLibraryDiscovery(html: string): string {
   return next;
 }
 
-function safeDiscoveryHtml(html: string): string {
-  return injectKnowledgeGraphDiscovery(injectDivinationDiscovery(injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))))))
-    .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
-    .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, the expanded Dream Library, the grounded Divination Reference Library, cross-system Mystical Themes, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
+function safeDiscoveryHtml(html: string, pathname = ""): string {
+  const discovered = injectKnowledgeGraphDiscovery(injectDivinationDiscovery(injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))))));
+  return injectReferenceSearchDiscovery(
+    discovered
+      .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
+      .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
+      .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, the expanded Dream Library, the grounded Divination Reference Library, cross-system Mystical Themes, universal Reference Search, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry."),
+    pathname,
+  );
 }
 
 function augmentRuneLlms(text: string): string {
@@ -80,20 +91,21 @@ function augmentRuneLlms(text: string): string {
 async function decorateStandaloneKnowledge(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok || !isHtmlResponse(response)) return response;
   const path = new URL(request.url).pathname;
-  return responseWithBody(response, injectKnowledgeGraph(await response.text(), path), "text/html; charset=UTF-8");
+  const withKnowledge = injectKnowledgeGraph(await response.text(), path);
+  return responseWithBody(response, injectReferenceSearchDiscovery(withKnowledge, path), "text/html; charset=UTF-8");
 }
 
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
   if (url.pathname === "/llms.txt") {
-    return responseWithBody(response, augmentLlmsWithKnowledgeGraph(augmentLlmsWithDivination(augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text())))))))))), "text/plain; charset=UTF-8");
+    return responseWithBody(response, augmentLlmsWithReferenceSearch(augmentLlmsWithKnowledgeGraph(augmentLlmsWithDivination(augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))))))))), "text/plain; charset=UTF-8");
   }
   if (isSitemapResponse(url.pathname, response)) {
-    return responseWithBody(response, augmentSitemapWithKnowledgeGraph(augmentSitemapWithDivination(augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))))))))))), "application/xml; charset=UTF-8");
+    return responseWithBody(response, augmentSitemapWithReferenceSearch(augmentSitemapWithKnowledgeGraph(augmentSitemapWithDivination(augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))))))))), "application/xml; charset=UTF-8");
   }
   if (isHtmlResponse(response)) {
-    const html = safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname));
+    const html = safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname), url.pathname);
     return responseWithBody(response, injectKnowledgeGraph(html, url.pathname), "text/html; charset=UTF-8");
   }
   return response;
@@ -116,7 +128,8 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/api/telemetry") return withSecurityHeaders(await handleTelemetry(request, env));
     if (url.pathname === "/api/council") return withSecurityHeaders(await handleCouncil(request, env));
-    if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(handleKnownKnowledgeTopicRoute(url.pathname));
+    if (request.method === "GET" && isReferenceSearchRoute(url.pathname)) return withSecurityHeaders(handleReferenceSearchRoute());
+    if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleKnownKnowledgeTopicRoute(url.pathname), request));
     if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) return withSecurityHeaders(await decorateStandaloneKnowledge(handleRuneRoute(url.pathname), request));
     if (request.method === "GET" && isLenormandRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleLenormandRoute(url.pathname), request));
     if (request.method === "GET" && isAdvancedTarotRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleAdvancedTarotRoute(url.pathname), request));
