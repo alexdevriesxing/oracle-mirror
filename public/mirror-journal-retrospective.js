@@ -124,7 +124,18 @@ function trendChart(trend) {
 
 function focusEntry(id) {
   if (!/^journal-[a-z0-9-]+$/i.test(String(id || ""))) return;
-  window.dispatchEvent(new CustomEvent("oracle:journal-focus", { detail: { id } }));
+  const reset = document.querySelector("[data-journal-reset]");
+  if (reset instanceof HTMLButtonElement) reset.click();
+  window.setTimeout(() => {
+    const card = document.querySelector(`[data-journal-entry="${CSS.escape(id)}"]`);
+    if (!(card instanceof HTMLElement)) return;
+    card.dataset.retrospectiveFocus = "true";
+    card.tabIndex = -1;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    card.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    card.focus({ preventScroll: true });
+    window.setTimeout(() => { delete card.dataset.retrospectiveFocus; }, 3200);
+  }, 0);
 }
 
 function onThisDayPanel(entries) {
