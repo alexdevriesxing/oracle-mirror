@@ -6,6 +6,7 @@ import "./instant-mysteries.js";
 import "./council.js";
 import "./interactive-oracles.js";
 import "./divination-bridge.js";
+import "./mirror-journal.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
