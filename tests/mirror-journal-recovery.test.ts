@@ -7,6 +7,7 @@ import {
   updateMirrorJournalEntry,
 } from "../public/mirror-journal-core.js";
 import {
+  MIRROR_JOURNAL_RECOVERY_VERSION,
   markMirrorJournalFollowUp,
   mergeMirrorJournalBackup,
   mirrorJournalFingerprint,
@@ -28,7 +29,7 @@ function entry(overrides: Record<string, any> = {}) {
   };
 }
 
-test("M8.2 accepts versioned Oracle Mirror backups and rejects unrelated or malformed JSON", () => {
+test("M8.2 accepts supported Oracle Mirror backups and rejects malformed or future formats", () => {
   const exported = mirrorJournalExport([entry()], new Date("2026-09-07T18:00:00.000Z"));
   const valid = validateMirrorJournalBackup(JSON.stringify(exported));
   assert.equal(valid.ok, true);
@@ -38,6 +39,11 @@ test("M8.2 accepts versioned Oracle Mirror backups and rejects unrelated or malf
   assert.equal(validateMirrorJournalBackup("not json").error, "invalid-json");
   assert.equal(validateMirrorJournalBackup({ format: "other", entries: [] }).error, "wrong-format");
   assert.equal(validateMirrorJournalBackup({ format: "mirror-journal" }).error, "missing-entries");
+  assert.equal(validateMirrorJournalBackup({
+    format: "mirror-journal",
+    version: MIRROR_JOURNAL_RECOVERY_VERSION + 1,
+    entries: [entry()],
+  }).error, "unsupported-version");
 });
 
 test("backup validation rejects malformed entries without importing their content", () => {
@@ -87,19 +93,50 @@ test("content fingerprint catches duplicates even when journal ids differ", () =
   assert.equal(merged.entries[0].journal.favorite, true);
 });
 
-test("restore keeps newest 100 readings and reports truncation", () => {
-  const local = [];
+test("restore keeps the newest 100 imported readings when the local journal is empty", () => {
   const backup = Array.from({ length: 105 }, (_, index) => entry({
     realm: `realm-${index}`,
     answer: `Answer ${index}`,
     question: `Question ${index}`,
     date: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
   }));
-  const merged = mergeMirrorJournalBackup(local, backup);
+  const merged = mergeMirrorJournalBackup([], backup);
   assert.equal(merged.entries.length, 100);
-  assert.equal(merged.summary.added, 105);
+  assert.equal(merged.summary.added, 100);
   assert.equal(merged.summary.truncated, 5);
   assert.ok(Date.parse(merged.entries[0].date) >= Date.parse(merged.entries.at(-1)!.date));
+});
+
+test("restore never evicts an existing local reading even when imported readings are newer", () => {
+  const local = migrateMirrorJournal(Array.from({ length: 99 }, (_, index) => entry({
+    realm: `local-${index}`,
+    answer: `Local answer ${index}`,
+    question: `Local question ${index}`,
+    date: new Date(Date.UTC(2025, 0, index + 1)).toISOString(),
+  }))).entries;
+  const localFingerprints = new Set(local.map(mirrorJournalFingerprint));
+  const backup = Array.from({ length: 10 }, (_, index) => entry({
+    realm: `import-${index}`,
+    answer: `Import answer ${index}`,
+    question: `Import question ${index}`,
+    date: new Date(Date.UTC(2027, 0, index + 1)).toISOString(),
+  }));
+
+  const merged = mergeMirrorJournalBackup(local, backup);
+  assert.equal(merged.entries.length, 100);
+  assert.equal(merged.summary.added, 1);
+  assert.equal(merged.summary.truncated, 9);
+  for (const fingerprint of localFingerprints) {
+    assert.ok(merged.entries.some((item) => mirrorJournalFingerprint(item) === fingerprint));
+  }
+});
+
+test("duplicate records inside one backup do not consume journal capacity twice", () => {
+  const duplicate = entry({ realm: "runes", answer: "Same cast" });
+  const merged = mergeMirrorJournalBackup([], [duplicate, { ...duplicate, journal: { id: "journal-other" } }]);
+  assert.equal(merged.entries.length, 1);
+  assert.equal(merged.summary.added, 1);
+  assert.equal(merged.summary.duplicates, 1);
 });
 
 test("follow-up metadata survives the main journal migration and later note updates", () => {
@@ -140,6 +177,8 @@ test("M8.2 bootstrap, recovery preview, accessibility and privacy boundaries are
   assert.match(hardening, /import "\.\/mirror-journal-recovery\.js"/);
   assert.match(recoveryUi, /Choose Backup File/);
   assert.match(recoveryUi, /Merge Backup Into Journal/);
+  assert.match(recoveryUi, /every reading already in this browser is preserved/i);
+  assert.match(recoveryUi, /unsupported-version/);
   assert.match(recoveryUi, /aria-pressed/);
   assert.match(recoveryUi, /Follow-up/);
   assert.match(recoveryUi, /MAX_BACKUP_BYTES/);
