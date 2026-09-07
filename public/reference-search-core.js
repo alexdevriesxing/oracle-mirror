@@ -8,13 +8,22 @@ export function normalizeSearchText(value) {
     .trim();
 }
 
+export function referenceResultPath(entry) {
+  const path = String(entry?.path || "");
+  if (entry?.system !== "I Ching" || !path.startsWith("/iching/hexagrams/")) return path;
+  const slug = path.slice("/iching/hexagrams/".length);
+  if (/^\d+(?:-|$)/.test(slug)) return path;
+  const match = String(entry?.title || "").match(/^Hexagram\s+(\d+)\b/i);
+  return match ? `/iching/hexagrams/${match[1]}-${slug}` : path;
+}
+
 function normalizedEntry(entry) {
   const title = normalizeSearchText(entry.title);
   const system = normalizeSearchText(entry.system);
   const summary = normalizeSearchText(entry.summary);
   const keywords = normalizeSearchText((entry.keywords || []).join(" "));
   const themes = normalizeSearchText((entry.themes || []).join(" "));
-  const path = normalizeSearchText(String(entry.path || "").replace(/[-/]/g, " "));
+  const path = normalizeSearchText(referenceResultPath(entry).replace(/[-/]/g, " "));
   return { title, system, summary, keywords, themes, path, all: `${title} ${system} ${keywords} ${themes} ${summary} ${path}` };
 }
 
