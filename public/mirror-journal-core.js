@@ -216,15 +216,13 @@ export function mirrorJournalStats(entries) {
   let favorites = 0;
   let notes = 0;
   let tagged = 0;
-  let followUps = 0;
   for (const entry of migrated) {
     if (entry.realm) realms.add(entry.realm);
     if (entry.journal.favorite) favorites += 1;
     if (entry.journal.note) notes += 1;
     if (entry.journal.tags.length) tagged += 1;
-    if (entry.journal.followUp) followUps += 1;
   }
-  return { total: migrated.length, favorites, notes, tagged, followUps, realms: realms.size };
+  return { total: migrated.length, favorites, notes, tagged, realms: realms.size };
 }
 
 export function mirrorJournalCalendar(entries, year, monthIndex) {
