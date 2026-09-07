@@ -42,6 +42,7 @@ import {
 } from "./reference-search.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
+declare const __BUILD_COMMIT__: string;
 type V2Env = Env & TelemetryEnv & CouncilEnv;
 
 function responseWithBody(response: Response, body: string, contentType?: string): Response {
@@ -126,6 +127,26 @@ async function transformHtmlResponse(response: Response, request: Request): Prom
 export default {
   async fetch(request: Request, env: V2Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === "/api/version" && request.method === "GET") {
+      const commit = typeof __BUILD_COMMIT__ !== "undefined" ? __BUILD_COMMIT__ : "unknown";
+      const payload = {
+        status: "ok",
+        commit,
+        versionId: env.CF_VERSION_METADATA?.id || null,
+        versionTag: env.CF_VERSION_METADATA?.tag || null,
+      };
+      return withSecurityHeaders(
+        new Response(JSON.stringify(payload, null, 2), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "X-Oracle-Commit": commit,
+            "X-Oracle-Version-Id": env.CF_VERSION_METADATA?.id || "unknown",
+          },
+        })
+      );
+    }
     if (url.pathname === "/api/telemetry") return withSecurityHeaders(await handleTelemetry(request, env));
     if (url.pathname === "/api/council") return withSecurityHeaders(await handleCouncil(request, env));
     if (request.method === "GET" && isReferenceSearchRoute(url.pathname)) return withSecurityHeaders(handleReferenceSearchRoute());

@@ -53,46 +53,51 @@ jobs:
         run: npm ci
 
       - name: Build production Worker
+        env:
+          GITHUB_SHA: ${{ steps.revision.outputs.sha }}
         run: npm run build
 
-      - name: Check Cloudflare deployment credentials
-        id: cloudflare
+      - name: Validate Cloudflare deployment credentials
         shell: bash
         run: |
-          if [[ -n "$CLOUDFLARE_API_TOKEN" && -n "$CLOUDFLARE_ACCOUNT_ID" ]]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Cloudflare deployment skipped. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository Actions secrets."
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Deployment failed: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets must be configured."
+            exit 1
           fi
+          echo "Cloudflare deployment credentials configured."
 
       - name: Deploy Worker
-        if: steps.cloudflare.outputs.configured == 'true'
         run: npx --yes wrangler@4 deploy
 
       - name: Verify production
-        if: steps.cloudflare.outputs.configured == 'true'
         shell: bash
         run: |
+          target_sha="${{ steps.revision.outputs.sha }}"
           verify() {
             homepage="$(curl --fail --silent --show-error https://oraclemirror.com/)" || return 1
             headers="$(curl --fail --silent --show-error --head https://oraclemirror.com/)" || return 1
             removed_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://oraclemirror.com/oracle-of-olympus)"
+            runes_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://oraclemirror.com/runes)"
+            version_res="$(curl --fail --silent --show-error https://oraclemirror.com/api/version)" || return 1
 
             grep -q '<title>Free Tarot, Horoscopes & Mystical Readings | Oracle Mirror</title>' <<< "$homepage" || return 1
             ! grep -qi 'World Cup 2026' <<< "$homepage" || return 1
             grep -qi '^x-content-type-options: nosniff' <<< "$headers" || return 1
             grep -qi '^referrer-policy: strict-origin-when-cross-origin' <<< "$headers" || return 1
             [[ "$removed_status" == "410" ]] || return 1
+            [[ "$runes_status" == "200" ]] || return 1
+            grep -q "$target_sha" <<< "$version_res" || return 1
           }
 
-          for attempt in {1..12}; do
+          echo "Awaiting production convergence for commit $target_sha..."
+          for attempt in {1..24}; do
             if verify; then
-              echo "Production verification passed for ${{ steps.revision.outputs.sha }}"
+              echo "Production verification passed for $target_sha"
               exit 0
             fi
             sleep 5
           done
 
-          echo "Production verification did not converge to the verified commit."
+          echo "Production verification did not converge to the verified commit $target_sha."
           exit 1
+
