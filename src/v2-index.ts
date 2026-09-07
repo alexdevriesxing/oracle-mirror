@@ -23,6 +23,7 @@ import { augmentLlmsWithAdvancedTarot, augmentSitemapWithAdvancedTarot, handleAd
 import { augmentLlmsWithAdvancedNumerology, augmentSitemapWithAdvancedNumerology, handleAdvancedNumerologyRoute, injectAdvancedNumerologyDiscovery, isAdvancedNumerologyRoute } from "./numerology-pages.ts";
 import { augmentLlmsWithAdvancedIChing, augmentSitemapWithAdvancedIChing, handleAdvancedIChingRoute, injectAdvancedIChingDiscovery, isAdvancedIChingRoute } from "./iching-pages.ts";
 import { augmentLlmsWithAstrology, augmentSitemapWithAstrology, handleAstrologyRoute, injectAstrologyDiscovery, isAstrologyRoute } from "./astrology-pages.ts";
+import { augmentLlmsWithPalmistry, augmentSitemapWithPalmistry, handleAdvancedPalmistryRoute, injectPalmistryDiscovery, isAdvancedPalmistryRoute } from "./palmistry-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 type V2Env = Env & TelemetryEnv & CouncilEnv;
@@ -43,10 +44,10 @@ function removedLegacyEventResponse(request: Request): Response {
 }
 
 function safeDiscoveryHtml(html: string): string {
-  return injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))
+  return injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))))))
     .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
     .replace("Seekers can consult ten mystical realms:", "Seekers can consult many mystical realms, including:")
-    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, and astrology/lunar reference guides.");
+    .replace("and the Dawn Oracle's Daily Fortune scroll.", "the Dawn Oracle's Daily Fortune scroll, Elder Futhark Rune Casting, Lenormand card reading, advanced 78-card Tarot, advanced numerology, Advanced I Ching, astrology/lunar reference guides, and Advanced Palmistry.");
 }
 
 function augmentRuneLlms(text: string): string {
@@ -58,10 +59,10 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
   if (url.pathname === "/llms.txt") {
-    return responseWithBody(response, augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text())))))), "text/plain; charset=UTF-8");
+    return responseWithBody(response, augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))))), "text/plain; charset=UTF-8");
   }
   if (isSitemapResponse(url.pathname, response)) {
-    return responseWithBody(response, augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text()))))))), "application/xml; charset=UTF-8");
+    return responseWithBody(response, augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))))), "application/xml; charset=UTF-8");
   }
   if (isHtmlResponse(response)) return responseWithBody(response, safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname)), "text/html; charset=UTF-8");
   return response;
@@ -90,6 +91,7 @@ export default {
     if (request.method === "GET" && isAdvancedNumerologyRoute(url.pathname)) return withSecurityHeaders(handleAdvancedNumerologyRoute(url.pathname));
     if (request.method === "GET" && isAdvancedIChingRoute(url.pathname)) return withSecurityHeaders(handleAdvancedIChingRoute(url.pathname));
     if (request.method === "GET" && isAstrologyRoute(url.pathname)) return withSecurityHeaders(handleAstrologyRoute(url.pathname));
+    if (request.method === "GET" && isAdvancedPalmistryRoute(url.pathname)) return withSecurityHeaders(handleAdvancedPalmistryRoute(url.pathname));
     if (isRetiredEventPath(url.pathname)) return withSecurityHeaders(removedLegacyEventResponse(request));
     let response = await app.fetch(request, env, ctx);
     response = await applyFreshnessTransforms(response, request);
