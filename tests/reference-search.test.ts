@@ -21,7 +21,7 @@ import {
   referenceSearchSystems,
   referenceSearchThemeOptions,
 } from "../src/reference-search.ts";
-import { searchReferenceEntries } from "../public/reference-search-core.js";
+import { referenceResultPath, searchReferenceEntries } from "../public/reference-search-core.js";
 
 const EXPECTED_COUNTS = new Map([
   ["Runes", 25],
@@ -54,6 +54,7 @@ test("reference index covers exactly the complete 745-page reference surface", (
   const entries = referenceSearchIndex();
   assert.equal(entries.length, 745);
   assert.equal(new Set(entries.map((entry) => entry.path)).size, 745);
+  assert.equal(new Set(entries.map(referenceResultPath)).size, 745);
   assert.deepEqual(referenceSearchSystems(), [...EXPECTED_COUNTS.keys()]);
   assert.equal(referenceSearchThemeOptions().length, 10);
 
@@ -62,7 +63,7 @@ test("reference index covers exactly the complete 745-page reference surface", (
   }
 
   for (const entry of entries) {
-    assert.match(entry.path, /^\//, entry.path);
+    assert.match(referenceResultPath(entry), /^\//, entry.path);
     assert.ok(entry.title.length >= 2, entry.path);
     assert.ok(entry.system.length >= 2, entry.path);
     assert.ok(entry.summary.length >= 15, entry.path);
@@ -71,29 +72,36 @@ test("reference index covers exactly the complete 745-page reference surface", (
   }
 });
 
-test("every indexed reference path resolves through its production route handler", () => {
+test("every clickable indexed reference path resolves through its production route handler", () => {
   for (const entry of referenceSearchIndex()) {
-    const response = resolveReference(entry.path);
-    assert.ok(response, `No production route handler for ${entry.path}`);
-    assert.equal(response?.status, 200, entry.path);
-    assert.match(response?.headers.get("content-type") || "", /text\/html/i, entry.path);
+    const path = referenceResultPath(entry);
+    const response = resolveReference(path);
+    assert.ok(response, `No production route handler for ${path}`);
+    assert.equal(response?.status, 200, path);
+    assert.match(response?.headers.get("content-type") || "", /text\/html/i, path);
   }
+});
+
+test("I Ching search results use the numbered canonical hexagram route", () => {
+  const creative = referenceSearchIndex().find((entry) => entry.title === "Hexagram 1 — The Creative");
+  assert.ok(creative);
+  assert.equal(referenceResultPath(creative), "/iching/hexagrams/1-creative");
 });
 
 test("local ranking finds exact concepts and respects system/theme filters", () => {
   const entries = referenceSearchIndex();
 
   const lovers = searchReferenceEntries(entries, "the lovers", { limit: 10 });
-  assert.equal(lovers[0]?.path, "/tarot/cards/the-lovers");
+  assert.equal(referenceResultPath(lovers[0]), "/tarot/cards/the-lovers");
 
   const mercury = searchReferenceEntries(entries, "mercury retrograde", { limit: 10 });
-  assert.equal(mercury[0]?.path, "/astrology/retrogrades/mercury");
+  assert.equal(referenceResultPath(mercury[0]), "/astrology/retrogrades/mercury");
 
   const teeth = searchReferenceEntries(entries, "teeth", { limit: 20 });
-  assert.ok(teeth.some((entry) => entry.path === "/dreams/teeth-falling-out"));
+  assert.ok(teeth.some((entry) => referenceResultPath(entry) === "/dreams/teeth-falling-out"));
 
   const protectedRunes = searchReferenceEntries(entries, "protection", { system: "Runes", limit: 20 });
-  assert.ok(protectedRunes.some((entry) => entry.path === "/runes/algiz"));
+  assert.ok(protectedRunes.some((entry) => referenceResultPath(entry) === "/runes/algiz"));
   assert.ok(protectedRunes.every((entry) => entry.system === "Runes"));
 
   const loveOnly = searchReferenceEntries(entries, "", { theme: "love-relationships", limit: 200 });
@@ -161,6 +169,7 @@ test("reference search client has no network search, persistence or raw-query te
   assert.doesNotMatch(pageClient, /location\.search|window\.location\.search/);
   assert.match(pageClient, /window\.location\.hash/);
   assert.match(pageClient, /history\.replaceState/);
+  assert.match(pageClient, /referenceResultPath/);
   assert.match(shortcutClient, /Control\+K|SEARCH_PATH|metaKey/);
 });
 
