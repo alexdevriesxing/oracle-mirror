@@ -1,4 +1,4 @@
-import { searchReferenceEntries } from "./reference-search-core.js";
+import { referenceResultPath, searchReferenceEntries } from "./reference-search-core.js";
 
 const dataNode = document.getElementById("reference-search-data");
 const input = document.querySelector("[data-reference-search-input]");
@@ -50,7 +50,7 @@ function element(tag, className, text) {
 
 function renderResult(entry) {
   const link = element("a", "reference-search-result");
-  link.href = entry.path;
+  link.href = referenceResultPath(entry);
   link.dataset.searchResult = "";
 
   const glyph = element("span", "reference-search-result-glyph", entry.glyph || "✦");
