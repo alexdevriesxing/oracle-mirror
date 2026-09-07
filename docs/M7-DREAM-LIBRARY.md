@@ -67,12 +67,14 @@ The expanded surface adds:
 
 To avoid destabilizing the mature monolithic Worker, Pass 19 introduces a compatibility wrapper:
 
-- `src/index-legacy.ts` preserves the previous production application handler.
+- `src/index-legacy.ts` is an exact source copy of the pre-pass `src/index.ts` application handler.
 - `src/index.ts` becomes a thin wrapper that intercepts only `/api/dream` and `/dreams*`, re-exports the legacy public symbols, and delegates all other requests unchanged.
 - `src/dream-expanded-data.ts` contains the 250 new symbol seeds and theme metadata.
 - `src/dream-library.ts` combines legacy and expanded symbols, retrieval, theme grouping, and related-symbol logic.
 - `src/dream-pages-v2.ts` renders the public dream library.
 - `src/dream-api.ts` supplies the expanded Morpheus grounding path.
+
+The move to `index-legacy.ts` does not duplicate runtime behaviour: the wrapper imports that handler and the production bundler follows the single referenced application graph. The split exists to make the Dream expansion reviewable and to avoid risky edits throughout the mature handler.
 
 This keeps the expansion isolated while retaining compatibility for existing tests and imports such as `deriveDreamPhase`.
 
