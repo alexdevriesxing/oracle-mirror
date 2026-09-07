@@ -7,6 +7,7 @@ import "./council.js";
 import "./interactive-oracles.js";
 import "./divination-bridge.js";
 import "./mirror-journal.js";
+import "./mirror-journal-recovery.js";
 
 const hardeningStylesheet = document.createElement("link");
 hardeningStylesheet.rel = "stylesheet";
