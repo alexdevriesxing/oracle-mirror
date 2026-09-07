@@ -139,8 +139,8 @@ function renderRestorePreview(validation) {
 
   const summary = merged.summary;
   const heading = el("strong", "", "Backup checked — nothing has been changed yet.");
-  const copy = el("p", "", `${validation.entries.length} valid backup entr${validation.entries.length === 1 ? "y" : "ies"}. ${summary.added} new, ${summary.duplicates} duplicate${summary.duplicates === 1 ? "" : "s"}, ${summary.enriched} existing entr${summary.enriched === 1 ? "y" : "ies"} can gain metadata.${validation.rejected ? ` ${validation.rejected} malformed entr${validation.rejected === 1 ? "y was" : "ies were"} rejected.` : ""}${summary.truncated ? ` ${summary.truncated} oldest entr${summary.truncated === 1 ? "y" : "ies"} would fall beyond the 100-reading limit.` : ""}`);
-  const policy = el("p", "mirror-journal-restore-policy", "Merge policy: existing reading text and local notes win; imported favorites, tags and follow-up markers may enrich duplicates. New valid readings are added newest-first.");
+  const copy = el("p", "", `${validation.entries.length} valid backup entr${validation.entries.length === 1 ? "y" : "ies"}. ${summary.added} new, ${summary.duplicates} duplicate${summary.duplicates === 1 ? "" : "s"}, ${summary.enriched} existing entr${summary.enriched === 1 ? "y" : "ies"} can gain metadata.${validation.rejected ? ` ${validation.rejected} malformed entr${validation.rejected === 1 ? "y was" : "ies were"} rejected.` : ""}${summary.truncated ? ` ${summary.truncated} imported entr${summary.truncated === 1 ? "y does" : "ies do"} not fit within the 100-reading limit and will be skipped.` : ""}`);
+  const policy = el("p", "mirror-journal-restore-policy", "Merge policy: every reading already in this browser is preserved. Existing reading text and local notes win; imported favorites, tags and follow-up markers may enrich duplicates. Only open capacity is filled with the newest valid imported readings.");
   const actions = el("div", "mirror-journal-restore-actions");
   const confirm = button("Merge Backup Into Journal", "btn-gold btn-small");
   confirm.addEventListener("click", confirmRestore);
@@ -172,6 +172,7 @@ async function selectBackup(event) {
       "wrong-format": "That JSON file is not an Oracle Mirror journal backup.",
       "missing-entries": "The backup does not contain a journal entries array.",
       "backup-too-large": "The backup contains too many entries to restore safely.",
+      "unsupported-version": "This backup was created by a newer journal format and cannot be restored safely here.",
       "no-valid-entries": "No valid saved readings were found in that backup.",
     };
     restoreStatus(messages[validation.error] || "The backup failed validation and was not imported.", true);
@@ -189,7 +190,7 @@ function confirmRestore() {
   }
   const { added, duplicates, enriched, truncated } = merged.summary;
   clearRestorePreview();
-  restoreStatus(`Backup merged locally: ${added} added, ${duplicates} duplicate${duplicates === 1 ? "" : "s"}, ${enriched} enriched${truncated ? `, ${truncated} beyond the 100-reading limit` : ""}.`);
+  restoreStatus(`Backup merged locally: ${added} added, ${duplicates} duplicate${duplicates === 1 ? "" : "s"}, ${enriched} enriched${truncated ? `, ${truncated} skipped at the 100-reading limit` : ""}.`);
   notifyJournalReload();
 }
 
