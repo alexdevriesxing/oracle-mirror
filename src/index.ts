@@ -17,7 +17,4 @@ export default {
     }
     return legacyApp.fetch(request, env, ctx);
   },
-  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    if (typeof legacyApp.scheduled === "function") return legacyApp.scheduled(controller, env, ctx);
-  },
 } satisfies ExportedHandler<Env>;
