@@ -84,6 +84,20 @@ const SYMBOL_INDEX = DREAM_SYMBOLS.flatMap((symbol) =>
     .map((needle) => ({ needle: normalizeText(needle).trim(), symbol }))
 ).sort((a, b) => b.needle.length - a.needle.length);
 
+function phraseMatches(haystack: string, needle: string): boolean {
+  if (haystack.includes(` ${needle} `)) return true;
+  const words = needle.split(/\s+/).filter((word) => word.length >= 4);
+  if (words.length < 2) return false;
+  let cursor = 0;
+  for (const word of words) {
+    const token = ` ${word} `;
+    const index = haystack.indexOf(token, cursor);
+    if (index < 0) return false;
+    cursor = index + token.length - 1;
+  }
+  return true;
+}
+
 export function retrieveDreamKnowledge(dreamText: string, limit = 6): DreamLibrarySymbol[] {
   if (!dreamText || limit <= 0) return [];
   const haystack = normalizeText(dreamText);
@@ -91,7 +105,7 @@ export function retrieveDreamKnowledge(dreamText: string, limit = 6): DreamLibra
   const seenSymbols = new Set<string>();
   for (const { needle, symbol } of SYMBOL_INDEX) {
     if (seenSymbols.has(symbol.symbol)) continue;
-    if (haystack.includes(` ${needle} `)) {
+    if (phraseMatches(haystack, needle)) {
       matched.push(symbol);
       seenSymbols.add(symbol.symbol);
       if (matched.length >= Math.min(limit, 8)) break;
