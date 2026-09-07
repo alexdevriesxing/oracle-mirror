@@ -104,6 +104,11 @@ export function validateMirrorJournalBackup(input) {
   if (!Array.isArray(parsed.entries)) return { ok: false, error: "missing-entries", entries: [] };
   if (parsed.entries.length > 1000) return { ok: false, error: "backup-too-large", entries: [] };
 
+  const sourceVersion = Number.isFinite(Number(parsed.version)) ? Number(parsed.version) : 1;
+  if (sourceVersion > MIRROR_JOURNAL_RECOVERY_VERSION) {
+    return { ok: false, error: "unsupported-version", entries: [], sourceVersion };
+  }
+
   const entries = [];
   let rejected = 0;
   for (let index = 0; index < parsed.entries.length; index += 1) {
@@ -117,7 +122,7 @@ export function validateMirrorJournalBackup(input) {
     error: "",
     entries,
     rejected,
-    sourceVersion: Number.isFinite(Number(parsed.version)) ? Number(parsed.version) : 1,
+    sourceVersion,
     exportedAt: validIso(parsed.exportedAt),
   };
 }
@@ -146,11 +151,21 @@ function mergeDuplicate(local, incoming) {
 }
 
 export function mergeMirrorJournalBackup(localEntries, backupEntries) {
-  const local = (Array.isArray(localEntries) ? localEntries : []).map((entry, index) => normalizedEntry(entry, index)).filter(Boolean);
-  const incoming = (Array.isArray(backupEntries) ? backupEntries : []).map((entry, index) => normalizedEntry(entry, index)).filter(Boolean);
+  const local = (Array.isArray(localEntries) ? localEntries : [])
+    .map((entry, index) => normalizedEntry(entry, index))
+    .filter(Boolean)
+    .slice(0, MIRROR_JOURNAL_MAX_ENTRIES);
+  const incoming = (Array.isArray(backupEntries) ? backupEntries : [])
+    .map((entry, index) => normalizedEntry(entry, index))
+    .filter(Boolean)
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+
+  // Existing browser entries are authoritative and must never be displaced by restore.
   const result = [...local];
   const byId = new Map();
   const byFingerprint = new Map();
+  const seenIncomingIds = new Set();
+  const seenIncomingFingerprints = new Set();
   result.forEach((entry, index) => {
     byId.set(entry.journal.id, index);
     byFingerprint.set(mirrorJournalFingerprint(entry), index);
@@ -159,25 +174,41 @@ export function mergeMirrorJournalBackup(localEntries, backupEntries) {
   let added = 0;
   let duplicates = 0;
   let enriched = 0;
+  let truncated = 0;
   for (const entry of incoming) {
-    const match = byId.get(entry.journal.id) ?? byFingerprint.get(mirrorJournalFingerprint(entry));
+    const fingerprint = mirrorJournalFingerprint(entry);
+    const match = byId.get(entry.journal.id) ?? byFingerprint.get(fingerprint);
     if (match !== undefined) {
       duplicates += 1;
       const before = JSON.stringify(result[match].journal);
       result[match] = mergeDuplicate(result[match], entry);
       if (JSON.stringify(result[match].journal) !== before) enriched += 1;
+      seenIncomingIds.add(entry.journal.id);
+      seenIncomingFingerprints.add(fingerprint);
+      continue;
+    }
+
+    // Duplicate records inside the backup itself should never consume capacity twice.
+    if (seenIncomingIds.has(entry.journal.id) || seenIncomingFingerprints.has(fingerprint)) {
+      duplicates += 1;
+      continue;
+    }
+    seenIncomingIds.add(entry.journal.id);
+    seenIncomingFingerprints.add(fingerprint);
+
+    if (result.length >= MIRROR_JOURNAL_MAX_ENTRIES) {
+      truncated += 1;
       continue;
     }
     result.push(entry);
     const index = result.length - 1;
     byId.set(entry.journal.id, index);
-    byFingerprint.set(mirrorJournalFingerprint(entry), index);
+    byFingerprint.set(fingerprint, index);
     added += 1;
   }
 
   result.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-  const truncated = Math.max(0, result.length - MIRROR_JOURNAL_MAX_ENTRIES);
-  return { entries: result.slice(0, MIRROR_JOURNAL_MAX_ENTRIES), summary: { added, duplicates, enriched, truncated } };
+  return { entries: result, summary: { added, duplicates, enriched, truncated } };
 }
 
 export function markMirrorJournalFollowUp(entries, id, followUp, now = new Date()) {
