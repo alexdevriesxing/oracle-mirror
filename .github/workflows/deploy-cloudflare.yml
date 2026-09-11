@@ -1,11 +1,25 @@
-name: Deploy Oracle Mirror to Cloudflare
+name: Deploy Oracle Mirror to Cloudflare (manual fallback)
+
+# MANUAL FALLBACK ONLY - this workflow no longer runs automatically.
+#
+# Production deploys are handled by Cloudflare Workers Builds, which builds and
+# deploys every push to master by itself and needs neither GitHub Actions
+# minutes nor a Cloudflare API token. See DEPLOYMENT.md for the dashboard
+# settings (Workers & Pages -> oracle-mirror -> Settings -> Build -> Connect to
+# Git; build `npm run build`, deploy `npx wrangler deploy`, branch master).
+#
+# This file previously triggered on workflow_run after CI and was the only way
+# the repository deployed. It could never honour that: the account Actions
+# spending limit is exhausted, so runs end in ~4s with steps: [] and the
+# annotation "The job was not started because an Actions budget is preventing
+# further use". That is a billing setting at
+# https://github.com/settings/billing, not a configuration problem.
+#
+# To ship by hand from a clean checkout of master instead:
+#
+#   npm ci && npm run build && npx wrangler deploy
 
 on:
-  workflow_run:
-    workflows:
-      - Oracle Mirror V2 CI
-    types:
-      - completed
   workflow_dispatch:
 
 concurrency:
@@ -14,11 +28,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master')
-      }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -28,20 +37,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
-      - name: Resolve deployment commit
-        id: revision
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Checkout verified commit
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.revision.outputs.sha }}
 
       - name: Use Node 22
         uses: actions/setup-node@v4
@@ -54,7 +51,7 @@ jobs:
 
       - name: Build production Worker
         env:
-          GITHUB_SHA: ${{ steps.revision.outputs.sha }}
+          GITHUB_SHA: ${{ github.sha }}
         run: npm run build
 
       - name: Validate Cloudflare deployment credentials
@@ -72,7 +69,7 @@ jobs:
       - name: Verify production
         shell: bash
         run: |
-          target_sha="${{ steps.revision.outputs.sha }}"
+          target_sha="${{ github.sha }}"
           verify() {
             homepage="$(curl --fail --silent --show-error https://oraclemirror.com/)" || return 1
             headers="$(curl --fail --silent --show-error --head https://oraclemirror.com/)" || return 1
@@ -80,7 +77,7 @@ jobs:
             runes_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://oraclemirror.com/runes)"
             version_res="$(curl --fail --silent --show-error https://oraclemirror.com/api/version)" || return 1
 
-            grep -q '<title>Free Tarot, Horoscopes & Mystical Readings | Oracle Mirror</title>' <<< "$homepage" || return 1
+            grep -q '<title>Free Tarot, Horoscopes &amp; Mystical Readings | Oracle Mirror</title>' <<< "$homepage" || return 1
             ! grep -qi 'World Cup 2026' <<< "$homepage" || return 1
             grep -qi '^x-content-type-options: nosniff' <<< "$headers" || return 1
             grep -qi '^referrer-policy: strict-origin-when-cross-origin' <<< "$headers" || return 1
@@ -100,4 +97,3 @@ jobs:
 
           echo "Production verification did not converge to the verified commit $target_sha."
           exit 1
-
