@@ -4603,3 +4603,110 @@ body {
 }
 
 .legal-list li { margin-bottom: 0.45rem; }
+
+
+/* --- Emporium Homepage Teaser & GDPR Consent Banner --- */
+.emporium-teaser {
+  max-width: 980px;
+  margin: 2.25rem auto 1rem;
+  padding: 1.75rem 1.5rem;
+  background: linear-gradient(145deg, rgba(17, 11, 38, 0.86), rgba(9, 7, 20, 0.92));
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.emporium-teaser-kicker {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+
+.emporium-teaser-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 1.15rem;
+}
+
+.emporium-teaser-disclosure {
+  margin-top: 0.85rem;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.oracle-consent-banner {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94vw, 780px);
+  z-index: 220;
+  background: rgba(9, 6, 20, 0.96);
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+}
+
+.oracle-consent-copy {
+  flex: 1 1 320px;
+  font-size: 0.94rem;
+  color: var(--text-cream);
+}
+
+.oracle-consent-copy strong {
+  display: block;
+  font-family: var(--font-heading);
+  color: var(--gold-light);
+  margin-bottom: 0.2rem;
+}
+
+.oracle-consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.oracle-consent-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: rgba(4, 2, 10, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.oracle-consent-modal-card {
+  width: min(94vw, 520px);
+  background: #0d0820;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: var(--text-cream);
+}
+
+.oracle-consent-modal-card h3 {
+  font-family: var(--font-heading);
+  color: var(--gold-light);
+  margin-bottom: 0.5rem;
+}
+
+.oracle-consent-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.9rem 0;
+  cursor: pointer;
+}

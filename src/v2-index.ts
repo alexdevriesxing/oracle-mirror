@@ -40,6 +40,14 @@ import {
   injectReferenceSearchDiscovery,
   isReferenceSearchRoute,
 } from "./reference-search.ts";
+import {
+  augmentLlmsWithShop,
+  augmentSitemapWithShop,
+  handleShopRoute,
+  injectShopDiscovery,
+  isShopRoute,
+  renderEditorialShopCallout,
+} from "./shop-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 declare const __BUILD_COMMIT__: string;
@@ -74,7 +82,7 @@ function injectDreamLibraryDiscovery(html: string): string {
 }
 
 function safeDiscoveryHtml(html: string, pathname = ""): string {
-  const discovered = injectKnowledgeGraphDiscovery(injectDivinationDiscovery(injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html))))))))));
+  const discovered = injectShopDiscovery(injectKnowledgeGraphDiscovery(injectDivinationDiscovery(injectDreamLibraryDiscovery(injectPalmistryDiscovery(injectAstrologyDiscovery(injectAdvancedIChingDiscovery(injectAdvancedNumerologyDiscovery(injectAdvancedTarotDiscovery(injectLenormandDiscovery(injectRunesDiscovery(html)))))))))));
   return injectReferenceSearchDiscovery(
     discovered
       .replace(' class="card card-runes" data-realm="runes"', ' class="card card-runes"')
@@ -92,18 +100,55 @@ function augmentRuneLlms(text: string): string {
 async function decorateStandaloneKnowledge(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok || !isHtmlResponse(response)) return response;
   const path = new URL(request.url).pathname;
-  const withKnowledge = injectKnowledgeGraph(await response.text(), path);
-  return responseWithBody(response, injectReferenceSearchDiscovery(withKnowledge, path), "text/html; charset=UTF-8");
+  let html = injectKnowledgeGraph(await response.text(), path);
+  const editorialCallout = renderEditorialShopCallout(path);
+  if (editorialCallout && !html.includes("oracle-editorial-shop")) {
+    html = html
+      .replace("</head>", '<link rel="stylesheet" href="/shop.css"></head>')
+      .replace("</main>", `${editorialCallout}</main>`);
+  }
+  return responseWithBody(response, injectReferenceSearchDiscovery(html, path), "text/html; charset=UTF-8");
 }
 
 async function applyFreshnessTransforms(response: Response, request: Request): Promise<Response> {
   if (request.method !== "GET" || !response.ok) return response;
   const url = new URL(request.url);
   if (url.pathname === "/llms.txt") {
-    return responseWithBody(response, augmentLlmsWithReferenceSearch(augmentLlmsWithKnowledgeGraph(augmentLlmsWithDivination(augmentLlmsWithDreamLibrary(augmentLlmsWithPalmistry(augmentLlmsWithAstrology(augmentLlmsWithAdvancedIChing(augmentLlmsWithAdvancedNumerology(augmentLlmsWithAdvancedTarot(augmentLlmsWithLenormand(augmentRuneLlms(await response.text()))))))))))), "text/plain; charset=UTF-8");
+    const llmsTransforms = [
+      augmentRuneLlms,
+      augmentLlmsWithLenormand,
+      augmentLlmsWithAdvancedTarot,
+      augmentLlmsWithAdvancedNumerology,
+      augmentLlmsWithAdvancedIChing,
+      augmentLlmsWithAstrology,
+      augmentLlmsWithPalmistry,
+      augmentLlmsWithDreamLibrary,
+      augmentLlmsWithDivination,
+      augmentLlmsWithKnowledgeGraph,
+      augmentLlmsWithReferenceSearch,
+      augmentLlmsWithShop,
+    ];
+    const body = llmsTransforms.reduce((acc, fn) => fn(acc), await response.text());
+    return responseWithBody(response, body, "text/plain; charset=UTF-8");
   }
   if (isSitemapResponse(url.pathname, response)) {
-    return responseWithBody(response, augmentSitemapWithReferenceSearch(augmentSitemapWithKnowledgeGraph(augmentSitemapWithDivination(augmentSitemapWithDreamLibrary(augmentSitemapWithPalmistry(augmentSitemapWithAstrology(augmentSitemapWithAdvancedIChing(augmentSitemapWithAdvancedNumerology(augmentSitemapWithAdvancedTarot(augmentSitemapWithLenormand(augmentSitemapWithRunes(rewriteSitemapFreshness(await response.text())))))))))))), "application/xml; charset=UTF-8");
+    const sitemapTransforms = [
+      rewriteSitemapFreshness,
+      augmentSitemapWithRunes,
+      augmentSitemapWithLenormand,
+      augmentSitemapWithAdvancedTarot,
+      augmentSitemapWithAdvancedNumerology,
+      augmentSitemapWithAdvancedIChing,
+      augmentSitemapWithAstrology,
+      augmentSitemapWithPalmistry,
+      augmentSitemapWithDreamLibrary,
+      augmentSitemapWithDivination,
+      augmentSitemapWithKnowledgeGraph,
+      augmentSitemapWithReferenceSearch,
+      augmentSitemapWithShop,
+    ];
+    const body = sitemapTransforms.reduce((acc, fn) => fn(acc), await response.text());
+    return responseWithBody(response, body, "application/xml; charset=UTF-8");
   }
   if (isHtmlResponse(response)) {
     const html = safeDiscoveryHtml(rewriteHtmlFreshness(await response.text(), url.pathname), url.pathname);
@@ -149,6 +194,7 @@ export default {
     }
     if (url.pathname === "/api/telemetry") return withSecurityHeaders(await handleTelemetry(request, env));
     if (url.pathname === "/api/council") return withSecurityHeaders(await handleCouncil(request, env));
+    if (request.method === "GET" && isShopRoute(url.pathname)) return withSecurityHeaders(handleShopRoute(url.pathname));
     if (request.method === "GET" && isReferenceSearchRoute(url.pathname)) return withSecurityHeaders(handleReferenceSearchRoute());
     if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleKnownKnowledgeTopicRoute(url.pathname), request));
     if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) return withSecurityHeaders(await decorateStandaloneKnowledge(handleRuneRoute(url.pathname), request));

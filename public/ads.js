@@ -198,19 +198,28 @@ function setStoredConsent(consent) {
 }
 
 export function getConsentState() {
-  // Consent is always granted: the site is ad-supported and ads load for every
-  // visitor. There is no opt-out path, so any historical stored state is ignored.
+  const stored = getStoredConsent();
+  if (stored && (stored.state === "accepted" || stored.state === "rejected" || stored.state === "custom")) {
+    return {
+      state: stored.state,
+      ads: Boolean(stored.ads),
+      analytics: Boolean(stored.analytics),
+      source: "stored",
+      consentRequired: Boolean(ORACLE_AD_CONFIG.consentRequired),
+    };
+  }
   return {
-    state: "accepted",
-    ads: true,
-    analytics: true,
-    source: "always_on",
-    consentRequired: false,
+    state: "pending",
+    ads: false,
+    analytics: false,
+    source: "default_pending",
+    consentRequired: Boolean(ORACLE_AD_CONFIG.consentRequired),
   };
 }
 
 function hasAdConsent() {
-  return true;
+  if (!ORACLE_AD_CONFIG.consentRequired) return true;
+  return getConsentState().ads === true;
 }
 
 function currentDevice() {
@@ -232,9 +241,8 @@ function hasConfiguredGlobalScript(config) {
   return Boolean(config?.scriptUrl) && !String(config.zoneId || "").startsWith("TODO_ADSTERRA");
 }
 
-function globalScriptRequiresConsent() {
-  // Global scripts (popunder, social bar) never wait for consent.
-  return false;
+function globalScriptRequiresConsent(config) {
+  return Boolean(ORACLE_AD_CONFIG.consentRequired || config?.consentRequired);
 }
 
 function recordUserInteraction() {
@@ -609,6 +617,11 @@ function requestSlot(host, config) {
     return;
   }
 
+  if (ORACLE_AD_CONFIG.consentRequired && !hasAdConsent()) {
+    markSlotCollapsed(host, config, instanceId, getConsentState().state === "rejected" ? "consent_rejected" : "consent_pending");
+    return;
+  }
+
   if (!hasConfiguredAdsterraZone(config)) {
     setSlotMessage(host, `${config.adsterra.placeholderZoneId} is not configured.`);
     markSlotCollapsed(host, config, instanceId, "placeholder_zone");
@@ -835,25 +848,100 @@ function initMobileAnchor() {
   window.addEventListener("resize", syncMobileAnchorHeight);
 }
 
-function initConsent() {
-  // Ads are always on. Overwrite any historical "rejected" state left in this
-  // browser from an earlier opt-out so returning visitors are monetized again.
-  const stored = getStoredConsent();
-  if (!stored || stored.state !== "accepted" || stored.ads !== true) {
-    setStoredConsent({ state: "accepted", ads: true, analytics: true });
-  }
-
+function applyConsentChoice(choice) {
+  const next = {
+    state: choice.ads && choice.analytics ? "accepted" : !choice.ads && !choice.analytics ? "rejected" : "custom",
+    ads: Boolean(choice.ads),
+    analytics: Boolean(choice.analytics),
+  };
+  setStoredConsent(next);
+  document.getElementById("oracle-consent-banner")?.remove();
+  document.getElementById("oracle-consent-modal")?.remove();
   trackEvent("consent_state", {
-    state: "accepted",
-    ads: true,
-    analytics: true,
-    source: "always_on",
-    consent_required: false,
+    state: next.state,
+    ads: next.ads,
+    analytics: next.analytics,
+    source: "user_choice",
+    consent_required: Boolean(ORACLE_AD_CONFIG.consentRequired),
   });
+  window.dispatchEvent(new CustomEvent("oracle-consent-updated", { detail: next }));
+  if (next.ads && typeof window.__oracleRefreshAdsAfterConsent === "function") {
+    window.__oracleRefreshAdsAfterConsent();
+  }
+}
+
+function renderConsentBanner() {
+  if (document.getElementById("oracle-consent-banner")) return;
+  const banner = document.createElement("aside");
+  banner.id = "oracle-consent-banner";
+  banner.className = "oracle-consent-banner";
+  banner.setAttribute("role", "dialog");
+  banner.setAttribute("aria-label", "Privacy and cookie preferences");
+  banner.innerHTML = `
+    <div class="oracle-consent-copy">
+      <strong>Privacy &amp; Cookie Choices</strong>
+      <p>Your reading archive stays in local browser storage. With your permission, Oracle Mirror uses optional analytics and third-party advertising cookies to keep readings free.</p>
+    </div>
+    <div class="oracle-consent-actions">
+      <button type="button" class="btn-gold" data-consent-accept>Accept All</button>
+      <button type="button" class="btn-ghost" data-consent-essential>Essential Only</button>
+      <button type="button" class="btn-ghost" data-consent-manage>Preferences</button>
+    </div>
+  `;
+  banner.querySelector("[data-consent-accept]")?.addEventListener("click", () => applyConsentChoice({ ads: true, analytics: true }));
+  banner.querySelector("[data-consent-essential]")?.addEventListener("click", () => applyConsentChoice({ ads: false, analytics: false }));
+  banner.querySelector("[data-consent-manage]")?.addEventListener("click", () => openCookiePreferences());
+  document.body.appendChild(banner);
+}
+
+function initConsent() {
+  const current = getConsentState();
+  trackEvent("consent_state", {
+    state: current.state,
+    ads: current.ads,
+    analytics: current.analytics,
+    source: current.source,
+    consent_required: current.consentRequired,
+  });
+  if (current.state === "pending") {
+    renderConsentBanner();
+  }
 }
 
 export function openCookiePreferences() {
-  // No-op: there is no opt-out UI. Kept for backwards-compatible imports.
+  document.getElementById("oracle-consent-modal")?.remove();
+  const current = getConsentState();
+  const modal = document.createElement("div");
+  modal.id = "oracle-consent-modal";
+  modal.className = "oracle-consent-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", "Manage cookie preferences");
+  modal.innerHTML = `
+    <div class="oracle-consent-modal-card">
+      <h3>Cookie &amp; Privacy Preferences</h3>
+      <p>Essential browser storage keeps your local reading Archive on your device and is always active.</p>
+      <label class="oracle-consent-toggle">
+        <input type="checkbox" id="consent-opt-analytics" ${current.analytics ? "checked" : ""}>
+        <span><strong>Privacy-safe Analytics</strong> — Coarse page and Emporium metrics (never private questions or journal entries).</span>
+      </label>
+      <label class="oracle-consent-toggle">
+        <input type="checkbox" id="consent-opt-ads" ${current.ads ? "checked" : ""}>
+        <span><strong>Third-Party Advertising</strong> — Allows Adsterra ad scripts and cookies to support free readings.</span>
+      </label>
+      <div class="oracle-consent-actions">
+        <button type="button" class="btn-gold" data-consent-save>Save Preferences</button>
+        <button type="button" class="btn-ghost" data-consent-close>Cancel</button>
+      </div>
+    </div>
+  `;
+  modal.querySelector("[data-consent-save]")?.addEventListener("click", () => {
+    const analytics = Boolean(modal.querySelector("#consent-opt-analytics")?.checked);
+    const ads = Boolean(modal.querySelector("#consent-opt-ads")?.checked);
+    applyConsentChoice({ ads, analytics });
+  });
+  modal.querySelector("[data-consent-close]")?.addEventListener("click", () => modal.remove());
+  document.body.appendChild(modal);
 }
 
 function runAdBlockCheck() {

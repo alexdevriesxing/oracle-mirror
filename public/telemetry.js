@@ -16,7 +16,7 @@ const SAFE_KEYS = new Set([
   "ads_filled", "ads_viewable_1s", "shares",
   "ritual_card", "badge", "recommendation", "streak", "best_streak", "total_days",
   "mood_score", "love_score", "money_score", "journey_days", "unique_cards",
-  "realms_explored",
+  "realms_explored", "shop_department", "shop_product", "affiliate_tag", "affiliate_channel",
 ]);
 
 function getSessionId() {
@@ -92,8 +92,22 @@ function scheduleFlush() {
   }, FLUSH_INTERVAL_MS);
 }
 
+function hasAnalyticsConsent() {
+  try {
+    const raw = localStorage.getItem("oracle-mirror-consent-v1");
+    if (!raw) return false;
+    return JSON.parse(raw)?.analytics === true;
+  } catch {
+    return false;
+  }
+}
+
 function flush(preferBeacon = false) {
   if (!queue.length) return;
+  if (!hasAnalyticsConsent()) {
+    queue.length = 0;
+    return;
+  }
   const events = queue.splice(0, MAX_BATCH);
   postPayload({ session_id: sessionId, events }, preferBeacon);
   if (queue.length) scheduleFlush();

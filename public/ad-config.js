@@ -1,9 +1,9 @@
 export const ORACLE_AD_CONFIG = {
   siteName: "Oracle Mirror",
   canonicalHost: "https://oraclemirror.com",
-  // Ads are always on for every visitor — no consent gate, no opt-out.
-  consentRequired: false,
-  contextualAdsWithoutConsent: true,
+  // Third-party advertising and analytics require explicit visitor consent.
+  consentRequired: true,
+  contextualAdsWithoutConsent: false,
   creativeDetectionDelayMs: 10000,
   scriptRetry: {
     maxAttempts: 2,
@@ -20,7 +20,7 @@ export const ORACLE_AD_CONFIG = {
       name: "oracle-ambient-popunder",
       placement: "ambient after reading value",
       enabled: true,
-      consentRequired: false,
+      consentRequired: true,
       sessionCap: 1,
       minSessionAgeMs: 10000,
       delayAfterValueMs: 3000,
@@ -33,7 +33,7 @@ export const ORACLE_AD_CONFIG = {
       name: "oracle-social-bar",
       placement: "global floating social bar",
       enabled: true,
-      consentRequired: false,
+      consentRequired: true,
       delayAfterLoadMs: 4000,
       placeholderZoneId: "TODO_ADSTERRA_ORACLE_SOCIAL_BAR",
       zoneId: "bdbff70e3f43e0bd0e569d51b2ab34ad",

@@ -16,6 +16,7 @@ const SAFE_STRING_FIELDS = [
   "screen", "screen_type", "realm", "realm_type", "reason", "error_reason",
   "trigger", "page_path", "consent_state", "ad_mode", "device", "source",
   "state", "result_kind", "ritual_card", "badge", "recommendation",
+  "shop_department", "shop_product", "affiliate_tag", "affiliate_channel",
 ] as const;
 
 const SAFE_NUMBER_FIELDS = [
