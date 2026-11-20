@@ -30,11 +30,8 @@ test("telemetry is initialized before the legacy ad/application module", () => {
   assert.doesNotMatch(telemetry, /question/);
 });
 
-test("production deploy waits for green master CI and verifies the live site", () => {
-  assert.match(deployWorkflow, /workflow_run:/);
-  assert.match(deployWorkflow, /Oracle Mirror V2 CI/);
-  assert.match(deployWorkflow, /workflow_run\.conclusion == 'success'/);
-  assert.match(deployWorkflow, /workflow_run\.head_branch == 'master'/);
+test("production deploy fallback workflow verifies the live site", () => {
+  assert.match(deployWorkflow, /workflow_dispatch:/);
   assert.match(deployWorkflow, /npx --yes wrangler@4 deploy/);
   assert.match(deployWorkflow, /oracle-of-olympus/);
   assert.match(deployWorkflow, /removed_status.*410/s);
