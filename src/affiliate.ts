@@ -80,3 +80,36 @@ export function affiliateLinkAttributes(
     rel: "nofollow sponsored noopener noreferrer",
   };
 }
+
+export function buildAmazonBountyUrl(
+  path: string,
+  options: {
+    channel?: AffiliateChannel;
+    config?: AffiliateConfig;
+  } = {},
+): string {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const config = options.config || createAffiliateConfig();
+  const tag = resolveAffiliateTag(options.channel || "website", config);
+  const url = new URL(cleanPath, config.marketplaceHost);
+  url.searchParams.set("tag", tag);
+  return url.toString();
+}
+
+export function bountyLinkAttributes(
+  path: string,
+  options: {
+    channel?: AffiliateChannel;
+    config?: AffiliateConfig;
+  } = {},
+): {
+  href: string;
+  target: "_blank";
+  rel: "nofollow sponsored noopener noreferrer";
+} {
+  return {
+    href: buildAmazonBountyUrl(path, options),
+    target: "_blank",
+    rel: "nofollow sponsored noopener noreferrer",
+  };
+}

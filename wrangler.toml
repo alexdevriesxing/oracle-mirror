@@ -16,6 +16,12 @@ dataset = "oracle_mirror_events"
 [version_metadata]
 binding = "CF_VERSION_METADATA"
 
+[vars]
+AMAZON_APPLICATION_ID = "xelarindo-20.xelarindo-20"
+AMAZON_CREDENTIAL_VERSION = "3.1"
+AMAZON_PARTNER_TAG = "xelarindo-20"
+AMAZON_MARKETPLACE = "www.amazon.com"
+
 # The temporary World Cup / Oracle of Olympus feature and its scheduled sync
 # were removed in V2 Pass 2. No scheduled trigger remains.
 

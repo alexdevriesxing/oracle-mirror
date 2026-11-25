@@ -12,6 +12,13 @@ export interface Env {
   AI: any;
   ASSETS: Fetcher;
   ADSTERRA_ADS_TXT?: string;
+  ORACLE_KV?: KVNamespace;
+  AMAZON_CREDENTIAL_ID?: string;
+  AMAZON_CREDENTIAL_SECRET?: string;
+  AMAZON_APPLICATION_ID?: string;
+  AMAZON_CREDENTIAL_VERSION?: string;
+  AMAZON_PARTNER_TAG?: string;
+  AMAZON_MARKETPLACE?: string;
 }
 
 const FALLBACK_FORTUNES = [
@@ -648,6 +655,8 @@ Allow: /
 Disallow: /ad-debug
 Disallow: /result/
 Disallow: /api/
+Disallow: /shop/analytics
+Disallow: /shop/social
 
 # AI assistants and answer engines are welcome to read and cite Oracle Mirror.
 User-agent: GPTBot
