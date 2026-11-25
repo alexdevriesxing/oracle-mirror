@@ -43,11 +43,13 @@ import {
 import {
   augmentLlmsWithShop,
   augmentSitemapWithShop,
-  handleShopRoute,
+  handleShopRouteAsync,
   injectShopDiscovery,
   isShopRoute,
   renderEditorialShopCallout,
 } from "./shop-pages.ts";
+import { getCatalogHealth } from "./amazon-creators.ts";
+import { SHOP_PRODUCTS } from "./shop-data.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 declare const __BUILD_COMMIT__: string;
@@ -194,7 +196,19 @@ export default {
     }
     if (url.pathname === "/api/telemetry") return withSecurityHeaders(await handleTelemetry(request, env));
     if (url.pathname === "/api/council") return withSecurityHeaders(await handleCouncil(request, env));
-    if (request.method === "GET" && isShopRoute(url.pathname)) return withSecurityHeaders(handleShopRoute(url.pathname));
+    if (url.pathname === "/api/shop/health" && request.method === "GET") {
+      const health = await getCatalogHealth(env, SHOP_PRODUCTS.map((p) => p.asin));
+      return withSecurityHeaders(
+        new Response(JSON.stringify(health, null, 2), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+          },
+        }),
+      );
+    }
+    if (request.method === "GET" && isShopRoute(url.pathname)) return withSecurityHeaders(await handleShopRouteAsync(url.pathname, env));
     if (request.method === "GET" && isReferenceSearchRoute(url.pathname)) return withSecurityHeaders(handleReferenceSearchRoute());
     if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleKnownKnowledgeTopicRoute(url.pathname), request));
     if (request.method === "GET" && (url.pathname === "/runes/" || isRuneRoute(url.pathname))) return withSecurityHeaders(await decorateStandaloneKnowledge(handleRuneRoute(url.pathname), request));

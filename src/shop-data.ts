@@ -88,9 +88,28 @@ export interface BuyingGuide {
   description: string;
   readingTime: string;
   departments: DepartmentSlug[];
+  answerFirst?: string;
+  historicalContext?: string;
+  comparisonTable?: {
+    headers: string[];
+    rows: string[][];
+  };
   sections: Array<{ heading: string; body: string }>;
+  faq?: Array<{ question: string; answer: string }>;
   groundedBoundary: string;
   recommendedSlugs: string[];
+}
+
+export interface BountyOffer {
+  slug: string;
+  programName: string;
+  kicker: string;
+  summary: string;
+  customerBenefit: string;
+  eligibilityNote: string;
+  amazonPath: string;
+  ctaLabel: string;
+  relevantDepartments: DepartmentSlug[];
 }
 
 export interface SocialCampaignTemplate {
@@ -1450,6 +1469,176 @@ export const BUYING_GUIDES: readonly BuyingGuide[] = [
     groundedBoundary: "Astrology is cultural symbolism; astronomy is observational science. Both belong on a thoughtful shelf for different reasons.",
     recommendedSlugs: ["you-were-born-for-this", "only-astrology-book-youll-ever-need", "the-stars-ha-rey"],
   },
+  {
+    slug: "tarot-vs-oracle-cards",
+    title: "Tarot vs. Oracle Cards: Structure, Symbolism & Choosing",
+    kicker: "Editorial Buying Guide · Card Systems",
+    description: "An answer-first comparison of 78-card tarot decks and freeform oracle decks so readers know how each system works.",
+    readingTime: "5 min read",
+    departments: ["tarot-oracle"],
+    answerFirst: "Tarot follows a standardized 78-card structure (22 Major Arcana and 56 Minor Arcana across four suits), whereas oracle decks vary freely in card count, themes, and layout according to each creator's design.",
+    historicalContext: "Tarot evolved from 15th-century Italian tarocchi trick-taking games and was adapted for symbolic reading in the 18th–20th centuries. Modern oracle decks emerged largely in the late 20th century as open-ended thematic reflection cards.",
+    comparisonTable: {
+      headers: ["Dimension", "Tarot Deck", "Oracle Deck"],
+      rows: [
+        ["Card Count", "Standardized 78 cards", "Varies (commonly 36–64 cards)"],
+        ["Structure", "22 Major + 56 Minor Arcana (4 suits)", "Creator-defined themes or keywords"],
+        ["Learning Curve", "Steeper initially, transferable across decks", "Immediate per-deck, relies on guidebook"],
+        ["Best Use", "Structured multi-card reflection & study", "Daily single-card prompts & affirmations"],
+      ],
+    },
+    sections: [
+      {
+        heading: "Why tarot skills transfer from deck to deck",
+        body: "Because nearly every tarot deck shares the 22 Major Arcana and four Minor Arcana suits (Wands, Cups, Swords, Pentacles), learning one Rider-Waite-Smith-based deck lets you read hundreds of others.",
+      },
+      {
+        heading: "When an oracle deck is the better companion",
+        body: "Oracle decks like Moonology or Sacred Traveler center on a single cohesive motif—lunar phases, nature metaphors, or gentle daily prompts—making them approachable for quick morning journaling without memorizing 78 meanings.",
+      },
+    ],
+    faq: [
+      {
+        question: "Can beginners use oracle cards before tarot?",
+        answer: "Yes. Many readers begin with a single-card oracle draw for daily journaling and add a 78-card tarot deck later when they want deeper structural nuance.",
+      },
+      {
+        question: "Do oracle cards replace tarot?",
+        answer: "They complement rather than replace each other: tarot offers a structured narrative grammar, while oracle decks offer focused thematic prompts.",
+      },
+    ],
+    groundedBoundary: "Both tarot and oracle cards are creative reflection tools for entertainment and self-inquiry, not predictive instruments.",
+    recommendedSlugs: ["rider-waite-tarot-deck", "moonology-oracle-cards", "work-your-light-oracle"],
+  },
+  {
+    slug: "numerology-terminology-and-core-numbers",
+    title: "Numerology Terminology: Life Path, Expression & Master Numbers",
+    kicker: "Editorial Buying Guide · Pythagorean Numerology",
+    description: "Clear definitions of Life Path, Expression, Soul Urge, Personality, Birthday, and Master Numbers in Pythagorean numerology.",
+    readingTime: "5 min read",
+    departments: ["celestial-gifts", "meditation-reflection"],
+    answerFirst: "Pythagorean numerology reduces birth dates and name letters (A=1 through I=9, cycling) to single digits 1–9 or Master Numbers 11, 22, and 33 to frame symbolic personality and life-theme archetypes.",
+    historicalContext: "While attributed in tradition to the 6th-century BCE Greek philosopher Pythagoras, modern alphabetical numerology was systematized in the late 19th and early 20th centuries in Western esoteric literature.",
+    comparisonTable: {
+      headers: ["Core Term", "Input Source", "Symbolic Focus"],
+      rows: [
+        ["Life Path", "Full birth date (YYYY-MM-DD)", "Broad life lessons and recurring themes"],
+        ["Expression (Destiny)", "All letters of full birth name", "Natural talents and modes of action"],
+        ["Soul Urge (Heart's Desire)", "Vowels (A, E, I, O, U) of birth name", "Inner motivations and values"],
+        ["Master Numbers (11, 22, 33)", "Unreduced double-digit sums", "Intensified versions of 2, 4, and 6"],
+      ],
+    },
+    sections: [
+      {
+        heading: "Distinguishing arithmetic reduction from empirical prediction",
+        body: "Digit reduction (for example, 1994 → 1+9+9+4 = 23 → 2+3 = 5) is deterministic arithmetic applied to names and dates. Its interpretive meanings are cultural and symbolic conventions, not scientific measurements.",
+      },
+      {
+        heading: "Pairing reference books with hands-on calculation",
+        body: "Using a structured guide such as David A. Phillips's The Complete Book of Numerology alongside Oracle Mirror's local Pythagorean calculator helps you verify every reduction step transparently.",
+      },
+    ],
+    groundedBoundary: "Numerology is a symbolic and historical study tradition, not a substitute for financial, medical, or career guidance.",
+    recommendedSlugs: ["complete-book-of-numerology", "constellations-journal-peter-pauper"],
+  },
+  {
+    slug: "reflective-journaling-for-clarity",
+    title: "Reflective Journaling: Turning Daily Prompts into Clarity",
+    kicker: "Editorial Buying Guide · Contemplative Writing",
+    description: "Practical, evidence-informed journaling structures for pairing tarot draws, morning pages, and evening review.",
+    readingTime: "4 min read",
+    departments: ["meditation-reflection", "dream-journaling", "celestial-gifts"],
+    answerFirst: "Reflective journaling works best when it stays brief and concrete: record the date, one observation or prompt, two honest sentences of personal context, and one small action or question for the day.",
+    sections: [
+      {
+        heading: "Why physical notebooks reduce distraction",
+        body: "Writing by hand on dedicated paper—away from notifications and feeds—slows thought down enough to notice patterns across weeks without turning reflection into another screen task.",
+      },
+      {
+        heading: "Three-line structure for tarot or daily reflection",
+        body: "Dedicated layouts like The Tarot Journal or unruled celestial notebooks make it easy to log a card draw, note what resonated in your actual week, and revisit entries a month later.",
+      },
+    ],
+    groundedBoundary: "Journaling supports personal organization and self-reflection; it is not clinical therapy or medical treatment.",
+    recommendedSlugs: ["the-tarot-journal", "the-artists-way", "celestial-journal-blue-gold"],
+  },
+  {
+    slug: "thoughtful-gift-ideas-for-tarot-enthusiasts",
+    title: "Thoughtful Gift Ideas for Tarot & Symbolism Enthusiasts",
+    kicker: "Editorial Buying Guide · Curated Gifting",
+    description: "How to choose meaningful decks, reference books, journals, and tactile ritual gifts without guessing someone's private practice.",
+    readingTime: "5 min read",
+    departments: ["tarot-oracle", "celestial-gifts", "ritual-atmosphere"],
+    answerFirst: "The safest, most appreciated gifts for tarot and symbolism readers are classic study books, archival foil-stamped journals, acoustic singing bowls, or an accessible second deck with distinctive illustration.",
+    comparisonTable: {
+      headers: ["Recipient Profile", "Ideal Gift Category", "Standout Pairing"],
+      rows: [
+        ["Curious Beginner", "Scenic RWS-based deck + accessible guide", "Modern Witch Tarot + Kitchen Table Tarot"],
+        ["Seasoned Reader", "Deep study volume or art-collector deck", "Seventy-Eight Degrees of Wisdom + Shadowscapes"],
+        ["Writer & Dreamer", "Foil-stamped hardcover notebook", "Constellations Journal + The Tarot Journal"],
+        ["Calm Space Builder", "Zafu cushion or hand-hammered bowl", "Sedona Zafu + 4-inch Singing Bowl"],
+      ],
+    },
+    sections: [
+      {
+        heading: "Match the gift to their reading habit, not stereotypes",
+        body: "Look for durable bindings, clear typography, and respected authors. A well-made hardcover journal or classic reference book feels personal without assuming specific beliefs.",
+      },
+      {
+        heading: "Pair physical editions with free digital exploration",
+        body: "Any physical deck or book pairs naturally with Oracle Mirror's free reference libraries—allowing recipients to explore card meanings, dream symbols, or constellations at their own pace.",
+      },
+    ],
+    groundedBoundary: "Gift selections focus on craftsmanship, literary value, and aesthetic appeal rather than supernatural claims.",
+    recommendedSlugs: ["rider-waite-tarot-deck", "constellations-journal-peter-pauper", "seventy-eight-degrees-of-wisdom"],
+  },
+];
+
+export const BOUNTY_OFFERS: readonly BountyOffer[] = [
+  {
+    slug: "audible-standard",
+    programName: "Audible Standard",
+    kicker: "Audio Reading Companion · Bounties",
+    summary: "Monthly audiobook listening access for contemplative classics, mythology, and historical surveys when reading hands-free.",
+    customerBenefit: "Listen to select audiobooks during walks or quiet evenings; plan terms and included catalog vary by region.",
+    eligibilityNote: "Membership eligibility, trial availability, and catalog inclusion are determined by Amazon at signup. Not every book is included in every tier.",
+    amazonPath: "/hz/audible/mlp/membership/standard",
+    ctaLabel: "Explore Audible Standard on Amazon",
+    relevantDepartments: ["tarot-oracle", "astrology-zodiac", "meditation-reflection"],
+  },
+  {
+    slug: "audible-premium-plus",
+    programName: "Audible Premium Plus",
+    kicker: "Audio Library · Bounties",
+    summary: "Includes a monthly audiobook credit to keep a title in your library plus access to the rotating Plus Catalog of audiobooks and podcasts.",
+    customerBenefit: "Ideal for long-form works on depth psychology, comparative mythology, and astronomy.",
+    eligibilityNote: "Trial offers apply only to eligible accounts as determined by Amazon; subscription pricing and catalog titles are subject to Amazon terms.",
+    amazonPath: "/hz/audible/mlp/membership/premiumplus",
+    ctaLabel: "Explore Audible Premium Plus on Amazon",
+    relevantDepartments: ["dream-journaling", "astrology-zodiac", "crystals-symbolism"],
+  },
+  {
+    slug: "kindle-unlimited",
+    programName: "Kindle Unlimited",
+    kicker: "Digital Reading Shelf · Bounties",
+    summary: "On-demand access to a rotating selection of e-books and digital magazines across Kindle devices and the free Kindle app.",
+    customerBenefit: "Browse introductory guides, journaling workbooks, and folklore collections digitally before committing to hardcover editions.",
+    eligibilityNote: "Not every book in the Oracle Reading Library is included in Kindle Unlimited; title availability and trial eligibility are set by Amazon.",
+    amazonPath: "/kindle-dbs/hz/signup",
+    ctaLabel: "Explore Kindle Unlimited on Amazon",
+    relevantDepartments: ["tarot-oracle", "dream-journaling", "iching-runes", "celestial-gifts"],
+  },
+  {
+    slug: "amazon-prime",
+    programName: "Amazon Prime",
+    kicker: "Shipping & Prime Reading · Bounties",
+    summary: "Fast delivery on physical tarot decks, hardcover books, and journals, alongside Prime Reading rotating e-book access.",
+    customerBenefit: "Convenient shipping on physical study editions and access to rotating Prime Reading selections.",
+    eligibilityNote: "Prime trial eligibility, regional benefits, and renewal terms are determined solely by Amazon at checkout or signup.",
+    amazonPath: "/amazonprime",
+    ctaLabel: "Explore Amazon Prime Benefits",
+    relevantDepartments: ["tarot-oracle", "ritual-atmosphere", "celestial-gifts"],
+  },
 ];
 
 export const SOCIAL_CAMPAIGN_TEMPLATES: readonly SocialCampaignTemplate[] = [
@@ -1571,4 +1760,20 @@ export function relatedProductsFor(product: ShopProduct, limit = 4): ShopProduct
       p.realms.some((r) => product.realms.includes(r)),
   );
   return [...sameDept, ...crossRealm].slice(0, limit);
+}
+
+export function getTarotDeckOfTheWeek(date: Date = new Date()): ShopProduct {
+  const decks = SHOP_PRODUCTS.filter(
+    (p) => p.department === "tarot-oracle" && (p.format === "Deck & Guidebook" || p.format === "Boxed Kit"),
+  );
+  const startOfYear = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86_400_000);
+  const weekIndex = Math.max(0, Math.floor(dayOfYear / 7));
+  return decks[weekIndex % decks.length] || SHOP_PRODUCTS[0];
+}
+
+export function getReadingLibraryProducts(): ShopProduct[] {
+  return SHOP_PRODUCTS.filter(
+    (p) => p.format === "Paperback" || p.format === "Hardcover" || p.format === "Journal",
+  );
 }

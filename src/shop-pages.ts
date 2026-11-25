@@ -1,15 +1,27 @@
 import {
   AMAZON_ASSOCIATES_DISCLOSURE,
   affiliateLinkAttributes,
+  bountyLinkAttributes,
   DEFAULT_AFFILIATE_TAG,
 } from "./affiliate.ts";
 import {
+  getCachedCatalogMap,
+  getCatalogHealth,
+  isAuthorizedAmazonImageUrl,
+  type AmazonCreatorsEnv,
+  type CatalogHealthSummary,
+  type CatalogItemMetadata,
+} from "./amazon-creators.ts";
+import {
+  BOUNTY_OFFERS,
   BUYING_GUIDES,
   GIFT_PERSONAS,
   REALM_SHOP_COLLECTIONS,
   SHOP_DEPARTMENTS,
   SHOP_PRODUCTS,
   departmentBySlug,
+  getReadingLibraryProducts,
+  getTarotDeckOfTheWeek,
   guideBySlug,
   productBySlug,
   productsByDepartment,
@@ -18,6 +30,7 @@ import {
   realmShopBySlug,
   relatedProductsFor,
   SOCIAL_CAMPAIGN_TEMPLATES,
+  type BountyOffer,
   type BuyingGuide,
   type DepartmentSlug,
   type ShopDepartment,
@@ -25,7 +38,7 @@ import {
 } from "./shop-data.ts";
 
 const HOST = "https://oraclemirror.com";
-const LASTMOD = "2026-11-20";
+const LASTMOD = "2026-11-25";
 
 function esc(value: string): string {
   return value.replace(/[&<>'"]/g, (char) => ({
@@ -45,33 +58,29 @@ function departmentName(slug: DepartmentSlug): string {
   return departmentBySlug(slug)?.name || slug;
 }
 
-function productIllustrationSvg(product: ShopProduct): string {
-  const paletteByDept: Record<DepartmentSlug, { bg1: string; bg2: string; accent: string }> = {
-    "tarot-oracle": { bg1: "#130b29", bg2: "#261547", accent: "#d4af37" },
-    "crystals-symbolism": { bg1: "#0d1229", bg2: "#1b2447", accent: "#b8a1f8" },
-    "astrology-zodiac": { bg1: "#080f24", bg2: "#14224a", accent: "#e8d48b" },
-    "dream-journaling": { bg1: "#100c24", bg2: "#211942", accent: "#c7b8ea" },
-    "ritual-atmosphere": { bg1: "#18101c", bg2: "#2b1b30", accent: "#d4af37" },
-    "iching-runes": { bg1: "#0f151f", bg2: "#1c2738", accent: "#d9b962" },
-    "meditation-reflection": { bg1: "#0e171c", bg2: "#192a33", accent: "#e6d7b0" },
-    "celestial-gifts": { bg1: "#0a0e22", bg2: "#1b1f44", accent: "#f0d060" },
-  };
-  const p = paletteByDept[product.department];
-  return `<svg class="shop-artwork" viewBox="0 0 320 220" role="img" aria-label="${esc(product.title)} celestial cabinet illustration" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="g-${esc(product.slug)}" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${p.bg1}"/>
-        <stop offset="100%" stop-color="${p.bg2}"/>
-      </linearGradient>
-    </defs>
-    <rect width="320" height="220" rx="14" fill="url(#g-${esc(product.slug)})"/>
-    <rect x="12" y="12" width="296" height="196" rx="10" fill="none" stroke="${p.accent}" stroke-opacity="0.32" stroke-width="1"/>
-    <circle cx="160" cy="102" r="56" fill="none" stroke="${p.accent}" stroke-opacity="0.38" stroke-width="1"/>
-    <circle cx="160" cy="102" r="42" fill="none" stroke="${p.accent}" stroke-opacity="0.2" stroke-dasharray="3 4" stroke-width="1"/>
-    <path d="M160 36 L160 52 M160 152 L160 168 M94 102 L110 102 M210 102 L226 102" stroke="${p.accent}" stroke-opacity="0.45" stroke-width="1"/>
-    <text x="160" y="114" text-anchor="middle" font-size="34" fill="${p.accent}" font-family="serif">${esc(product.artworkGlyph)}</text>
-    <text x="160" y="186" text-anchor="middle" font-size="10" letter-spacing="2.2" fill="#e8dcc4" fill-opacity="0.72" font-family="sans-serif">${esc(product.format.toUpperCase())}</text>
-  </svg>`;
+function renderProductMedia(
+  product: ShopProduct,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): string {
+  const meta = catalogMap.get(product.asin);
+  const primary = meta?.primaryImage;
+  if (primary && isAuthorizedAmazonImageUrl(primary.url)) {
+    const widthAttr = primary.width ? ` width="${primary.width}"` : "";
+    const heightAttr = primary.height ? ` height="${primary.height}"` : "";
+    return `<div class="shop-photo-frame"><img class="shop-product-photo" src="${esc(primary.url)}" alt="${esc(product.title)} by ${esc(product.creator)}"${widthAttr}${heightAttr} loading="lazy" decoding="async"></div>`;
+  }
+  return `<div class="shop-text-only-media" role="img" aria-label="${esc(product.title)} — text-only listing">
+    <span class="shop-text-only-badge">Text-Only Listing</span>
+    <span class="shop-text-only-format">${esc(product.format)}</span>
+    <span class="shop-text-only-note">Live Amazon image unavailable</span>
+  </div>`;
+}
+
+function isProductAvailable(
+  product: ShopProduct,
+  catalogMap: Map<string, CatalogItemMetadata>,
+): boolean {
+  return catalogMap.get(product.asin)?.status !== "unavailable";
 }
 
 function affiliateCta(product: ShopProduct, label = "Check Current Price on Amazon"): string {
@@ -79,9 +88,24 @@ function affiliateCta(product: ShopProduct, label = "Check Current Price on Amaz
   return `<a class="shop-amazon-btn" href="${esc(attrs.href)}" target="${attrs.target}" rel="${attrs.rel}" data-affiliate-click data-shop-product="${esc(product.slug)}" data-shop-department="${esc(product.department)}" data-asin="${esc(product.asin)}" data-affiliate-tag="${DEFAULT_AFFILIATE_TAG}">${esc(label)} &#8599;</a>`;
 }
 
-function productCard(product: ShopProduct): string {
+function bountyCard(offer: BountyOffer): string {
+  const attrs = bountyLinkAttributes(offer.amazonPath);
+  return `<article class="shop-bounty-card">
+    <p class="shop-kicker">${esc(offer.kicker)}</p>
+    <h3>${esc(offer.programName)}</h3>
+    <p class="shop-bounty-summary">${esc(offer.summary)}</p>
+    <p class="shop-bounty-benefit">${esc(offer.customerBenefit)}</p>
+    <p class="shop-bounty-eligibility"><small>${esc(offer.eligibilityNote)}</small></p>
+    <a class="shop-amazon-btn" href="${esc(attrs.href)}" target="${attrs.target}" rel="${attrs.rel}" data-affiliate-click data-shop-product="${esc(offer.slug)}" data-shop-department="bounties" data-affiliate-tag="${DEFAULT_AFFILIATE_TAG}">${esc(offer.ctaLabel)} &#8599;</a>
+  </article>`;
+}
+
+function productCard(
+  product: ShopProduct,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): string {
   return `<article class="shop-card" data-department="${esc(product.department)}" data-level="${esc(product.experienceLevel)}" data-format="${esc(product.format.toLowerCase())}" data-search="${esc(`${product.title} ${product.creator} ${product.summary}`.toLowerCase())}">
-    <a class="shop-card-media" href="/shop/products/${esc(product.slug)}">${productIllustrationSvg(product)}</a>
+    <a class="shop-card-media" href="/shop/products/${esc(product.slug)}">${renderProductMedia(product, catalogMap)}</a>
     <div class="shop-card-body">
       <p class="shop-card-meta">${esc(departmentName(product.department))} &middot; ${esc(product.format)}</p>
       <h3><a href="/shop/products/${esc(product.slug)}">${esc(product.title)}</a></h3>
@@ -137,6 +161,8 @@ function layout(options: {
   <meta name="description" content="${esc(options.description)}">
   <meta name="robots" content="${robots}">
   <link rel="canonical" href="${esc(canonical)}">
+  <link rel="alternate" hreflang="en" href="${esc(canonical)}">
+  <link rel="alternate" hreflang="x-default" href="${esc(canonical)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="theme-color" content="#07050d">
   <meta property="og:type" content="website">
@@ -159,6 +185,8 @@ function layout(options: {
       <a class="shop-brand" href="/">&#10022; Oracle Mirror</a>
       <div class="shop-nav-links">
         <a href="/shop">Emporium</a>
+        <a href="/shop/reading-library">Reading Library</a>
+        <a href="/shop/tarot-deck-of-the-week">Deck of the Week</a>
         <a href="/shop/realms">Shop Your Realm</a>
         <a href="/shop/gift-finder">Gift Finder</a>
         <a href="/shop/guides">Buying Guides</a>
@@ -184,9 +212,11 @@ function layout(options: {
 </html>`;
 }
 
-function renderShopHome(): Response {
+function renderShopHome(catalogMap: Map<string, CatalogItemMetadata> = new Map()): Response {
   const title = "The Oracle Mirror Emporium — Tarot, Celestial Treasures & Ritual Essentials";
   const description = "Curated tarot decks, astrology books, dream journals, I Ching editions, Elder Futhark rune sets, and reflective gifts selected to complement Oracle Mirror.";
+  const weeklyDeck = getTarotDeckOfTheWeek();
+  const visibleCatalog = SHOP_PRODUCTS.filter((p) => isProductAvailable(p, catalogMap));
   const deptCards = SHOP_DEPARTMENTS.map((dept) => {
     const count = productsByDepartment(dept.slug).length;
     return `<a class="shop-dept-card" href="/shop/departments/${esc(dept.slug)}">
@@ -214,12 +244,32 @@ function renderShopHome(): Response {
       <p class="shop-hero-sub">An editorial collector's cabinet of ${SHOP_PRODUCTS.length} verified decks, classic translations, dream notebooks, and quiet study instruments—selected to accompany your reflections without ever gatekeeping free readings.</p>
       <div class="shop-hero-actions">
         <a class="btn-gold" href="#emporium-catalog">Browse the Cabinet</a>
+        <a class="btn-ghost" href="/shop/reading-library">Oracle Reading Library</a>
+        <a class="btn-ghost" href="/shop/tarot-deck-of-the-week">Tarot Deck of the Week</a>
         <a class="btn-ghost" href="/shop/gift-finder">Find Your Mystical Gift</a>
-        <a class="btn-ghost" href="/shop/realms">Shop Your Realm</a>
       </div>
     </section>
 
     ${disclosureBanner()}
+
+    <section class="shop-section shop-spotlight" aria-labelledby="weekly-deck-heading">
+      <div class="shop-section-head">
+        <div>
+          <p class="shop-kicker">Weekly Editorial Spotlight</p>
+          <h2 id="weekly-deck-heading">Tarot Deck of the Week: ${esc(weeklyDeck.title)}</h2>
+        </div>
+        <a class="shop-text-link" href="/shop/tarot-deck-of-the-week">Read weekly spotlight &#8594;</a>
+      </div>
+      <div class="shop-spotlight-grid">
+        ${productCard(weeklyDeck, catalogMap)}
+        <div class="shop-grounded-box">
+          <h3>Why We Highlight One Deck Each Week</h3>
+          <p>${esc(weeklyDeck.whyItFits)}</p>
+          <p>${esc(weeklyDeck.groundedNote)}</p>
+          <p><a class="shop-text-link" href="/shop/guides/how-to-choose-your-first-tarot-deck">Read: How to Choose Your First Tarot Deck &#8594;</a></p>
+        </div>
+      </div>
+    </section>
 
     <section class="shop-section" aria-labelledby="shop-realms-heading">
       <div class="shop-section-head">
@@ -246,7 +296,7 @@ function renderShopHome(): Response {
       <div class="shop-section-head">
         <div>
           <p class="shop-kicker">Verified Amazon.com Editions</p>
-          <h2 id="shop-catalog-heading">Complete Collector's Catalog (${SHOP_PRODUCTS.length})</h2>
+          <h2 id="shop-catalog-heading">Complete Collector's Catalog (${visibleCatalog.length})</h2>
         </div>
       </div>
       <div class="shop-filters" role="region" aria-label="Filter catalog">
@@ -271,10 +321,21 @@ function renderShopHome(): Response {
           </select>
         </label>
       </div>
-      <p class="shop-results-count" id="shop-results-count" aria-live="polite">Showing ${SHOP_PRODUCTS.length} verified items</p>
+      <p class="shop-results-count" id="shop-results-count" aria-live="polite">Showing ${visibleCatalog.length} verified items</p>
       <div class="shop-grid" id="shop-catalog-grid">
-        ${SHOP_PRODUCTS.map(productCard).join("")}
+        ${visibleCatalog.map((p) => productCard(p, catalogMap)).join("")}
       </div>
+    </section>
+
+    <section class="shop-section" aria-labelledby="shop-bounties-heading">
+      <div class="shop-section-head">
+        <div>
+          <p class="shop-kicker">Reading &amp; Listening Companions</p>
+          <h2 id="shop-bounties-heading">Audible, Kindle Unlimited &amp; Prime Offers</h2>
+        </div>
+        <a class="shop-text-link" href="/shop/reading-library">Visit Reading Library &#8594;</a>
+      </div>
+      <div class="shop-bounty-grid">${BOUNTY_OFFERS.map(bountyCard).join("")}</div>
     </section>
 
     <section class="shop-section" aria-labelledby="shop-guides-heading">
@@ -283,7 +344,7 @@ function renderShopHome(): Response {
           <p class="shop-kicker">Grounded Reference</p>
           <h2 id="shop-guides-heading">Editorial Buying Guides</h2>
         </div>
-        <a class="shop-text-link" href="/shop/guides">All 8 guides &#8594;</a>
+        <a class="shop-text-link" href="/shop/guides">All ${BUYING_GUIDES.length} guides &#8594;</a>
       </div>
       <div class="shop-guides-grid">
         ${BUYING_GUIDES.slice(0, 4).map((g) => `<a class="shop-guide-card" href="/shop/guides/${esc(g.slug)}">
@@ -297,6 +358,13 @@ function renderShopHome(): Response {
   `;
 
   const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Oracle Mirror",
+      url: HOST,
+      logo: `${HOST}/og-image.png`,
+    },
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
@@ -313,8 +381,11 @@ function renderShopHome(): Response {
   });
 }
 
-function renderDepartmentPage(dept: ShopDepartment): Response {
-  const items = productsByDepartment(dept.slug);
+function renderDepartmentPage(
+  dept: ShopDepartment,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response {
+  const items = productsByDepartment(dept.slug).filter((p) => isProductAvailable(p, catalogMap));
   const path = `/shop/departments/${dept.slug}`;
   const title = `${dept.name} — The Oracle Mirror Emporium`;
   const description = `${dept.description} Browse ${items.length} curated editions with direct Amazon.com links.`;
@@ -343,7 +414,7 @@ function renderDepartmentPage(dept: ShopDepartment): Response {
       </label>
     </div>
     <p class="shop-results-count" id="shop-results-count" aria-live="polite">Showing ${items.length} verified items</p>
-    <div class="shop-grid" id="shop-catalog-grid">${items.map(productCard).join("")}</div>
+    <div class="shop-grid" id="shop-catalog-grid">${items.map((p) => productCard(p, catalogMap)).join("")}</div>
   `;
 
   const jsonLd = [
@@ -373,12 +444,20 @@ function renderDepartmentPage(dept: ShopDepartment): Response {
   });
 }
 
-function renderProductPage(product: ShopProduct): Response {
+function renderProductPage(
+  product: ShopProduct,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response {
   const dept = departmentBySlug(product.department)!;
-  const related = relatedProductsFor(product, 4);
+  const related = relatedProductsFor(product, 4).filter((p) => isProductAvailable(p, catalogMap));
   const path = `/shop/products/${product.slug}`;
   const title = `${product.title} — ${dept.name} | Oracle Mirror Emporium`;
   const description = `${product.title} by ${product.creator}. ${product.summary}`;
+  const meta = catalogMap.get(product.asin);
+  const variantGallery = (meta?.variantImages || [])
+    .filter((v) => isAuthorizedAmazonImageUrl(v.url))
+    .map((v, idx) => `<img class="shop-variant-thumb" src="${esc(v.url)}" alt="${esc(product.title)} alternate view ${idx + 1}"${v.width ? ` width="${v.width}"` : ""}${v.height ? ` height="${v.height}"` : ""} loading="lazy" decoding="async">`)
+    .join("");
 
   const realmLinks = product.realms
     .map((slug) => realmShopBySlug(slug))
@@ -395,7 +474,10 @@ function renderProductPage(product: ShopProduct): Response {
     </nav>
     <article class="shop-product-detail" data-track-product-view="${esc(product.slug)}" data-shop-department="${esc(product.department)}">
       <div class="shop-product-hero">
-        <div class="shop-product-art">${productIllustrationSvg(product)}</div>
+        <div class="shop-product-art">
+          ${renderProductMedia(product, catalogMap)}
+          ${variantGallery ? `<div class="shop-variant-strip" aria-label="Additional Amazon product photos">${variantGallery}</div>` : ""}
+        </div>
         <div class="shop-product-info">
           <p class="shop-kicker">${esc(dept.name)} &middot; ${esc(product.format)} &middot; ${esc(product.experienceLevel)}</p>
           <h1>${esc(product.title)}</h1>
@@ -430,7 +512,7 @@ function renderProductPage(product: ShopProduct): Response {
 
     <section class="shop-section" aria-labelledby="related-products-heading">
       <h2 id="related-products-heading">Related Cabinet Selections</h2>
-      <div class="shop-grid">${related.map(productCard).join("")}</div>
+      <div class="shop-grid">${related.map((p) => productCard(p, catalogMap)).join("")}</div>
     </section>
   `;
 
@@ -509,10 +591,13 @@ function renderRealmsIndex(): Response {
   );
 }
 
-function renderRealmCollectionPage(slug: string): Response | null {
+function renderRealmCollectionPage(
+  slug: string,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response | null {
   const realm = realmShopBySlug(slug);
   if (!realm) return null;
-  const items = productsForRealmShop(realm.slug);
+  const items = productsForRealmShop(realm.slug).filter((p) => isProductAvailable(p, catalogMap));
   const path = `/shop/realms/${realm.slug}`;
   const title = `${realm.realmTitle} — Shop Your Realm | Oracle Mirror Emporium`;
   const description = realm.description;
@@ -529,7 +614,7 @@ function renderRealmCollectionPage(slug: string): Response | null {
       </div>
     </section>
     ${disclosureBanner()}
-    <div class="shop-grid">${items.map(productCard).join("")}</div>
+    <div class="shop-grid">${items.map((p) => productCard(p, catalogMap)).join("")}</div>
   `;
 
   return new Response(
@@ -550,7 +635,7 @@ function renderRealmCollectionPage(slug: string): Response | null {
   );
 }
 
-function renderGiftFinderPage(): Response {
+function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new Map()): Response {
   const title = "Find Your Mystical Gift — Interactive Gift Discovery | Oracle Mirror";
   const description = "Voluntary, privacy-respecting gift matcher for Tarot Beginners, Celestial Readers, Dream Keepers, Rune Enthusiasts, Crystal Collectors, and Symbolism Explorers.";
 
@@ -562,8 +647,9 @@ function renderGiftFinderPage(): Response {
     </button>`,
   ).join("");
 
+  const availableProducts = SHOP_PRODUCTS.filter((p) => isProductAvailable(p, catalogMap));
   const preloaded = safeJson(
-    SHOP_PRODUCTS.map((p) => ({
+    availableProducts.map((p) => ({
       slug: p.slug,
       asin: p.asin,
       title: p.title,
@@ -575,10 +661,13 @@ function renderGiftFinderPage(): Response {
       giftPersonas: p.giftPersonas,
       summary: p.summary,
       amazonUrl: affiliateLinkAttributes(p.asin).href,
+      imageUrl: catalogMap.get(p.asin)?.primaryImage?.url || null,
     })),
   );
 
-  const initialItems = productsForGiftPersona("tarot-beginner").slice(0, 6);
+  const initialItems = productsForGiftPersona("tarot-beginner")
+    .filter((p) => isProductAvailable(p, catalogMap))
+    .slice(0, 6);
 
   const body = `
     <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>Find Your Mystical Gift</span></nav>
@@ -626,7 +715,7 @@ function renderGiftFinderPage(): Response {
       </div>
       <p class="shop-results-count" id="gift-results-count" aria-live="polite">Showing ${initialItems.length} curated matches for Tarot Beginner</p>
       <div class="shop-grid" id="gift-results-grid">
-        ${initialItems.map(productCard).join("")}
+        ${initialItems.map((p) => productCard(p, catalogMap)).join("")}
       </div>
       <script id="gift-catalog-data" type="application/json">${preloaded}</script>
     </section>
@@ -646,7 +735,7 @@ function renderGiftFinderPage(): Response {
 
 function renderGuidesIndex(): Response {
   const title = "Editorial Buying Guides — Tarot, I Ching, Runes, Dreams & Crystals | Oracle Mirror";
-  const description = "Eight grounded buying guides explaining how to choose tarot decks, I Ching translations, rune sets, dream journals, crystals, and astrology books.";
+  const description = `${BUYING_GUIDES.length} grounded buying guides explaining how to choose tarot decks, Rider-Waite-Smith symbolism, oracle cards, numerology, I Ching translations, rune sets, dream journals, and astrology books.`;
 
   const body = `
     <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>Buying Guides</span></nav>
@@ -677,12 +766,32 @@ function renderGuidesIndex(): Response {
   );
 }
 
-function renderGuidePage(guide: BuyingGuide): Response {
+function renderGuidePage(
+  guide: BuyingGuide,
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response {
   const path = `/shop/guides/${guide.slug}`;
   const title = `${guide.title} | Oracle Mirror Emporium`;
   const recs = guide.recommendedSlugs
     .map((slug) => productBySlug(slug))
-    .filter((p): p is ShopProduct => Boolean(p));
+    .filter((p): p is ShopProduct => Boolean(p))
+    .filter((p) => isProductAvailable(p, catalogMap));
+
+  const answerFirstHtml = guide.answerFirst
+    ? `<section class="shop-answer-first" aria-label="Quick summary"><h2>Quick Summary</h2><p>${esc(guide.answerFirst)}</p></section>`
+    : "";
+
+  const historyHtml = guide.historicalContext
+    ? `<section class="shop-history-box"><h2>Historical &amp; Cultural Context</h2><p>${esc(guide.historicalContext)}</p></section>`
+    : "";
+
+  const tableHtml = guide.comparisonTable
+    ? `<section class="shop-table-wrap"><h2>At-a-Glance Comparison</h2><table class="shop-comparison-table"><thead><tr>${guide.comparisonTable.headers.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${guide.comparisonTable.rows.map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></section>`
+    : "";
+
+  const faqHtml = guide.faq?.length
+    ? `<section class="shop-faq-section"><h2>Frequently Asked Questions</h2><dl class="shop-faq-list">${guide.faq.map((f) => `<div><dt>${esc(f.question)}</dt><dd>${esc(f.answer)}</dd></div>`).join("")}</dl></section>`
+    : "";
 
   const body = `
     <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><a href="/shop/guides">Buying Guides</a><span>&#8250;</span><span>${esc(guide.title)}</span></nav>
@@ -692,7 +801,11 @@ function renderGuidePage(guide: BuyingGuide): Response {
         <h1>${esc(guide.title)}</h1>
         <p class="shop-hero-sub">${esc(guide.description)}</p>
       </header>
+      ${answerFirstHtml}
+      ${historyHtml}
+      ${tableHtml}
       ${guide.sections.map((s) => `<section><h2>${esc(s.heading)}</h2><p>${esc(s.body)}</p></section>`).join("")}
+      ${faqHtml}
       <section class="shop-grounded-box">
         <h2>Grounded scope</h2>
         <p>${esc(guide.groundedBoundary)}</p>
@@ -701,11 +814,11 @@ function renderGuidePage(guide: BuyingGuide): Response {
     ${disclosureBanner()}
     <section class="shop-section" aria-labelledby="guide-recs-heading">
       <h2 id="guide-recs-heading">Verified Editions Mentioned in This Guide</h2>
-      <div class="shop-grid">${recs.map(productCard).join("")}</div>
+      <div class="shop-grid">${recs.map((p) => productCard(p, catalogMap)).join("")}</div>
     </section>
   `;
 
-  const jsonLd = [
+  const jsonLd: unknown[] = [
     {
       "@context": "https://schema.org",
       "@type": "Article",
@@ -720,6 +833,18 @@ function renderGuidePage(guide: BuyingGuide): Response {
       { name: guide.title, path },
     ]),
   ];
+
+  if (guide.faq?.length) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: guide.faq.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: { "@type": "Answer", text: f.answer },
+      })),
+    });
+  }
 
   return new Response(layout({ title, description: guide.description, path, body, jsonLd }), {
     headers: { "Content-Type": "text/html; charset=UTF-8", "Cache-Control": "public, max-age=3600" },
@@ -761,9 +886,147 @@ function renderSocialWorkflowPage(): Response {
   });
 }
 
-function renderAnalyticsReportPage(): Response {
+function renderTarotDeckOfTheWeekPage(
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response {
+  const deck = getTarotDeckOfTheWeek();
+  const related = relatedProductsFor(deck, 4).filter((p) => isProductAvailable(p, catalogMap));
+  const path = "/shop/tarot-deck-of-the-week";
+  const title = `Tarot Deck of the Week: ${deck.title} | Oracle Mirror Emporium`;
+  const description = `Weekly tarot editorial spotlight featuring ${deck.title} by ${deck.creator}. Chosen for symbolic clarity, durability, and beginner-to-collector study.`;
+
+  const body = `
+    <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>Tarot Deck of the Week</span></nav>
+    <section class="shop-hero shop-hero-compact">
+      <p class="shop-kicker">Weekly Editorial Spotlight</p>
+      <h1>Tarot Deck of the Week: ${esc(deck.title)}</h1>
+      <p class="shop-hero-sub">${esc(deck.summary)}</p>
+    </section>
+    ${disclosureBanner()}
+    <article class="shop-product-detail" data-track-product-view="${esc(deck.slug)}" data-shop-department="${esc(deck.department)}">
+      <div class="shop-product-hero">
+        <div class="shop-product-art">${renderProductMedia(deck, catalogMap)}</div>
+        <div class="shop-product-info">
+          <p class="shop-kicker">${esc(deck.format)} &middot; ${esc(deck.experienceLevel)}</p>
+          <h2>${esc(deck.title)}</h2>
+          <p class="shop-product-creator">By ${esc(deck.creator)}</p>
+          <p class="shop-product-summary">${esc(deck.whyItFits)}</p>
+          <div class="shop-product-cta-row">
+            ${affiliateCta(deck, "Check Current Price on Amazon")}
+            <a class="btn-ghost" href="/shop/products/${esc(deck.slug)}">Full Edition Details</a>
+          </div>
+          <p class="shop-inline-disclosure">${esc(AMAZON_ASSOCIATES_DISCLOSURE)} Free 78-card readings on Oracle Mirror never require purchasing a physical deck.</p>
+        </div>
+      </div>
+      <div class="shop-grounded-box">
+        <h2>Editorial Selection Criteria &amp; Grounded Note</h2>
+        <p>${esc(deck.groundedNote)} Every weekly selection is rotated deterministically from our curated tarot cabinet based on card readability, illustration craft, and companion documentation—never on private reading inputs.</p>
+      </div>
+    </article>
+    <section class="shop-section" aria-labelledby="weekly-related-heading">
+      <h2 id="weekly-related-heading">Companion Books &amp; Decks</h2>
+      <div class="shop-grid">${related.map((p) => productCard(p, catalogMap)).join("")}</div>
+    </section>
+  `;
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      description,
+      mainEntityOfPage: `${HOST}${path}`,
+      isPartOf: { "@type": "WebSite", name: "Oracle Mirror", url: HOST },
+    },
+    breadcrumbSchema([
+      { name: "Emporium", path: "/shop" },
+      { name: "Tarot Deck of the Week", path },
+    ]),
+  ];
+
+  return new Response(layout({ title, description, path, body, jsonLd }), {
+    headers: { "Content-Type": "text/html; charset=UTF-8", "Cache-Control": "public, max-age=3600" },
+  });
+}
+
+function renderReadingLibraryPage(
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): Response {
+  const books = getReadingLibraryProducts().filter((p) => isProductAvailable(p, catalogMap));
+  const path = "/shop/reading-library";
+  const title = "Oracle Reading Library — Tarot, Astrology, Dream & Mythology Books | Oracle Mirror";
+  const description = `Curated library of ${books.length} verified books, study manuals, classical translations, and reflective journals, paired with Audible and Kindle Unlimited options.`;
+
+  const body = `
+    <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>Oracle Reading Library</span></nav>
+    <section class="shop-hero shop-hero-compact">
+      <p class="shop-kicker">Curated Study Shelf</p>
+      <h1>Oracle Reading Library</h1>
+      <p class="shop-hero-sub">Respected tarot study manuals, natal astrology guides, I Ching translations, Jungian dream classics, astronomy field guides, and archival journals.</p>
+    </section>
+    ${disclosureBanner()}
+    <section class="shop-section" aria-labelledby="library-books-heading">
+      <div class="shop-section-head">
+        <div>
+          <p class="shop-kicker">Verified Print &amp; Journal Editions</p>
+          <h2 id="library-books-heading">Library Catalog (${books.length} Titles)</h2>
+        </div>
+        <a class="shop-text-link" href="/shop/guides">Read Editorial Guides &#8594;</a>
+      </div>
+      <div class="shop-grid">${books.map((p) => productCard(p, catalogMap)).join("")}</div>
+    </section>
+    <section class="shop-section" aria-labelledby="library-bounties-heading">
+      <div class="shop-section-head">
+        <div>
+          <p class="shop-kicker">Digital &amp; Audio Subscriptions</p>
+          <h2 id="library-bounties-heading">Audible, Kindle Unlimited &amp; Prime</h2>
+        </div>
+      </div>
+      <div class="shop-bounty-grid">${BOUNTY_OFFERS.map(bountyCard).join("")}</div>
+    </section>
+  `;
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Oracle Reading Library",
+      description,
+      url: `${HOST}${path}`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      numberOfItems: books.length,
+      itemListElement: books.map((book, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        name: book.title,
+        url: `${HOST}/shop/products/${book.slug}`,
+      })),
+    },
+    breadcrumbSchema([
+      { name: "Emporium", path: "/shop" },
+      { name: "Oracle Reading Library", path },
+    ]),
+  ];
+
+  return new Response(layout({ title, description, path, body, jsonLd }), {
+    headers: { "Content-Type": "text/html; charset=UTF-8", "Cache-Control": "public, max-age=1800" },
+  });
+}
+
+function renderAnalyticsReportPage(health?: CatalogHealthSummary): Response {
   const title = "Emporium Reporting View | Oracle Mirror";
   const description = "Privacy-compliant local and session reporting for Oracle Mirror Emporium views and outbound Amazon clicks.";
+  const apiStatusHtml = health
+    ? `<section class="shop-analytics-grid" aria-label="Creators API catalog diagnostics">
+      <div class="shop-stat-card"><h3>Creators API Credentials</h3><p>${health.configured ? "Configured" : "Not Configured"}</p><small>OAuth 2.0 v${esc(health.version)} · ${esc(health.marketplace)}</small></div>
+      <div class="shop-stat-card"><h3>Cached ASINs (&le;${health.cacheTtlHours}h)</h3><p>${health.cachedCount} / ${health.totalTracked}</p><small>KV metadata cache within 24h limit</small></div>
+      <div class="shop-stat-card"><h3>Live Product Images</h3><p>${health.withImageCount}</p><small>Authorized Amazon image URLs cached</small></div>
+      <div class="shop-stat-card"><h3>Unavailable / Last Error</h3><p>${health.unavailableCount}</p><small>${esc(health.lastError || "No active API error")}</small></div>
+    </section>`
+    : "";
 
   const body = `
     <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/shop">Emporium</a><span>&#8250;</span><span>Emporium Reporting</span></nav>
@@ -778,6 +1041,7 @@ function renderAnalyticsReportPage(): Response {
       <div class="shop-stat-card"><h3>Session Shop Views</h3><p id="stat-shop-views">0</p><small>Recorded locally when analytics consent is granted</small></div>
       <div class="shop-stat-card"><h3>Session Outbound Clicks</h3><p id="stat-outbound-clicks">0</p><small>Clicks on Amazon.com links (not confirmed sales)</small></div>
     </section>
+    ${apiStatusHtml}
     <section class="shop-grounded-box">
       <h2>Important Attribution Distinction</h2>
       <p>Oracle Mirror never fabricates conversion rates, order counts, or commission totals. Outbound clicks indicate visitor interest; actual qualifying purchases and earnings are reported exclusively by Amazon Associates Central.</p>
@@ -793,34 +1057,40 @@ export function isShopRoute(pathname: string): boolean {
   return pathname === "/shop" || pathname === "/shop/" || pathname.startsWith("/shop/");
 }
 
-export function handleShopRoute(pathname: string): Response {
+function routeShopWithCatalog(
+  pathname: string,
+  catalogMap: Map<string, CatalogItemMetadata>,
+  health?: CatalogHealthSummary,
+): Response {
   const normalized = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  if (normalized === "/shop") return renderShopHome();
+  if (normalized === "/shop") return renderShopHome(catalogMap);
+  if (normalized === "/shop/reading-library") return renderReadingLibraryPage(catalogMap);
+  if (normalized === "/shop/tarot-deck-of-the-week") return renderTarotDeckOfTheWeekPage(catalogMap);
   if (normalized === "/shop/realms") return renderRealmsIndex();
-  if (normalized === "/shop/gift-finder") return renderGiftFinderPage();
+  if (normalized === "/shop/gift-finder") return renderGiftFinderPage(catalogMap);
   if (normalized === "/shop/guides") return renderGuidesIndex();
   if (normalized === "/shop/social") return renderSocialWorkflowPage();
-  if (normalized === "/shop/analytics") return renderAnalyticsReportPage();
+  if (normalized === "/shop/analytics") return renderAnalyticsReportPage(health);
 
   if (normalized.startsWith("/shop/departments/")) {
     const slug = normalized.slice("/shop/departments/".length);
     const dept = departmentBySlug(slug);
-    if (dept) return renderDepartmentPage(dept);
+    if (dept) return renderDepartmentPage(dept, catalogMap);
   }
   if (normalized.startsWith("/shop/products/")) {
     const slug = normalized.slice("/shop/products/".length);
     const product = productBySlug(slug);
-    if (product) return renderProductPage(product);
+    if (product) return renderProductPage(product, catalogMap);
   }
   if (normalized.startsWith("/shop/realms/")) {
     const slug = normalized.slice("/shop/realms/".length);
-    const response = renderRealmCollectionPage(slug);
+    const response = renderRealmCollectionPage(slug, catalogMap);
     if (response) return response;
   }
   if (normalized.startsWith("/shop/guides/")) {
     const slug = normalized.slice("/shop/guides/".length);
     const guide = guideBySlug(slug);
-    if (guide) return renderGuidePage(guide);
+    if (guide) return renderGuidePage(guide, catalogMap);
   }
 
   return new Response(
@@ -829,9 +1099,29 @@ export function handleShopRoute(pathname: string): Response {
   );
 }
 
+export function handleShopRoute(pathname: string): Response {
+  return routeShopWithCatalog(pathname, new Map());
+}
+
+export async function handleShopRouteAsync(
+  pathname: string,
+  env: AmazonCreatorsEnv,
+): Promise<Response> {
+  const normalized = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  const allAsins = SHOP_PRODUCTS.map((p) => p.asin);
+  if (normalized === "/shop/analytics") {
+    const health = await getCatalogHealth(env, allAsins);
+    return routeShopWithCatalog(pathname, new Map(), health);
+  }
+  const catalogMap = await getCachedCatalogMap(env, allAsins);
+  return routeShopWithCatalog(pathname, catalogMap);
+}
+
 export function shopSitemapUrls(): string[] {
   return [
     "/shop",
+    "/shop/reading-library",
+    "/shop/tarot-deck-of-the-week",
     "/shop/realms",
     "/shop/gift-finder",
     "/shop/guides",
@@ -846,7 +1136,7 @@ export function augmentSitemapWithShop(xml: string): string {
   if (!xml.includes("</urlset>") || xml.includes(`${HOST}/shop</loc>`)) return xml;
   const additions = shopSitemapUrls()
     .map((path) => {
-      const priority = path === "/shop" ? "0.85" : path.startsWith("/shop/departments/") || path.startsWith("/shop/realms/") ? "0.75" : "0.60";
+      const priority = path === "/shop" ? "0.85" : path.startsWith("/shop/departments/") || path.startsWith("/shop/realms/") || path === "/shop/reading-library" || path === "/shop/tarot-deck-of-the-week" ? "0.75" : "0.60";
       return `  <url><loc>${HOST}${path}</loc><lastmod>${LASTMOD}</lastmod><changefreq>weekly</changefreq><priority>${priority}</priority></url>`;
     })
     .join("\n");
@@ -855,7 +1145,7 @@ export function augmentSitemapWithShop(xml: string): string {
 
 export function augmentLlmsWithShop(text: string): string {
   if (text.includes(`${HOST}/shop`)) return text;
-  return `${text.trimEnd()}\n\n## The Oracle Mirror Emporium\n- Curated shop: ${HOST}/shop — Tarot, Celestial Treasures & Ritual Essentials (${SHOP_PRODUCTS.length} verified editions).\n- Shop Your Realm: ${HOST}/shop/realms — curated collections paired with Oracle Mirror realms.\n- Gift Discovery: ${HOST}/shop/gift-finder — voluntary, privacy-safe mystical gift matcher.\n- Buying Guides: ${HOST}/shop/guides — 8 grounded editorial guides.\n- Disclosure: ${AMAZON_ASSOCIATES_DISCLOSURE}\n`;
+  return `${text.trimEnd()}\n\n## The Oracle Mirror Emporium\n- Curated shop: ${HOST}/shop — Tarot, Celestial Treasures & Ritual Essentials (${SHOP_PRODUCTS.length} verified editions).\n- Oracle Reading Library: ${HOST}/shop/reading-library — curated tarot, astrology, dream, I Ching, rune, and numerology books.\n- Tarot Deck of the Week: ${HOST}/shop/tarot-deck-of-the-week — weekly tarot deck spotlight.\n- Shop Your Realm: ${HOST}/shop/realms — curated collections paired with Oracle Mirror realms.\n- Gift Discovery: ${HOST}/shop/gift-finder — voluntary, privacy-safe mystical gift matcher.\n- Buying Guides: ${HOST}/shop/guides — ${BUYING_GUIDES.length} grounded editorial guides.\n- Disclosure: ${AMAZON_ASSOCIATES_DISCLOSURE}\n`;
 }
 
 export function injectShopDiscovery(html: string): string {
@@ -865,14 +1155,16 @@ export function injectShopDiscovery(html: string): string {
     '<a href="/archive" class="nav-link" data-nav="archive">Archive</a>',
     '<a href="/shop" class="nav-link nav-link-shop">Emporium</a>\n          <a href="/archive" class="nav-link" data-nav="archive">Archive</a>',
   );
+  const weeklyDeck = getTarotDeckOfTheWeek();
   const teaser = `<section id="emporium-teaser" class="emporium-teaser" aria-labelledby="emporium-teaser-title">
         <div class="section-divider">&#10022; &#9830; &#10022;</div>
         <p class="emporium-teaser-kicker">The Oracle Mirror Emporium</p>
         <h2 id="emporium-teaser-title">Tarot, Celestial Treasures &amp; Ritual Essentials</h2>
-        <p class="section-subtitle">Explore curated physical tarot decks, I Ching translations, Elder Futhark sets, dream journals, and stargazing guides—optional companions to your free readings.</p>
+        <p class="section-subtitle">Explore curated physical tarot decks, I Ching translations, Elder Futhark sets, dream journals, and stargazing guides—optional companions to your free readings. Featured this week: <strong>${esc(weeklyDeck.title)}</strong>.</p>
         <div class="emporium-teaser-actions">
           <a href="/shop" class="btn-gold">Visit the Emporium</a>
-          <a href="/shop/realms" class="btn-ghost">Shop Your Realm</a>
+          <a href="/shop/tarot-deck-of-the-week" class="btn-ghost">Tarot Deck of the Week</a>
+          <a href="/shop/reading-library" class="btn-ghost">Oracle Reading Library</a>
           <a href="/shop/gift-finder" class="btn-ghost">Find Your Mystical Gift</a>
         </div>
         <p class="emporium-teaser-disclosure">${esc(AMAZON_ASSOCIATES_DISCLOSURE)}</p>

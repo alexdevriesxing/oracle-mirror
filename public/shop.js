@@ -137,6 +137,12 @@ function initGiftFinder() {
 
     grid.innerHTML = matches.slice(0, 9).map((item) => `
       <article class="shop-card">
+        <a class="shop-card-media" href="/shop/products/${escapeHtml(item.slug)}">
+          ${item.imageUrl
+            ? `<div class="shop-photo-frame"><img class="shop-product-photo" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)} by ${escapeHtml(item.creator)}" loading="lazy" decoding="async"></div>`
+            : `<div class="shop-text-only-media"><span class="shop-text-only-badge">Text-Only Listing</span><span class="shop-text-only-format">${escapeHtml(item.format)}</span><span class="shop-text-only-note">Live Amazon image unavailable</span></div>`
+          }
+        </a>
         <div class="shop-card-body">
           <p class="shop-card-meta">${escapeHtml(item.departmentName)} &middot; ${escapeHtml(item.format)}</p>
           <h3><a href="/shop/products/${escapeHtml(item.slug)}">${escapeHtml(item.title)}</a></h3>

@@ -782,3 +782,157 @@
   margin-top: 0.3rem;
   color: #c7b8d9;
 }
+
+/* Real Amazon Product Photos & Text-Only Fallback */
+.shop-photo-frame {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  background: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.shop-product-photo {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.shop-text-only-media {
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  border-radius: 10px;
+  border: 1px dashed rgba(212, 175, 55, 0.35);
+  background: rgba(16, 11, 32, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.shop-text-only-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.shop-text-only-format {
+  font-size: 0.95rem;
+  color: #f4ead6;
+  font-weight: 600;
+}
+
+.shop-text-only-note {
+  font-size: 0.78rem;
+  color: #bfb1cf;
+}
+
+.shop-variant-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.shop-variant-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* Bounties, Weekly Spotlight & GAIO Editorial Blocks */
+.shop-bounty-grid,
+.shop-spotlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.shop-bounty-card {
+  background: linear-gradient(155deg, rgba(18, 12, 36, 0.9), rgba(10, 7, 22, 0.95));
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.shop-bounty-card h3 {
+  margin: 0;
+  color: #f4ead6;
+  font-family: 'Cinzel', serif;
+}
+
+.shop-bounty-eligibility {
+  color: #b7a8c9;
+  margin-top: auto;
+}
+
+.shop-answer-first,
+.shop-history-box {
+  background: rgba(212, 175, 55, 0.08);
+  border-left: 3px solid #d4af37;
+  border-radius: 0 10px 10px 0;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+}
+
+.shop-table-wrap {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.shop-comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(16, 11, 32, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.shop-comparison-table th,
+.shop-comparison-table td {
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.16);
+  text-align: left;
+  color: #e9dec8;
+}
+
+.shop-comparison-table th {
+  font-family: 'Cinzel', serif;
+  color: #f0d060;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.shop-faq-list div {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.14);
+}
+
+.shop-faq-list dt {
+  font-weight: 600;
+  color: #f0d060;
+  margin-bottom: 0.3rem;
+}
+
+.shop-faq-list dd {
+  margin: 0;
+  color: #dcd0e8;
+}

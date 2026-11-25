@@ -67,7 +67,7 @@ test("Emporium catalog has 8 departments, 50+ verified products, unique slugs, a
 test("Shop Your Realm, Gift Finder, Buying Guides, and Social templates are complete", () => {
   assert.equal(REALM_SHOP_COLLECTIONS.length, 7);
   assert.equal(GIFT_PERSONAS.length, 6);
-  assert.equal(BUYING_GUIDES.length, 8);
+  assert.ok(BUYING_GUIDES.length >= 12);
   assert.equal(SOCIAL_CAMPAIGN_TEMPLATES.length, 7);
 
   for (const template of SOCIAL_CAMPAIGN_TEMPLATES) {
