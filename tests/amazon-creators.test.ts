@@ -218,4 +218,26 @@ test("Bounties, Tarot Deck of the Week, Reading Library, and 12 guides are compl
 
   const weeklyRes = await handleShopRouteAsync("/shop/tarot-deck-of-the-week", {});
   assert.equal(weeklyRes.status, 200);
+
+  // Unavailable product suppresses purchase CTA instead of falling back to Amazon search
+  const kv = createMemoryKv();
+  await kv.put(
+    "amazon:item:v1:www.amazon.com:1454938684",
+    JSON.stringify({
+      asin: "1454938684",
+      marketplace: "www.amazon.com",
+      title: "The Modern Witch Tarot Deck",
+      creator: "Lisa Sterle",
+      detailPageUrl: null,
+      primaryImage: null,
+      variantImages: [],
+      available: false,
+      status: "unavailable",
+      fetchedAt: Date.now(),
+    } satisfies CatalogItemMetadata),
+  );
+  const unavailableRes = await handleShopRouteAsync("/shop/products/modern-witch-tarot-deck", { ORACLE_KV: kv });
+  const unavailableHtml = await unavailableRes.text();
+  assert.match(unavailableHtml, /Currently unavailable on Amazon/);
+  assert.doesNotMatch(unavailableHtml, /data-shop-product="modern-witch-tarot-deck"/);
 });

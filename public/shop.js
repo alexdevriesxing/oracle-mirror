@@ -207,7 +207,7 @@ function initGiftFinder() {
           <p class="shop-card-creator">By ${escapeHtml(item.creator)}</p>
           <p class="shop-card-summary">${escapeHtml(item.summary)}</p>
           <div class="shop-card-actions">
-            <a class="shop-amazon-btn" href="${escapeHtml(item.amazonUrl)}" target="_blank" rel="nofollow sponsored noopener noreferrer" data-affiliate-click data-shop-product="${escapeHtml(item.slug)}" data-shop-department="${escapeHtml(item.department)}" data-asin="${escapeHtml(item.asin)}">Check Current Price on Amazon &#8599;</a>
+            <a class="shop-amazon-btn" href="${escapeHtml(item.amazonUrl)}" target="_blank" rel="nofollow sponsored noopener noreferrer" data-affiliate-click data-shop-product="${escapeHtml(item.slug)}" data-shop-department="${escapeHtml(item.department)}" data-asin="${escapeHtml(item.asin)}" data-affiliate-tag="xelarindo-20">Check Current Price on Amazon &#8599;</a>
             <a class="shop-detail-link" href="/shop/products/${escapeHtml(item.slug)}">Details</a>
           </div>
         </div>

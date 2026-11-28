@@ -38,7 +38,7 @@ import {
 } from "./shop-data.ts";
 
 const HOST = "https://oraclemirror.com";
-const LASTMOD = "2026-11-25";
+const LASTMOD = "2026-11-28";
 
 function esc(value: string): string {
   return value.replace(/[&<>'"]/g, (char) => ({
@@ -83,7 +83,14 @@ function isProductAvailable(
   return catalogMap.get(product.asin)?.status !== "unavailable";
 }
 
-function affiliateCta(product: ShopProduct, label = "Check Current Price on Amazon"): string {
+function affiliateCta(
+  product: ShopProduct,
+  label = "Check Current Price on Amazon",
+  catalogMap: Map<string, CatalogItemMetadata> = new Map(),
+): string {
+  if (!isProductAvailable(product, catalogMap)) {
+    return `<span class="shop-unavailable-note">Currently unavailable on Amazon</span>`;
+  }
   const attrs = affiliateLinkAttributes(product.asin);
   return `<a class="shop-amazon-btn" href="${esc(attrs.href)}" target="${attrs.target}" rel="${attrs.rel}" data-affiliate-click data-shop-product="${esc(product.slug)}" data-shop-department="${esc(product.department)}" data-asin="${esc(product.asin)}" data-affiliate-tag="${DEFAULT_AFFILIATE_TAG}">${esc(label)} &#8599;</a>`;
 }
@@ -531,7 +538,7 @@ function renderProductPage(
             <div><dt>Level</dt><dd>${esc(product.experienceLevel)}</dd></div>
           </dl>
           <div class="shop-product-cta-row">
-            ${affiliateCta(product, "Check Current Price on Amazon")}
+            ${affiliateCta(product, "Check Current Price on Amazon", catalogMap)}
             <a class="btn-ghost" href="/shop/departments/${esc(dept.slug)}">Back to ${esc(dept.name)}</a>
           </div>
           <p class="shop-inline-disclosure">${esc(AMAZON_ASSOCIATES_DISCLOSURE)} Pricing and stock are verified live on Amazon.com.</p>
@@ -1010,7 +1017,7 @@ function renderTarotDeckOfTheWeekPage(
           <p class="shop-product-creator">By ${esc(deck.creator)}</p>
           <p class="shop-product-summary">${esc(deck.whyItFits)}</p>
           <div class="shop-product-cta-row">
-            ${affiliateCta(deck, "Check Current Price on Amazon")}
+            ${affiliateCta(deck, "Check Current Price on Amazon", catalogMap)}
             <a class="btn-ghost" href="/shop/products/${esc(deck.slug)}">Full Edition Details</a>
           </div>
           <p class="shop-inline-disclosure">${esc(AMAZON_ASSOCIATES_DISCLOSURE)} Free 78-card readings on Oracle Mirror never require purchasing a physical deck.</p>

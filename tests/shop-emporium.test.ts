@@ -5,17 +5,22 @@ import {
   AMAZON_ASSOCIATES_DISCLOSURE,
   DEFAULT_AFFILIATE_TAG,
   affiliateLinkAttributes,
+  bountyLinkAttributes,
   buildAmazonProductUrl,
   createAffiliateConfig,
   isValidAsin,
+  validateAmazonBountyUrl,
+  validateAmazonProductUrl,
 } from "../src/affiliate.ts";
 import {
+  BOUNTY_OFFERS,
   BUYING_GUIDES,
   GIFT_PERSONAS,
   REALM_SHOP_COLLECTIONS,
   SHOP_DEPARTMENTS,
   SHOP_PRODUCTS,
   SOCIAL_CAMPAIGN_TEMPLATES,
+  productBySlug,
 } from "../src/shop-data.ts";
 import {
   augmentLlmsWithShop,
@@ -50,24 +55,57 @@ test("affiliate link utility validates ASINs, applies tracking tag, and sets spo
   assert.match(attrs.href, /^https:\/\/www\.amazon\.com\/dp\/B09N21ZD7B\?tag=xelarindo-20$/);
 });
 
-test("Emporium catalog has 8 departments, 50+ verified products, unique slugs, and valid ASINs", () => {
+test("Emporium catalog has 8 departments, 500+ verified products, unique slugs/ASINs, and compliant Amazon URLs", () => {
   assert.equal(SHOP_DEPARTMENTS.length, 8);
-  assert.ok(SHOP_PRODUCTS.length >= 50 && SHOP_PRODUCTS.length <= 80, `Expected 50-80 products, got ${SHOP_PRODUCTS.length}`);
+  assert.ok(SHOP_PRODUCTS.length >= 500, `Expected >= 500 products, got ${SHOP_PRODUCTS.length}`);
 
   const slugs = new Set<string>();
+  const asins = new Set<string>();
   const deptSlugs = new Set(SHOP_DEPARTMENTS.map((d) => d.slug));
   for (const product of SHOP_PRODUCTS) {
     assert.ok(!slugs.has(product.slug), `Duplicate slug: ${product.slug}`);
     slugs.add(product.slug);
     assert.ok(isValidAsin(product.asin), `Invalid ASIN for ${product.slug}: ${product.asin}`);
+    assert.ok(!asins.has(product.asin), `Duplicate ASIN for ${product.slug}: ${product.asin}`);
+    asins.add(product.asin);
     assert.ok(deptSlugs.has(product.department), `Unknown department ${product.department}`);
+
+    const url = buildAmazonProductUrl(product.asin);
+    const check = validateAmazonProductUrl(url, DEFAULT_AFFILIATE_TAG);
+    assert.equal(check.valid, true, `URL validation failed for ${product.slug} (${url}): ${check.reason}`);
+  }
+
+  // Enforce xelarindo-20 on www.amazon.com even if an override tries to set a different defaultTag
+  const hijackedConfig = createAffiliateConfig({ defaultTag: "wrong-tag-20" });
+  assert.equal(
+    buildAmazonProductUrl("091386613X", { config: hijackedConfig }),
+    "https://www.amazon.com/dp/091386613X?tag=xelarindo-20",
+  );
+
+  // Reject search links, wrong tags, multi-tags, and unsupported domains
+  assert.equal(validateAmazonProductUrl("https://www.amazon.com/s?k=tarot&tag=xelarindo-20").valid, false);
+  assert.equal(validateAmazonProductUrl("https://www.amazon.com/dp/091386613X?tag=other-20").valid, false);
+  assert.equal(validateAmazonProductUrl("https://www.amazon.com/dp/091386613X?tag=xelarindo-20&tag=other-20").valid, false);
+  assert.equal(validateAmazonProductUrl("https://evil.example.com/dp/091386613X?tag=xelarindo-20").valid, false);
+
+  // Validate bounty URLs under separate rules
+  assert.equal(BOUNTY_OFFERS.length, 4);
+  for (const offer of BOUNTY_OFFERS) {
+    const attrs = bountyLinkAttributes(offer.amazonPath);
+    const check = validateAmazonBountyUrl(attrs.href, DEFAULT_AFFILIATE_TAG);
+    assert.equal(check.valid, true, `Bounty validation failed for ${offer.slug}: ${check.reason}`);
   }
 });
 
-test("Shop Your Realm, Gift Finder, Buying Guides, and Social templates are complete", () => {
+test("Shop Your Realm, Gift Finder, 14 Buying Guides, and Social templates are complete", () => {
   assert.equal(REALM_SHOP_COLLECTIONS.length, 7);
   assert.equal(GIFT_PERSONAS.length, 6);
-  assert.ok(BUYING_GUIDES.length >= 12);
+  assert.ok(BUYING_GUIDES.length >= 14);
+  for (const guide of BUYING_GUIDES) {
+    for (const slug of guide.recommendedSlugs) {
+      assert.ok(productBySlug(slug), `Guide ${guide.slug} references missing product ${slug}`);
+    }
+  }
   assert.equal(SOCIAL_CAMPAIGN_TEMPLATES.length, 7);
 
   for (const template of SOCIAL_CAMPAIGN_TEMPLATES) {

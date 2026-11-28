@@ -1,3 +1,5 @@
+import { EXPANDED_SHOP_PRODUCTS } from "./shop-catalog-expanded.ts";
+
 export type DepartmentSlug =
   | "tarot-oracle"
   | "crystals-symbolism"
@@ -191,7 +193,7 @@ export const SHOP_DEPARTMENTS: readonly ShopDepartment[] = [
   },
 ];
 
-export const SHOP_PRODUCTS: readonly ShopProduct[] = [
+export const BASE_SHOP_PRODUCTS: readonly ShopProduct[] = [
   // 1. Tarot & Oracle Decks (14 items)
   {
     slug: "rider-waite-tarot-deck",
@@ -535,7 +537,7 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
   },
   {
     slug: "you-were-born-for-this",
-    asin: "0063043874",
+    asin: "0063043777",
     title: "You Were Born for This: Astrology for Radical Self-Acceptance",
     creator: "Chani Nicholas",
     department: "astrology-zodiac",
@@ -746,35 +748,19 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     schemaType: "Product",
   },
   {
-    slug: "fay-bless-singing-bowl-3in",
-    asin: "B0DQV9KLLS",
-    title: "Fay Bless Tibetan Singing Bowl Set (3-Inch)",
-    creator: "Fay Bless",
+    slug: "silent-mind-tibetan-singing-bowl",
+    asin: "B00XEV4WYM",
+    title: "Silent Mind Tibetan Singing Bowl Set",
+    creator: "Silent Mind",
     department: "ritual-atmosphere",
     format: "Physical Instrument",
     experienceLevel: "beginner",
     giftPersonas: ["crystal-collector"],
     realms: ["madame-fortuna-crystal-ball"],
-    summary: "A compact 3-inch brass singing bowl set suited for small desks, bookshelves, and travel.",
-    whyItFits: "Ideal for apartments or compact reflection corners where space is limited.",
-    groundedNote: "Decorative and acoustic table piece for quiet ambiance.",
+    summary: "Handcrafted Tibetan singing bowl set with wooden striker and cushion for quiet desk and study ambiance.",
+    whyItFits: "Ideal for apartments or compact reflection corners where a gentle acoustic chime marks the start of quiet reading.",
+    groundedNote: "Decorative and acoustic table piece for quiet ambiance; not a medical device.",
     artworkGlyph: "◎",
-    schemaType: "Product",
-  },
-  {
-    slug: "master-healing-carved-singing-bowl",
-    asin: "B08GJMW1Q9",
-    title: "Master Healing Carved Tibetan Singing Bowl (14-Inch)",
-    creator: "Master Healing",
-    department: "ritual-atmosphere",
-    format: "Physical Instrument",
-    experienceLevel: "collector",
-    giftPersonas: ["crystal-collector"],
-    realms: ["madame-fortuna-crystal-ball"],
-    summary: "A large 14-inch carved brass singing bowl producing deep, sustained resonant tones.",
-    whyItFits: "A centerpiece acoustic instrument for dedicated meditation rooms and collectors.",
-    groundedNote: "Traditional resonant craft object; not a medical device.",
-    artworkGlyph: "◉",
     schemaType: "Product",
   },
   {
@@ -991,7 +977,7 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
   },
   {
     slug: "retrospec-sedona-zafu-crescent",
-    asin: "B092DYYBB3",
+    asin: "B092DSTPCN",
     title: "Retrospec Sedona Zafu Meditation Cushion (Crescent)",
     creator: "Retrospec",
     department: "meditation-reflection",
@@ -1153,7 +1139,7 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
   },
   {
     slug: "cosmos-carl-sagan",
-    asin: "0394715964",
+    asin: "0345539435",
     title: "Cosmos",
     creator: "Carl Sagan",
     department: "celestial-gifts",
@@ -1183,6 +1169,11 @@ export const SHOP_PRODUCTS: readonly ShopProduct[] = [
     artworkGlyph: "🔢",
     schemaType: "Book",
   },
+];
+
+export const SHOP_PRODUCTS: readonly ShopProduct[] = [
+  ...BASE_SHOP_PRODUCTS,
+  ...EXPANDED_SHOP_PRODUCTS,
 ];
 
 export const REALM_SHOP_COLLECTIONS: readonly RealmShopCollection[] = [
@@ -1508,7 +1499,7 @@ export const BUYING_GUIDES: readonly BuyingGuide[] = [
       },
     ],
     groundedBoundary: "Both tarot and oracle cards are creative reflection tools for entertainment and self-inquiry, not predictive instruments.",
-    recommendedSlugs: ["rider-waite-tarot-deck", "moonology-oracle-cards", "work-your-light-oracle"],
+    recommendedSlugs: ["rider-waite-tarot-deck", "moonology-oracle-cards", "work-your-light-oracle-cards"],
   },
   {
     slug: "numerology-terminology-and-core-numbers",
@@ -1560,7 +1551,7 @@ export const BUYING_GUIDES: readonly BuyingGuide[] = [
       },
     ],
     groundedBoundary: "Journaling supports personal organization and self-reflection; it is not clinical therapy or medical treatment.",
-    recommendedSlugs: ["the-tarot-journal", "the-artists-way", "celestial-journal-blue-gold"],
+    recommendedSlugs: ["the-tarot-journal-peter-pauper", "the-artists-way", "celestial-journal-blue-gold"],
   },
   {
     slug: "thoughtful-gift-ideas-for-tarot-enthusiasts",
@@ -1591,6 +1582,50 @@ export const BUYING_GUIDES: readonly BuyingGuide[] = [
     ],
     groundedBoundary: "Gift selections focus on craftsmanship, literary value, and aesthetic appeal rather than supernatural claims.",
     recommendedSlugs: ["rider-waite-tarot-deck", "constellations-journal-peter-pauper", "seventy-eight-degrees-of-wisdom"],
+  },
+  {
+    slug: "understanding-different-rider-waite-deck-editions",
+    title: "Understanding Different Rider-Waite Deck Editions",
+    kicker: "Editorial Buying Guide · Classic Editions",
+    description: "How standard U.S. Games yellow-box, borderless, pocket, and modern recolored Rider-Waite-Smith editions compare in cardstock, sizing, and readability.",
+    readingTime: "5 min read",
+    departments: ["tarot-oracle"],
+    answerFirst: "The classic 1971 U.S. Games yellow-box Rider-Waite Tarot Deck (ASIN 091386613X) remains the benchmark for beginners because its standard 2.75 x 4.75 inch proportions and clear borders match almost every tarot study book.",
+    historicalContext: "First published in London in December 1909 by William Rider & Son, the deck paired Arthur Edward Waite's esoteric direction with Pamela Colman Smith's expressive scenic illustrations.",
+    sections: [
+      {
+        heading: "Standard vs. pocket and oversized formats",
+        body: "Standard-size decks (roughly 2.75 by 4.75 inches) balance hand-shuffle comfort with visible scenic detail. Pocket editions save table space for travel, while oversized editions highlight fine linework for study.",
+      },
+      {
+        heading: "Why edition verification matters",
+        body: "Because Rider-Waite-Smith artwork is widely reprinted, checking the publisher (such as U.S. Games Systems) and exact ASIN ensures consistent cardstock, color reproduction, and booklet quality.",
+      },
+    ],
+    groundedBoundary: "Historical note: the 1909 Rider-Waite-Smith deck is a landmark of illustrated card design. Readings remain personal reflection and entertainment.",
+    recommendedSlugs: ["rider-waite-tarot-deck", "morgan-greer-tarot-deck", "modern-witch-tarot-deck"],
+  },
+  {
+    slug: "exploring-the-cultural-history-of-divination",
+    title: "Exploring the Cultural History of Divination",
+    kicker: "Editorial Buying Guide · History & Folklore",
+    description: "Distinguishing the documented historical origins of tarot, the I Ching, Elder Futhark runes, and lunar calendars from modern symbolic reflection.",
+    readingTime: "6 min read",
+    departments: ["tarot-oracle", "iching-runes", "astrology-zodiac"],
+    answerFirst: "Tarot began as a fifteenth-century Italian trick-taking card game, the I Ching evolved over three millennia as a classical Chinese philosophical text, and the Elder Futhark was a Germanic alphabet—knowing their real history enriches modern reflective use.",
+    historicalContext: "Across cultures, symbolic systems served varied roles: courtly games in Renaissance Italy, moral and cosmological philosophy in Zhou-dynasty China, and epigraphic writing in Northern Europe.",
+    sections: [
+      {
+        heading: "Separating documented history from later esoteric lore",
+        body: "Scholarly translations and museum-backed histories help readers appreciate how traditions actually developed, rather than relying on nineteenth-century myths about ancient origins.",
+      },
+      {
+        heading: "Reading classics alongside modern commentary",
+        body: "Pairing a respected primary translation—such as Richard Wilhelm and Cary F. Baynes's I Ching—with an accessible modern workbook gives both historical depth and practical clarity.",
+      },
+    ],
+    groundedBoundary: "Oracle Mirror clearly distinguishes documented history and cultural traditions from scientific evidence, presenting readings as symbolic entertainment.",
+    recommendedSlugs: ["i-ching-wilhelm-baynes", "futhark-handbook-edred-thorsson", "seventy-eight-degrees-of-wisdom"],
   },
 ];
 
