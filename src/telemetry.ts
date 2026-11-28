@@ -17,6 +17,8 @@ const SAFE_STRING_FIELDS = [
   "trigger", "page_path", "consent_state", "ad_mode", "device", "source",
   "state", "result_kind", "ritual_card", "badge", "recommendation",
   "shop_department", "shop_product", "affiliate_tag", "affiliate_channel",
+  "sister_site", "daily_edit_id", "gift_recipient", "gift_occasion",
+  "gift_interest", "component",
 ] as const;
 
 const SAFE_NUMBER_FIELDS = [

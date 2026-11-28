@@ -559,6 +559,14 @@ function setOutput(realm, text, isLoading = false) {
   }
 }
 
+const POST_READING_REALM_MAP = {
+  magic8: "magic-8-ball",
+  birthchart: "birth-chart",
+  palmistry: "palm-reading",
+  iching: "iching-oracle",
+  love: "love-oracle",
+};
+
 function setOutputHTML(realm, html, isLoading = false) {
   const el = document.querySelector(`[data-output="${realm}"]`);
   if (!el) return;
@@ -569,6 +577,10 @@ function setOutputHTML(realm, html, isLoading = false) {
     clearResultAftercare(realm);
   } else {
     el.classList.remove("loading");
+    const mappedRealm = POST_READING_REALM_MAP[realm] || realm;
+    if (window.OracleRoutine && typeof window.OracleRoutine.renderPostReading === "function") {
+      window.OracleRoutine.renderPostReading(el, mappedRealm);
+    }
   }
 }
 

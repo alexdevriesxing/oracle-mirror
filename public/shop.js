@@ -103,10 +103,47 @@ function initGiftFinder() {
   }
 
   const personaBtns = Array.from(document.querySelectorAll("[data-gift-persona]"));
+  const recipientSelect = document.getElementById("gift-recipient-select");
+  const occasionSelect = document.getElementById("gift-occasion-select");
+  const budgetSelect = document.getElementById("gift-budget-select");
+  const interestSelect = document.getElementById("gift-interest-select");
+  const zodiacSelect = document.getElementById("gift-zodiac-select");
   const levelSelect = document.getElementById("gift-level-select");
   const formatSelect = document.getElementById("gift-format-select");
+  const sisterBox = document.getElementById("gift-sister-recommendations");
   const countEl = document.getElementById("gift-results-count");
   let activePersona = personaBtns.find((b) => b.classList.contains("active"))?.dataset.giftPersona || "tarot-beginner";
+
+  const SISTER_GIFT_COLLECTIONS = {
+    beauty: {
+      site: "Routine & Glow",
+      title: "Beauty & Fragrance Gift Ideas on Routine & Glow",
+      desc: "Explore skincare staples, signature fragrance families, and giftable everyday luxuries.",
+      url: "https://www.routineandglow.com/shop/fragrance/",
+      cta: "Explore Beauty & Fragrance Gifts",
+    },
+    fashion: {
+      site: "Routine & Runway",
+      title: "Fashion & Accessory Gift Ideas on Routine & Runway",
+      desc: "Discover timeless handbags, scarves, sunglasses, and wearable wardrobe pieces.",
+      url: "https://www.routineandrunway.com/shop/accessories/",
+      cta: "Explore Style Gifts",
+    },
+    "symbolic-jewelry": {
+      site: "Routine & Runway",
+      title: "Symbolic Jewelry & Keepsakes on Routine & Runway",
+      desc: "Classic rings, pendants, and everyday jewelry paired with our Emporium keepsakes below.",
+      url: "https://www.routineandrunway.com/shop/jewelry/",
+      cta: "Explore Jewelry on Runway",
+    },
+    "home-decor": {
+      site: "Routine & Haven",
+      title: "Home Décor, Lighting & Ceramics on Routine & Haven",
+      desc: "Warm lamps, sculptural vases, home fragrance, and thoughtful housewarming pieces.",
+      url: "https://www.routineandhaven.com/shop/ceramics-and-vases/",
+      cta: "Explore Home Living Gifts",
+    },
+  };
 
   function escapeHtml(str) {
     return String(str)
@@ -116,9 +153,29 @@ function initGiftFinder() {
       .replace(/"/g, "&quot;");
   }
 
+  function renderSisterPanel(interest) {
+    if (!sisterBox) return;
+    const rec = SISTER_GIFT_COLLECTIONS[interest];
+    if (!rec) {
+      sisterBox.hidden = true;
+      sisterBox.innerHTML = "";
+      return;
+    }
+    sisterBox.hidden = false;
+    sisterBox.innerHTML = `
+      <p class="shop-kicker">${escapeHtml(rec.site)} &middot; Sister Publication</p>
+      <h3>${escapeHtml(rec.title)}</h3>
+      <p>${escapeHtml(rec.desc)}</p>
+      <p style="margin-top:0.65rem;"><a class="shop-amazon-btn" href="${escapeHtml(rec.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(rec.cta)} &#8599;</a></p>
+    `;
+  }
+
   function renderMatches() {
     const level = levelSelect?.value || "all";
     const format = formatSelect?.value || "all";
+    const interest = interestSelect?.value || "astrology";
+    renderSisterPanel(interest);
+
     const matches = products.filter((item) => {
       const matchesPersona = Array.isArray(item.giftPersonas) && item.giftPersonas.includes(activePersona);
       const matchesLevel = level === "all" || item.experienceLevel === level;
@@ -127,7 +184,8 @@ function initGiftFinder() {
     });
 
     if (countEl) {
-      countEl.textContent = `Showing ${matches.length} curated ${matches.length === 1 ? "match" : "matches"}`;
+      const zodiacNote = zodiacSelect?.value && zodiacSelect.value !== "none" ? ` (${zodiacSelect.options[zodiacSelect.selectedIndex].text})` : "";
+      countEl.textContent = `Showing ${matches.length} curated Emporium ${matches.length === 1 ? "match" : "matches"}${zodiacNote}`;
     }
 
     if (matches.length === 0) {
@@ -172,6 +230,20 @@ function initGiftFinder() {
 
   levelSelect?.addEventListener("change", renderMatches);
   formatSelect?.addEventListener("change", renderMatches);
+  recipientSelect?.addEventListener("change", () => {
+    renderMatches();
+    emitShopEvent("gift_edit_filter", { gift_recipient: recipientSelect.value });
+  });
+  occasionSelect?.addEventListener("change", () => {
+    renderMatches();
+    emitShopEvent("gift_edit_filter", { gift_occasion: occasionSelect.value });
+  });
+  budgetSelect?.addEventListener("change", renderMatches);
+  interestSelect?.addEventListener("change", () => {
+    renderMatches();
+    emitShopEvent("gift_edit_filter", { gift_interest: interestSelect.value });
+  });
+  zodiacSelect?.addEventListener("change", renderMatches);
 }
 
 function initTelemetryAndAnalytics() {

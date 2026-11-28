@@ -292,6 +292,48 @@ function renderShopHome(catalogMap: Map<string, CatalogItemMetadata> = new Map()
       <div class="shop-dept-grid">${deptCards}</div>
     </section>
 
+    <section class="shop-section" aria-labelledby="shop-sister-collections-heading">
+      <div class="shop-section-head">
+        <div>
+          <p class="shop-kicker">Routine Lifestyle Collection &middot; Sister Publications</p>
+          <h2 id="shop-sister-collections-heading">Complementary Lifestyle Collections</h2>
+        </div>
+        <a class="shop-text-link" href="/shop/gift-finder">Open The Gift Edit &#8594;</a>
+      </div>
+      <div class="shop-grounded-box" style="margin-bottom: 1rem;">
+        <p>The cabinets above are Oracle Mirror Emporium's verified Amazon.com affiliate catalogue. For mainstream beauty, personal style, and home living inspiration, explore our independent sister publications:</p>
+      </div>
+      <div class="shop-dept-grid">
+        <a class="shop-dept-card" href="https://www.routineandglow.com/shop/fragrance/" target="_blank" rel="noopener noreferrer">
+          <span class="shop-dept-glyph" aria-hidden="true">&#10024;</span>
+          <div>
+            <p class="shop-kicker">Routine &amp; Glow</p>
+            <h3>Beauty &amp; Fragrances</h3>
+            <p>Skincare rituals, fragrance families, and everyday personal care edits.</p>
+            <span class="shop-dept-count">Visit Routine &amp; Glow &#8599;</span>
+          </div>
+        </a>
+        <a class="shop-dept-card" href="https://www.routineandrunway.com/shop/jewelry/" target="_blank" rel="noopener noreferrer">
+          <span class="shop-dept-glyph" aria-hidden="true">&#128141;</span>
+          <div>
+            <p class="shop-kicker">Routine &amp; Runway</p>
+            <h3>Jewelry &amp; Accessories</h3>
+            <p>Timeless rings, pendants, handbags, and personal style guides.</p>
+            <span class="shop-dept-count">Visit Routine &amp; Runway &#8599;</span>
+          </div>
+        </a>
+        <a class="shop-dept-card" href="https://www.routineandhaven.com/shop/lighting/" target="_blank" rel="noopener noreferrer">
+          <span class="shop-dept-glyph" aria-hidden="true">&#127969;</span>
+          <div>
+            <p class="shop-kicker">Routine &amp; Haven</p>
+            <h3>Home D&eacute;cor &amp; Lighting</h3>
+            <p>Warm lamps, ceramics, candles, and decorative accents for calm spaces.</p>
+            <span class="shop-dept-count">Visit Routine &amp; Haven &#8599;</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
     <section class="shop-section" id="emporium-catalog" aria-labelledby="shop-catalog-heading">
       <div class="shop-section-head">
         <div>
@@ -636,8 +678,8 @@ function renderRealmCollectionPage(
 }
 
 function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new Map()): Response {
-  const title = "Find Your Mystical Gift — Interactive Gift Discovery | Oracle Mirror";
-  const description = "Voluntary, privacy-respecting gift matcher for Tarot Beginners, Celestial Readers, Dream Keepers, Rune Enthusiasts, Crystal Collectors, and Symbolism Explorers.";
+  const title = "The Gift Edit — Curated Gift Discovery | Oracle Mirror";
+  const description = "Voluntary, privacy-respecting gift discovery across Oracle Mirror Emporium and the Routine Lifestyle Collection. Filter by recipient, occasion, budget, personal interest, and optional zodiac sign.";
 
   const personaButtons = GIFT_PERSONAS.map(
     (p, idx) => `<button type="button" class="gift-persona-btn${idx === 0 ? " active" : ""}" data-gift-persona="${esc(p.slug)}" aria-pressed="${idx === 0 ? "true" : "false"}">
@@ -670,29 +712,84 @@ function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new
     .slice(0, 6);
 
   const body = `
-    <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>Find Your Mystical Gift</span></nav>
+    <nav class="shop-crumb" aria-label="Breadcrumb"><a href="/">Oracle Mirror</a><span>&#8250;</span><a href="/shop">Emporium</a><span>&#8250;</span><span>The Gift Edit</span></nav>
     <section class="shop-hero shop-hero-compact">
-      <p class="shop-kicker">Voluntary &amp; Privacy-Safe</p>
-      <h1>Find Your Mystical Gift</h1>
-      <p class="shop-hero-sub">Choose an interest profile, recipient style, and experience level to filter verified editions from our catalog. No personal data is collected and no supernatural matching is claimed.</p>
+      <p class="shop-kicker">The Gift Edit &middot; Voluntary &amp; Privacy-Safe</p>
+      <h1>The Gift Edit</h1>
+      <p class="shop-hero-sub">Choose a recipient, occasion, budget, and personal interest to discover thoughtful gifts from Oracle Mirror Emporium and our sister Routine publications. No private reading data is used and no gift claims to alter fortune.</p>
     </section>
     ${disclosureBanner()}
     <section class="gift-finder-panel" aria-labelledby="gift-finder-step1">
-      <h2 id="gift-finder-step1">1. Choose an interest profile</h2>
+      <h2 id="gift-finder-step1">1. Choose a Gift Edit Interest or Mystical Profile</h2>
+      <div class="gift-controls-row" style="margin-bottom: 1.25rem;">
+        <label class="shop-filter-field">
+          <span>Recipient</span>
+          <select id="gift-recipient-select">
+            <option value="partner">Partner</option>
+            <option value="friend" selected>Friend</option>
+            <option value="family">Family Member</option>
+            <option value="colleague">Colleague</option>
+            <option value="self">Personal Treat</option>
+          </select>
+        </label>
+        <label class="shop-filter-field">
+          <span>Occasion</span>
+          <select id="gift-occasion-select">
+            <option value="birthday">Birthday</option>
+            <option value="anniversary">Anniversary</option>
+            <option value="holiday">Holiday</option>
+            <option value="housewarming">Housewarming</option>
+            <option value="thank-you">Thank You</option>
+            <option value="just-because">Just Because</option>
+          </select>
+        </label>
+        <label class="shop-filter-field">
+          <span>Budget</span>
+          <select id="gift-budget-select">
+            <option value="all">Any Budget</option>
+            <option value="under-25">Under $25</option>
+            <option value="25-50">$25 &ndash; $50</option>
+            <option value="50-100">$50 &ndash; $100</option>
+            <option value="100-plus">Luxury ($100+)</option>
+          </select>
+        </label>
+        <label class="shop-filter-field">
+          <span>Personal Interest</span>
+          <select id="gift-interest-select">
+            <option value="astrology">Astrology-Related Gifts (Emporium)</option>
+            <option value="books">Books &amp; Classics (Emporium)</option>
+            <option value="journaling">Journaling &amp; Reflection (Emporium)</option>
+            <option value="symbolic-jewelry">Symbolic Jewelry (Emporium &amp; Runway)</option>
+            <option value="beauty">Beauty &amp; Fragrance (Routine &amp; Glow)</option>
+            <option value="fashion">Fashion &amp; Accessories (Routine &amp; Runway)</option>
+            <option value="home-decor">Home D&eacute;cor &amp; Lighting (Routine &amp; Haven)</option>
+          </select>
+        </label>
+        <label class="shop-filter-field">
+          <span>Birth Month / Zodiac (Optional)</span>
+          <select id="gift-zodiac-select">
+            <option value="none">No preference</option>
+            <option value="aries">March/April &middot; Aries</option>
+            <option value="taurus">April/May &middot; Taurus</option>
+            <option value="gemini">May/June &middot; Gemini</option>
+            <option value="cancer">June/July &middot; Cancer</option>
+            <option value="leo">July/August &middot; Leo</option>
+            <option value="virgo">August/September &middot; Virgo</option>
+            <option value="libra">September/October &middot; Libra</option>
+            <option value="scorpio">October/November &middot; Scorpio</option>
+            <option value="sagittarius">November/December &middot; Sagittarius</option>
+            <option value="capricorn">December/January &middot; Capricorn</option>
+            <option value="aquarius">January/February &middot; Aquarius</option>
+            <option value="pisces">February/March &middot; Pisces</option>
+          </select>
+        </label>
+      </div>
       <div class="gift-persona-grid" role="group" aria-label="Gift interest profiles">
         ${personaButtons}
       </div>
       <div class="gift-controls-row">
         <label class="shop-filter-field">
-          <span>2. Recipient</span>
-          <select id="gift-recipient-select">
-            <option value="friend">Thoughtful Friend or Partner</option>
-            <option value="self">Personal Study &amp; Reflection</option>
-            <option value="host">Host or Creative Mentor</option>
-          </select>
-        </label>
-        <label class="shop-filter-field">
-          <span>3. Experience Level</span>
+          <span>Experience Level</span>
           <select id="gift-level-select">
             <option value="all">Any Experience Level</option>
             <option value="beginner">Beginner-Friendly</option>
@@ -701,7 +798,7 @@ function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new
           </select>
         </label>
         <label class="shop-filter-field">
-          <span>4. Preferred Format</span>
+          <span>Preferred Format</span>
           <select id="gift-format-select">
             <option value="all">All Formats</option>
             <option value="Deck & Guidebook">Decks &amp; Guidebooks</option>
@@ -713,6 +810,7 @@ function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new
           </select>
         </label>
       </div>
+      <div id="gift-sister-recommendations" class="shop-grounded-box" hidden style="margin-bottom: 1.25rem;"></div>
       <p class="shop-results-count" id="gift-results-count" aria-live="polite">Showing ${initialItems.length} curated matches for Tarot Beginner</p>
       <div class="shop-grid" id="gift-results-grid">
         ${initialItems.map((p) => productCard(p, catalogMap)).join("")}
@@ -727,7 +825,7 @@ function renderGiftFinderPage(catalogMap: Map<string, CatalogItemMetadata> = new
       description,
       path: "/shop/gift-finder",
       body,
-      jsonLd: [breadcrumbSchema([{ name: "Emporium", path: "/shop" }, { name: "Find Your Mystical Gift", path: "/shop/gift-finder" }])],
+      jsonLd: [breadcrumbSchema([{ name: "Emporium", path: "/shop" }, { name: "The Gift Edit", path: "/shop/gift-finder" }])],
     }),
     { headers: { "Content-Type": "text/html; charset=UTF-8", "Cache-Control": "public, max-age=1800" } },
   );

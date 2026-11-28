@@ -50,6 +50,13 @@ import {
 } from "./shop-pages.ts";
 import { getCatalogHealth } from "./amazon-creators.ts";
 import { SHOP_PRODUCTS } from "./shop-data.ts";
+import { buildPublicEditorialManifest } from "./routine-manifest.ts";
+import {
+  augmentLlmsWithEditorial,
+  augmentSitemapWithEditorial,
+  handleEditorialRoute,
+  isEditorialRoute,
+} from "./editorial-pages.ts";
 
 const FULL_SHELL_QUERY = "__oracle_full_shell";
 declare const __BUILD_COMMIT__: string;
@@ -129,6 +136,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
       augmentLlmsWithKnowledgeGraph,
       augmentLlmsWithReferenceSearch,
       augmentLlmsWithShop,
+      augmentLlmsWithEditorial,
     ];
     const body = llmsTransforms.reduce((acc, fn) => fn(acc), await response.text());
     return responseWithBody(response, body, "text/plain; charset=UTF-8");
@@ -148,6 +156,7 @@ async function applyFreshnessTransforms(response: Response, request: Request): P
       augmentSitemapWithKnowledgeGraph,
       augmentSitemapWithReferenceSearch,
       augmentSitemapWithShop,
+      augmentSitemapWithEditorial,
     ];
     const body = sitemapTransforms.reduce((acc, fn) => fn(acc), await response.text());
     return responseWithBody(response, body, "application/xml; charset=UTF-8");
@@ -208,6 +217,18 @@ export default {
         }),
       );
     }
+    if (url.pathname === "/api/editorial-manifest.json" && request.method === "GET") {
+      return withSecurityHeaders(
+        new Response(JSON.stringify(buildPublicEditorialManifest(), null, 2), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Cache-Control": "public, max-age=3600",
+          },
+        }),
+      );
+    }
+    if (request.method === "GET" && isEditorialRoute(url.pathname)) return withSecurityHeaders(handleEditorialRoute(url.pathname));
     if (request.method === "GET" && isShopRoute(url.pathname)) return withSecurityHeaders(await handleShopRouteAsync(url.pathname, env));
     if (request.method === "GET" && isReferenceSearchRoute(url.pathname)) return withSecurityHeaders(handleReferenceSearchRoute());
     if (request.method === "GET" && isKnownKnowledgeTopicRoute(url.pathname)) return withSecurityHeaders(await decorateStandaloneKnowledge(handleKnownKnowledgeTopicRoute(url.pathname), request));
